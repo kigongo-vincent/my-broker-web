@@ -7,7 +7,7 @@ export interface Props {
 
 const Tabs = ({ links }: Props) => {
     return (
-        <div className="bg-pale h-[8vh] max-h-[8vh] fixed bottom-0 w-full flex items-center justify-center">
+        <div className="bg-pale dark:bg-paper/90 dark:backdrop-blur-sm h-[8vh] max-h-[8vh] fixed bottom-0 w-full flex items-center justify-center">
             <FlexRender className="flex-row  w-full px-4 justify-between" items={links} render={(item, index) => <Tab {...item} key={index} />} />
         </div>
     )

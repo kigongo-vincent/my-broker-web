@@ -316,7 +316,7 @@ const Home = () => {
 
     return (
         <div>
-            <Search />
+            <Search filter />
             <FlexRender row className="flex-row my-4 gap-2" items={tabs} render={(item, index) => <div
                 onClick={() => setSlelectedTab(item)}
                 className={`bg-pale px-5 py-3 rounded-full cursor-pointer ${seletcedTab == item && "bg-primary text-white"}`} key={index}>{item}

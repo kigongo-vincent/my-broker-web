@@ -3,6 +3,7 @@ import Home from "../../pages/tabs/user/Home"
 import Favourites from "../../pages/tabs/user/Favourites"
 import Settings from "../../pages/tabs/user/Settings"
 import Upload from "../../pages/tabs/user/Upload"
+import Chat from "../../pages/tabs/user/Chat"
 
 
 const user = () => {
@@ -11,6 +12,7 @@ const user = () => {
             <Route path="/" Component={Home} />
             <Route path="/favourites" Component={Favourites} />
             <Route path="/upload" Component={Upload} />
+            <Route path="/chat" Component={Chat} />
             <Route path="/settings" Component={Settings} />
             <Route path="/upload" Component={Upload} />
         </Routes>
