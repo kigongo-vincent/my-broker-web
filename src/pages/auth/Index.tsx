@@ -2,9 +2,13 @@ import Lineicons from "@lineiconshq/react-lineicons"
 import Logo from "../../components/base/Logo"
 import { PhoneSolid } from "@lineiconshq/free-icons"
 import GoogleIcon from "../../assets/google-logo.png"
+import { useNavigate } from "react-router"
 
 
 const Index = () => {
+
+    const navigate = useNavigate()
+
     return (
         <div className="h-screen flex flex-col items-center justify-between p-10">
             <div />
@@ -19,7 +23,9 @@ const Index = () => {
                     continue with phone number
                 </button>
 
-                <button className="btn bg-pale">
+                <button
+                    onClick={() => navigate("/tabs/user")}
+                    className="btn bg-pale">
                     <img src={GoogleIcon} className="h-6" alt="" />
                     <span>Continue with google </span>
                 </button>

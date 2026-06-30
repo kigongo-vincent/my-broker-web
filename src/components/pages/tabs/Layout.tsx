@@ -31,7 +31,7 @@ const Layout = ({ children }: Props) => {
     },
     {
         icon: <Lineicons icon={PlusSolid} />,
-        path: `${BASE_URL}/upload`
+        path: `/upload`
     },
     {
         icon: <Lineicons icon={HeartSolid} />,

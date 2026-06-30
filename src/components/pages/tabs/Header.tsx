@@ -11,6 +11,9 @@ const Header = () => {
         <div className=" fixed max-h-[8vh]  z-50 bg-paper dark:bg-paper/80 dark:backdrop-blur-sm top-0 w-full h-[8vh] flex items-center justify-between px-4">
 
             <Logo className="h-16" />
+
+            <p className="font-semibold pinyon-script-regular text-3xl">My Broker</p>
+
             <img src={photo} className="h-14 w-14 rounded-full object-cover" alt="" />
 
         </div>
