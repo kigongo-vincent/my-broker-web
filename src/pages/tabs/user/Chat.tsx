@@ -2,7 +2,7 @@ import { useState } from "react"
 import Search from "../../../components/pages/tabs/home/Search"
 import FlexRender from "../../../components/base/FlexRender"
 import { BaseI, UserI, useUserStore } from "../../../store/auth"
-import { ClockIcon } from "@heroicons/react/20/solid"
+// import { ClockIcon } from "@heroicons/react/20/solid"
 import { useNavigate } from "react-router"
 
 export interface ChatCompnentI extends BaseI {

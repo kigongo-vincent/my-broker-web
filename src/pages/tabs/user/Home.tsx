@@ -321,7 +321,7 @@ const Home = () => {
     const { user } = useUserStore()
 
 
-    const [properties, setProperties] = useState<Partial<PostI>[]>([
+    const [properties,] = useState<Partial<PostI>[]>([
         {
             ID: 1,
             price: { amount: 5500000, currency: "UGX" },

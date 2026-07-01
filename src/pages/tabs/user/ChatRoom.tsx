@@ -1,4 +1,4 @@
-import Header, { props } from "../../../components/pages/tabs/Header"
+import Header from "../../../components/pages/tabs/Header"
 import { User } from "../../../components/pages/tabs/Post"
 import BGL from "../../../assets/light.png"
 import BGD from "../../../assets/dark.png"
@@ -39,9 +39,9 @@ const Message = ({ sender, attachment, text, CreatedAt }: MessageI) => {
 const ChatRoom = () => {
 
     const { theme } = useSystemTheme()
-    const [loading, setloading] = useState(false)
+    const [loading,] = useState(false)
 
-    const [messages, setMessages] = useState<MessageI[]>([
+    const [messages] = useState<MessageI[]>([
         {
             ID: 1,
             CreatedAt: "2026-07-01T10:00:00Z",

@@ -43,7 +43,7 @@ export const AVATAR_FALLBACK =
 
 export const useUserStore = create<AuthStoreI>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: MockkUser,
       token: "",
       company: {},

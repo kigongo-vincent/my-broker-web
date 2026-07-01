@@ -2,7 +2,7 @@ import { GallerySolid, MapMarker1Solid, MapMarker5Solid, XmarkSolid } from "@lin
 import Lineicons from "@lineiconshq/react-lineicons"
 import { ReactNode, useMemo, useState } from "react"
 import { useNavigate } from "react-router"
-import MapComponent from "../../../components/pages/upload/Map"
+// import MapComponent from "../../../components/pages/upload/Map"
 import FlexRender from "../../../components/base/FlexRender"
 import commercialIcon from "../../../assets/upload/commercial.png"
 import residentialIcon from "../../../assets/upload/residential.png"
