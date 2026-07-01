@@ -20,7 +20,7 @@ export interface UserI extends Partial<BaseI> {
 
 const MockkUser: UserI = {
   ID: 1,
-  name: "jamal alkhen saleem",
+  name: "jamal alkhen saleem malkeen",
   photo:
     "https://images.rawpixel.com/image_800/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvNDc5LW1rLTk2OTAtam9iNTgzLmpwZw.jpg",
   phone: "+256782147143",
@@ -53,12 +53,8 @@ export const useUserStore = create<AuthStoreI>()(
       },
 
       getUserPhoto: (url) => {
-        const savedUser = get()?.user as UserI;
-        return url
-          ? url
-          : savedUser?.photo
-          ? savedUser?.photo
-          : AVATAR_FALLBACK;
+        // const savedUser = get()?.user as UserI;
+        return url ? url : AVATAR_FALLBACK;
       },
 
       logout: () => {

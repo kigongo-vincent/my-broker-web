@@ -26,14 +26,14 @@ interface ShellProps {
 
 const Shell = ({ onBack, onNext, children }: ShellProps) => {
     return (
-        <div className="flex h-screen flex-col p-6 justify-between">
+        <div className="flex h-screen flex-col p-4 justify-between">
 
-            <div>
+            <div className="p-4">
                 {children}
             </div>
 
             {/* actions  */}
-            <div className="flex items-center justify-between">
+            <div className="flex fixed bottom-5 px-4 left-0 w-full items-center justify-between">
                 <button onClick={() => onBack?.()} className="btn bg-pale w-max">
                     back
                 </button>
@@ -121,7 +121,7 @@ const Upload = () => {
                 <div className="absolute bg-black/10 flex flex-col justify-end  h-full w-full">
 
                     {/* actions  */}
-                    <div className="flex items-center justify-around bg-black/80 p-10">
+                    <div className="flex items-center fixed w-full text-white bottom-0 justify-around bg-black/80 p-10">
 
                         <button className="bg-white/10 p-5 rounded-full">
                             <Lineicons icon={GallerySolid} size={30} />
@@ -151,8 +151,13 @@ const Upload = () => {
                 <div className="flex gap-4  flex-col relative">
 
 
-                    <div className="h-[50vh] rounded-2xl overflow-hidden">
+                    {/* <div className="h-[50vh] rounded-2xl overflow-hidden">
                         <MapComponent />
+                    </div> */}
+
+                    <div>
+                        <p className="text-xl font-semibold">Property loaction</p>
+                        <p className="text-text/50 text-sm mt-1">please provide the location of the property</p>
                     </div>
 
                     <button className="btn bg-primary text-white">
@@ -160,7 +165,7 @@ const Upload = () => {
                         <span>use current location</span>
                     </button>
 
-                    <div className="bg-pale w-full border border-text/10 rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
+                    <div className="bg-pale w-full dark:border border-text/10 rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
                         <Lineicons icon={MapMarker5Solid} className="text-text/50" />
                         <input type="text" placeholder="provide the location" className={`flex-1 outline-0 `} />
                     </div>
@@ -176,7 +181,7 @@ const Upload = () => {
                     <p className="text-xl font-semibold">Property Type</p>
                     <p className="text-text/50 text-sm mt-1">please provide the category of property you're uploading</p>
                     <br />
-                    <FlexRender className="flex-wrap" row items={categories} render={(item, index) => <Category key={index} {...item} />} />
+                    <FlexRender className="grid grid-cols-2" row items={categories} render={(item, index) => <Category key={index} {...item} />} />
 
                 </div>
             </Shell>
@@ -189,7 +194,7 @@ const Upload = () => {
                     <p className="text-text/50 text-sm mt-1">please provide the bedrooms, bathrooms & toilet situation of the property</p>
                     <br />
 
-                    <div className="flex flex-col gap-4 mt-6 border border-text/10 p-6 rounded-lg">
+                    <div className="flex flex-col gap-4 mt-6   rounded-lg">
 
                         <div className="flex flex-col gap-2">
                             <span className="text-sm">bedroom</span>

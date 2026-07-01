@@ -32,7 +32,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
     const overlayTransition = { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const }
     const sheetTransition = { duration: 0.26, ease: [0.22, 1, 0.36, 1] as const }
 
-    var mode: string = ""
+    var mode: string = "light"
     const overlayStyles = mode == "light" ? "bg-black/10 " : "bg-black/40 backdrop-blur-sm"
 
     const content = (
@@ -61,13 +61,13 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                                 exit={{ y: 28, opacity: 0 }}
                                 transition={sheetTransition}
                                 onClick={(e) => e.stopPropagation()}
-                                className={`bg-paper mx-3 sm:mx-4 w-[min(100%,28rem)] sm:w-[min(92vw,36rem)] md:w-[min(40vw,42rem)] max-h-[90vh] rounded-lg p-4 sm:p-6 flex flex-col ${className ?? ""}`}
+                                className={`bg-paper mx-3 sm:mx-4 w-[min(100%,98vw)] sm:w-[min(92vw,36rem)] md:w-[min(40vw,42rem)] max-h-[90vh] rounded-lg p-4 sm:p-6 flex flex-col ${className ?? ""}`}
                             >
 
                                 {/* header - fixed at top, not scrollable */}
                                 <div className="flex mb-6 items-center justify-end shrink-0">
                                     <button onClick={onClose} className="hover:bg-pale">
-                                        <XMarkIcon />
+                                        <XMarkIcon className="h-10 w-10" />
                                     </button>
                                 </div>
 
@@ -100,7 +100,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                                 {/* header - fixed at top, not scrollable */}
                                 <div className="flex mb-6 items-center justify-end shrink-0">
                                     <button onClick={onClose} className="hover:bg-pale">
-                                        <XMarkIcon />
+                                        <XMarkIcon className="h-10 w-10" />
                                     </button>
                                 </div>
                                 <div className="max-h-[90vh] overflow-y-auto">

@@ -9,12 +9,12 @@ export interface Props extends InputHTMLAttributes<HTMLInputElement> {
 
 const Search = ({ filter, className, ...attr }: Props) => {
     return (
-        <div className="bg-pale w-full rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
-            <Lineicons icon={Search1Solid} className="text-text/50" />
+        <div className="bg-pale w-full rounded-full h-17 flex gap-3 items-center pl-6 pr-4">
+            <Lineicons icon={Search1Solid} />
             <input type="text" placeholder="search for rentals" className={`flex-1 outline-0 ${className}`} {...attr} />
             {
                 filter && <button>
-                    <AdjustmentsHorizontalIcon className="h-14 w-14 bg-paper rounded-full p-4" />
+                    <AdjustmentsHorizontalIcon className="h-14 w-14 p-2.5 rounded-full" />
                 </button>
             }
         </div>

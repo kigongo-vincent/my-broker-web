@@ -3,6 +3,7 @@ import Search from "../../../components/pages/tabs/home/Search"
 import FlexRender from "../../../components/base/FlexRender"
 import { BaseI, UserI, useUserStore } from "../../../store/auth"
 import { ClockIcon } from "@heroicons/react/20/solid"
+import { useNavigate } from "react-router"
 
 export interface ChatCompnentI extends BaseI {
     sender: UserI
@@ -14,25 +15,28 @@ export interface ChatCompnentI extends BaseI {
 const ChatComponent = (c: ChatCompnentI) => {
 
     const { getUserPhoto } = useUserStore()
+    const navigate = useNavigate()
 
     return (
-        <div className="flex items-center bg-pale p-4 py-6 rounded-xl gap-3">
+        <div
+            onClick={() => navigate(`/chat/${c?.ID}`)}
+            className="flex items-center bg-pale p-4 py-6 rounded-xl gap-3">
 
-            <img src={getUserPhoto?.(c?.sender?.photo)} className="h-14 w-14  rounded-full" alt="" />
+            <img src={getUserPhoto?.(c?.sender?.photo)} className="h-18 w-18  rounded-2xl" alt="" />
 
             <div className="flex-1">
 
 
                 {/* header  */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-end justify-between">
                     <p className="font-medium">{c?.sender?.name}</p>
-                    {c?.newMessages != 0 && <span className="bg-primary/10 text-primary h-8 w-8 text-sm flex items-center justify-center rounded-full">{c?.newMessages}</span>}
+                    {c?.newMessages != 0 && <span className="bg-danger text-white h-8 w-8 text-sm flex items-center justify-center rounded-full">{c?.newMessages}</span>}
                 </div>
 
-                <div className="flex items-start mt-2 justify-between">
+                <div className="flex items-start mt-1 justify-between">
                     <p className=" text-text/50">{c?.lastMessage}</p>
-                    <div className="flex items-center gap-1 text-sm opacity-40">
-                        <ClockIcon className="h-4 w-4" />
+                    <div className="flex items-center gap-1 text-sm font-semibold opacity-40">
+                        {/* <ClockIcon className="h-4 w-4" /> */}
                         <p>{c?.CreatedAt}</p>
                     </div>
                 </div>
@@ -133,7 +137,7 @@ const Chat = () => {
                 onClick={() => setSlelectedTab(item)}
                 className={`bg-pale px-5 py-3 rounded-full cursor-pointer ${seletcedTab == item && "bg-primary text-white"}`} key={index}>{item}
             </div>} />
-            <FlexRender items={chats} render={(item, index) => <ChatComponent {...item} key={index} />} />
+            <FlexRender className="gap-2" items={chats} render={(item, index) => <ChatComponent {...item} key={index} />} />
         </div>
     )
 }

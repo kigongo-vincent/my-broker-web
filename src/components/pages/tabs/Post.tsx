@@ -9,6 +9,7 @@ import {
 } from "@lineiconshq/free-icons"
 import { Activity, useEffect, useState } from "react"
 import { CheckBadgeIcon } from "@heroicons/react/20/solid"
+import { TextCropper } from "../../../utils/text"
 
 
 export type PostType = "rental" | "short-stay"
@@ -60,14 +61,13 @@ export interface PostI extends BaseI {
     available: boolean
 }
 
+export interface Props extends UserI {
+    noActions?: boolean
+}
 
-
-const User = (u: UserI) => {
+export const User = ({ noActions, ...u }: Props) => {
 
     const { getUserPhoto } = useUserStore()
-
-
-
 
     return (
         <div className="flex items-center justify-between">
@@ -83,7 +83,7 @@ const User = (u: UserI) => {
 
                     <div className="flex items-center gap-1">
                         <p className="font-medium">
-                            {u.name}
+                            {TextCropper(u?.name, 23)}
                         </p>
                         {
                             u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />
@@ -102,18 +102,20 @@ const User = (u: UserI) => {
             </div>
 
 
-            <div className="flex gap-4">
+            {
+                !noActions && <div className="flex gap-3">
 
-                <button className="bg-pale p-3 rounded-full">
-                    <Lineicons icon={Telephone1Solid} />
-                </button>
+                    <button className="bg-pale h-16 w-16 flex items-center justify-center rounded-full">
+                        <Lineicons icon={Telephone1Solid} />
+                    </button>
 
 
-                <button className="bg-pale p-3 rounded-full">
-                    <Lineicons icon={Message2Solid} />
-                </button>
+                    <button className="bg-pale h-16 w-16 flex items-center justify-center rounded-full">
+                        <Lineicons icon={Message2Solid} />
+                    </button>
 
-            </div>
+                </div>
+            }
 
         </div>
     )
@@ -289,7 +291,8 @@ const Post = (p: PostI) => {
 
                                                     <span
                                                         className="
-                                                            bg-primary
+                                                            bg-primary/20
+                                                            text-primary
                                                             px-4
                                                             py-2
                                                             rounded-full
@@ -329,21 +332,21 @@ const Post = (p: PostI) => {
                                                     flex
                                                     gap-2
                                                     flex-wrap
-                                                    mt-4
+                                                    
                                                 "
                                             >
 
-                                                <div className="bg-white/20 px-4 py-2 rounded-full">
+                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
                                                     {p.toilets} toilet{p.toilets !== 1 && "s"}
                                                 </div>
 
 
-                                                <div className="bg-white/20 px-4 py-2 rounded-full">
+                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
                                                     {p.bathrooms} bathroom{p.bathrooms !== 1 && "s"}
                                                 </div>
 
 
-                                                <div className="bg-white/20 px-4 py-2 rounded-full">
+                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
                                                     {p.bedrooms} bedroom{p.bedrooms !== 1 && "s"}
                                                 </div>
 

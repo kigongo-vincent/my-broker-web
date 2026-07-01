@@ -14,13 +14,13 @@ export interface SettingComponentI {
 
 const SettingComponent = (s: SettingComponentI) => {
     return (
-        <div className="flex items-center gap-2">
-            <span className="h-14 w-14 rounded-xl flex items-center justify-center bg-pale">
+        <div className="flex items-center gap-3">
+            <span className="h-18 w-18 rounded-xl flex items-center justify-center bg-pale">
                 {s?.icon}
             </span>
-            <div className="flex flex-col justify-center">
-                <p className="font-medium">{s?.title}</p>
-                <p className="text-sm text-text/50">{s?.caption}</p>
+            <div className="flex flex-col  justify-center">
+                <p className="font-medium text-lg">{s?.title}</p>
+                <p className=" text-text/50">{s?.caption}</p>
             </div>
         </div>
     )

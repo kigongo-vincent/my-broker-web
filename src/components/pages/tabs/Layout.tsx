@@ -49,7 +49,7 @@ const Layout = ({ children }: Props) => {
             <Header />
             <main className=" h-screen pt-[9vh] px-4 overscroll-y-auto">{children}
 
-                <div className="min-h-[10vh]"></div>
+                <div className="min-h-[14vh]"></div>
 
             </main>
             <Tabs links={isUser ? UserLinks : []} />
