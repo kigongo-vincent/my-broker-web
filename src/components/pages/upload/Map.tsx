@@ -9,6 +9,7 @@ const MAP_ID = 'YOUR_GOOGLE_MAP_ID';
 export interface Props {
     theme?: ColorScheme;
     properties?: Partial<PostI>[];
+
 }
 
 // Simple helper to format currency (adjust currency/locale as needed)
@@ -57,7 +58,7 @@ const MapComponent = ({ theme, properties }: Props) => {
                             >
                                 {/* Custom Price Tag Icon Styling */}
                                 <Link
-                                    to={`/chat/${p?.ID}`}
+                                    to={`/post/${p?.ID}`}
                                     style={{
                                         background: '#ffffff',
                                         color: '#000000',

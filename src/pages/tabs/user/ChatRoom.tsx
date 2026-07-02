@@ -10,6 +10,7 @@ import { BaseI, UserI } from "../../../store/auth"
 import Modal from "../../../components/base/Modal"
 import FlexRender from "../../../components/base/FlexRender"
 import { PaperAirplaneIcon } from "@heroicons/react/20/solid"
+import { useNavigate } from "react-router"
 
 interface MessageI extends BaseI {
     sender?: UserI
@@ -133,59 +134,69 @@ const ChatRoom = () => {
 
     const [showUserMenu, setShowMenu] = useState<boolean>(false)
     const bg = theme == "dark" ? BGD : BGL
+    const navigate = useNavigate()
+
     return (
-        <div className=" relative border overflow-hidden flex-1 h-screen">
+        <div className="relative  overflow-hidden flex-1 h-[100dvh]">
 
-            <img src={bg} className="absolute  h-full w-full" alt="" />
+            <img src={bg} className="absolute h-full w-full object-cover" alt="" />
 
-            <div className={`absolute h-full   ${loading && "bg-paper/90 animate-pulse"} w-full`}>
+            <div className={`absolute inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
 
-                <Header back />
-                <div className=" mt-[10vh]   flex flex-col gap-5 max-h-[80vh] overflow-hidden w-full p-4 absolute">
-
-                    <div className="flex w-full bg-black/6 border border-white backdrop-blur-lg px-6 py-4 rounded-full items-center justify-between">
-                        <User name="vincent" noActions lastSeen="23hrs ago" />
-                        <button onClick={() => setShowMenu(true)} className=" h-12 w-12 flex items-center justify-center"><Lineicons icon={MenuMeatballs1Solid} /></button>
-                    </div>
-
-                    <div className=" rounded-2xl  h-[58vh] p-4  overflow-y-auto">
-
-                        {/* single message  */}
-                        <FlexRender items={messages} render={(item, index) => <Message {...item} key={index} />} />
-                    </div>
-
-                    <div className="flex items-center bottom-5 left-0 px-4 fixed gap-2 w-full">
-                        <div className="rounded-full  flex items-center px-6 bg-paper h-18 flex-1">
-                            <input type="text" placeholder="say something" className="flex-1 outline-0" />
-                            <button className=" h-14 w-16 text-text/60 flex items-center justify-center">
-                                <Lineicons icon={Camera1Solid} size={30} />
-                            </button>
-                            <button className=" h-14 w-16 text-text/60 flex items-center justify-center">
-                                <PaperAirplaneIcon className="h-8 w-8" />
+                {/* fixed header block */}
+                <div className="shrink-0 z-10">
+                    <Header back />
+                    <div className="w-full fixed z-200 top-25 px-4 pt-2">
+                        <div className="flex w-full bg-black/6 border  border-white backdrop-blur-lg px-6 py-4 rounded-full items-center justify-between">
+                            <User name="vincent" noActions lastSeen="23hrs ago" />
+                            <button onClick={() => setShowMenu(true)} className="h-12 w-12 flex items-center justify-center">
+                                <Lineicons icon={MenuMeatballs1Solid} />
                             </button>
                         </div>
                     </div>
-
                 </div>
+
+                {/* scrollable messages only */}
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-5 w-full p-4 pt-[21vh]">
+                    <FlexRender items={messages} render={(item, index) => <Message {...item} key={index} />} />
+                </div>
+
+                {/* fixed input bar */}
+                <div className="shrink-0 flex items-center px-4 pb-5 pt-2 gap-2 w-full">
+                    <div className="rounded-full flex items-center px-6 bg-paper h-18 flex-1">
+                        <input type="text" placeholder="say something" className="flex-1 outline-0" />
+                        <button className="h-14 w-16 text-text/60 flex items-center justify-center">
+                            <Lineicons icon={Camera1Solid} size={30} />
+                        </button>
+                        <button className="h-14 w-16 text-text/60 flex items-center justify-center">
+                            <PaperAirplaneIcon className="h-8 w-8" />
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
             {/* message sender actions  */}
-            <Modal open={showUserMenu} onClose={() => setShowMenu(false)}>
+            <Modal open={showUserMenu} className="" onClose={() => setShowMenu(false)}>
 
-                <button className="btn justify-start gap-5">
-                    <Lineicons icon={User4Solid} />
-                    vieew profile</button>
+                <div className="flex flex-col gap-4 text-lg">
+                    <button
+                        onClick={() => navigate(`/profile/${1}`)}
+                        className="btn justify-start gap-5">
+                        <Lineicons icon={User4Solid} />
+                        View profile</button>
 
-                <button className="btn justify-start gap-5">
-                    <Lineicons icon={HandTakingUserSolid} />
-                    Report user</button>
+                    <button className="btn justify-start gap-5">
+                        <Lineicons icon={HandTakingUserSolid} />
+                        Report user</button>
 
-                <button className="btn justify-start gap-5">
-                    <Lineicons icon={User4Stroke} />
-                    Block user</button>
-                <button className="btn justify-start gap-5">
-                    <Lineicons icon={Trash3Solid} />
-                    clear chate</button>
+                    <button className="btn justify-start gap-5">
+                        <Lineicons icon={User4Stroke} />
+                        Block user</button>
+                    <button className="btn justify-start gap-5">
+                        <Lineicons icon={Trash3Solid} />
+                        Clear chat</button>
+                </div>
 
             </Modal>
 

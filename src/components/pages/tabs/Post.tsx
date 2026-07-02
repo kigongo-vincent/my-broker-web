@@ -10,6 +10,7 @@ import {
 import { Activity, useEffect, useState } from "react"
 import { CheckBadgeIcon } from "@heroicons/react/20/solid"
 import { TextCropper } from "../../../utils/text"
+import { useNavigate } from "react-router"
 
 
 export type PostType = "rental" | "short-stay"
@@ -68,13 +69,17 @@ export interface Props extends UserI {
 export const User = ({ noActions, ...u }: Props) => {
 
     const { getUserPhoto } = useUserStore()
+    const navigate = useNavigate()
 
     return (
-        <div className="flex items-center justify-between">
+        <div
+
+            className="flex cursor-pointer items-center justify-between">
 
             <div className="flex items-center gap-2">
 
                 <img
+                    onClick={() => navigate(`/profile/${u?.ID}`)}
                     src={getUserPhoto?.(u.photo)}
                     className="h-14 w-14 rounded-full object-cover"
                 />
@@ -110,7 +115,9 @@ export const User = ({ noActions, ...u }: Props) => {
                     </button>
 
 
-                    <button className="bg-pale h-16 w-16 flex items-center justify-center rounded-full">
+                    <button
+                        onClick={() => navigate(`/chat/1`)}
+                        className="bg-pale h-16 w-16 flex items-center justify-center rounded-full">
                         <Lineicons icon={Message2Solid} />
                     </button>
 
@@ -132,13 +139,17 @@ const Post = (p: PostI) => {
         setLiked(!liked)
     }
 
+    const navigate = useNavigate()
     const handleClick = () => {
-
+        navigate(`/post/${p?.ID}`)
     }
+
 
     return (
 
-        <div className="flex flex-col gap-4" onClick={handleClick} onDoubleClick={handleClick}>
+        <div
+
+            className="flex flex-col gap-4" onDoubleClick={handleClick}>
 
 
             {/* user */}
@@ -150,11 +161,12 @@ const Post = (p: PostI) => {
             <div
                 className="
                     flex
-                    gap-4
+                    gap-4 
                     overflow-x-auto
                     snap-x
                     snap-mandatory
                     scrollbar-hide
+                    
                 "
             >
 
@@ -162,6 +174,7 @@ const Post = (p: PostI) => {
                     p.assets?.map((item, index) => (
 
                         <div
+                            onClick={handleClick}
                             key={index}
                             className="
                                 relative
@@ -352,6 +365,7 @@ const Post = (p: PostI) => {
 
 
                                             </div>
+
 
 
                                         </div>

@@ -1,36 +1,18 @@
-import { HTMLAttributes, useState } from "react"
-import FlexRender from "../../../components/base/FlexRender"
-import Search from "../../../components/pages/tabs/home/Search"
-import Post, { PostI } from "../../../components/pages/tabs/Post"
-import { useUserStore } from "../../../store/auth"
-import Lineicons from "@lineiconshq/react-lineicons"
-import { MapMarker1Solid } from "@lineiconshq/free-icons"
-import { motion } from "framer-motion"
-import Modal from "../../../components/base/Modal"
-import Map from "../../../components/pages/tabs/home/Map"
-import { useNavigate } from "react-router"
+import { useEffect, useState } from 'react'
+import { UserI, useUserStore } from '../../../store/auth'
+import Post, { PostI } from '../../../components/pages/tabs/Post'
+import { useNavigate } from 'react-router'
+import FlexRender from '../../../components/base/FlexRender'
 
-interface FABProps extends HTMLAttributes<HTMLButtonElement> {
-
+export interface AccountI {
+    user: Partial<UserI>
+    posts: PostI[]
 }
 
-const FAB = ({ ...attr }: FABProps) => {
-    return (
-        <motion.button
-            drag
-            onClick={attr?.onClick}
-            transition={{ ease: "linear" }}
-            className="fixed z-40 bottom-40 right-10 bg-primary h-18 w-18 flex items-center justify-center text-white rounded-full">
-            <Lineicons icon={MapMarker1Solid} />
-        </motion.button>
-    )
-}
+const Profile = () => {
 
-const Home = () => {
-
-    const tabs = ["rentals", "short stays"]
-    const [seletcedTab, setSlelectedTab] = useState(tabs[0])
-    const [showMap, setShowMap] = useState(false)
+    const { user, getUserPhoto } = useUserStore()
+    const [account, setAccount] = useState<AccountI | null>(null)
 
     const [posts] = useState<Partial<PostI>[]>([
         {
@@ -318,111 +300,39 @@ const Home = () => {
             available: false,
         },
     ])
-
-    const { user } = useUserStore()
-
-
-    const [properties,] = useState<Partial<PostI>[]>([
-        {
-            ID: 1,
-            price: { amount: 5500000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3284, lon: 32.5912 },
-                name: "Kololo Apartments"
-            }
-        },
-        {
-            ID: 2,
-            price: { amount: 7200000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3245, lon: 32.5786 },
-                name: "Nakasero Office Tower"
-            }
-        },
-        {
-            ID: 3,
-            price: { amount: 2500000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3178, lon: 32.6104 },
-                name: "Bugolobi Village Studio"
-            }
-        },
-        {
-            ID: 4,
-            price: { amount: 12000000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.2989, lon: 32.6045 },
-                name: "Muyenga Hillside Heights"
-            }
-        },
-        {
-            ID: 5,
-            price: { amount: 1800000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3542, lon: 32.6120 },
-                name: "Ntinda Ministers Village"
-            }
-        },
-        {
-            ID: 6,
-            price: { amount: 6000000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3421, lon: 32.6023 },
-                name: "Naguru Peak View Residences"
-            }
-        },
-        {
-            ID: 7,
-            price: { amount: 3200000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3340, lon: 32.5680 },
-                name: "Makerere Main Gate Court"
-            }
-        },
-        {
-            ID: 8,
-            price: { amount: 4500000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3505, lon: 32.5955 },
-                name: "Bukoto Plaza Complex"
-            }
-        },
-        {
-            ID: 9,
-            price: { amount: 1500000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3372, lon: 32.5854 },
-                name: "Kamwokya Kanjokya Street Suites"
-            }
-        },
-        {
-            ID: 10,
-            price: { amount: 2200000, currency: "UGX" },
-            location: {
-                cordinates: { lat: 0.3620, lon: 32.5790 },
-                name: "Kyebando Central Bungalow"
-            }
-        }
-    ]);
-
-    const [query, setQuery] = useState("")
     const navigate = useNavigate()
+    useEffect(() => {
+        setAccount(() => ({ posts: posts as PostI[], user: user }))
+    }, [user])
+
     return (
         <div>
-            <Search filter handleSubmit={() => navigate(`/search/${query}`)} value={query} onChange={(e) => setQuery(e?.currentTarget?.value)} />
-            <FlexRender row className="flex-row my-4 gap-2" items={tabs} render={(item, index) => <div
-                onClick={() => setSlelectedTab(item)}
-                className={` px-5 py-3  cursor-pointer flex-1 text-center ${seletcedTab == item && "border-b-2 border-primary text-primary"}`} key={index}>{item}
-            </div>} />
-            <FlexRender className="gap-10" items={posts?.map(p => ({ ...p, author: user }))} render={(item, index) => <Post {...(item as PostI)} key={index} />} />
+            <div className='bg-primary p-10 relative h-[18vh]'>
 
-            <FAB onClick={() => setShowMap(true)} />
+                <button
+                    onClick={() => navigate(-1)}
+                    className=' p-3 active:opacity-60 text-white rounded-full bg-white/10 px-8'>back</button>
 
-            <Modal position="right" open={showMap} onClose={() => setShowMap(false)}>
-                <Map properties={properties} />
-            </Modal>
+                <img src={getUserPhoto?.(account?.user?.photo)} className='h-50 w-50 left-[50%] transform -translate-x-[50%] top-20 border-4 border-paper absolute rounded-full object-cover' alt="" />
+
+
+
+            </div>
+
+            <div className="mt-30 p-4">
+
+                <div className="bg-pale p-6 flex flex-col gap-1.5 rounded-xl">
+                    <h3 className="text-2xl font-bold black-ops-one-regular">{account?.user?.name}</h3>
+                    <p>{account?.user?.email}</p>
+                    <p>{account?.user?.phone}</p>
+                </div>
+                <br />
+                <FlexRender className="gap-10" items={posts?.map(p => ({ ...p, author: user }))} render={(item, index) => <Post {...(item as PostI)} key={index} />} />
+
+
+            </div>
         </div>
     )
 }
 
-export default Home
+export default Profile

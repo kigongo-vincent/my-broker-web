@@ -14,7 +14,7 @@ const Header = ({ back }: props) => {
     const navigate = useNavigate()
 
     return (
-        <div className=" fixed max-h-[8vh] border-b border-text/10 z-50 bg-paper/80 dark:bg-paper/80 backdrop-blur-sm top-0 w-full h-[8vh] flex items-center justify-between px-4">
+        <div className=" fixed max-h-[8vh] border-b border-text/10 z-50 bg-paper dark:bg-paper/80 dark:backdrop-blur-sm top-0 w-full h-[8vh] flex items-center justify-between px-4">
 
             {
                 !back

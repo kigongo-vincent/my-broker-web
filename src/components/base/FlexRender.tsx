@@ -20,7 +20,7 @@ const FlexRender = <T,>({ items, render, row, emptyContainer, emptyTitle, emptyC
                 isLoading
                     ?
                     (
-                        <div role="status" aria-live="polite" aria-busy="true" className="w-full min-w-0" data-skeleton="flex-render-loading">
+                        <div role="status" aria-live="polite" aria-busy="true" className="w-full min-w-max" data-skeleton="flex-render-loading">
                             <span className="sr-only">Loading list</span>
                             {loadingContainer || <ListStackSkeleton rows={3} className="py-1 " />}
                         </div>

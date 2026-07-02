@@ -1,6 +1,6 @@
-import { GallerySolid, MapMarker1Solid, MapMarker5Solid, XmarkSolid } from "@lineiconshq/free-icons"
+import { GallerySolid, MapMarker1Solid, MapMarker5Solid, Trash3Solid, XmarkSolid } from "@lineiconshq/free-icons"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { ReactNode, useMemo, useState } from "react"
+import { HTMLAttributes, ReactNode, useMemo, useState } from "react"
 import { useNavigate } from "react-router"
 // import MapComponent from "../../../components/pages/upload/Map"
 import FlexRender from "../../../components/base/FlexRender"
@@ -18,15 +18,15 @@ export interface StepI {
     content: ReactNode
 }
 
-interface ShellProps {
+interface ShellProps extends HTMLAttributes<HTMLDivElement> {
     children: ReactNode
     onBack?: () => void
     onNext?: () => void
 }
 
-const Shell = ({ onBack, onNext, children }: ShellProps) => {
+export const Shell = ({ onBack, onNext, children, className }: ShellProps) => {
     return (
-        <div className="flex h-screen flex-col p-4 justify-between">
+        <div className={`flex h-screen flex-col p-4 justify-between ${className}`}>
 
             <div className="p-4">
                 {children}
@@ -46,7 +46,7 @@ const Shell = ({ onBack, onNext, children }: ShellProps) => {
     )
 }
 
-interface CategoryI {
+export interface CategoryI {
 
     icon: string,
     label: string,
@@ -56,7 +56,7 @@ interface CategoryI {
 
 }
 
-const Category = (c: CategoryI) => {
+export const Category = (c: CategoryI) => {
     return (
         <div
             onClick={() => c?.onPress?.()}
@@ -73,6 +73,10 @@ const Upload = () => {
     const navigate = useNavigate()
     const [currentStepID, setCurrentStepID] = useState<number>(1)
     const [showNegotiationModal, setShowNegotiationModal] = useState(false)
+    const [selectedPhotos, setSelectedPhotos] = useState<string[]>(["https://images.pexels.com/photos/20200292/pexels-photo-20200292.jpeg", "https://images.pexels.com/photos/37460680/pexels-photo-37460680.jpeg", "https://images.pexels.com/photos/37460692/pexels-photo-37460692.jpeg"])
+    const handleRemovePhoto = (url?: string) => {
+        setSelectedPhotos(prev => prev?.filter(p => p != url))
+    }
     const categories: CategoryI[] = ([
         {
             icon: commercialIcon,
@@ -115,7 +119,21 @@ const Upload = () => {
             content: <div className="h-screen relative">
 
                 {/* bg image  */}
-                <img src={photo} className="absolute animate-pulse h-full w-full" alt="" />
+                <img src={photo} className="absolute  h-full w-full" alt="" />
+
+                {/* selected images  */}
+                {
+                    selectedPhotos?.length != 0 && <div className="fixed z-400 bottom-[20vh] left-4">
+                        <FlexRender row className="overflow-x-scroll" items={selectedPhotos} render={(item, index) => <div key={index} className="h-20 relative w-20 rounded-xl">
+                            <img src={item} alt="" className="h-full absolute w-full rounded-2xl" />
+                            <div
+                                onClick={() => handleRemovePhoto?.(item)}
+                                className="absolute h-full w-full bg-black/10 rounded-2xl text-white flex items-center justify-center">
+                                <Lineicons className="" icon={Trash3Solid} />
+                            </div>
+                        </div>} />
+                    </div>
+                }
 
                 {/* overlay  */}
                 <div className="absolute bg-black/10 flex flex-col justify-end  h-full w-full">
@@ -265,7 +283,7 @@ const Upload = () => {
                 </div>
             </Shell>
         }
-    ], [photo, currentStepID, showNegotiationModal])
+    ], [photo, currentStepID, showNegotiationModal, selectedPhotos])
     return (
         <>
             {steps.find(s => s?.id == currentStepID)?.content}

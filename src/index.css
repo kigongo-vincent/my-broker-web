@@ -27,6 +27,12 @@ html {
   font-style: normal;
 }
 
+@media (min-width: 768px) {
+  * {
+    display: none;
+  }
+}
+
 /* vw-only is tiny on narrow viewports; desktop keeps 0.86vw above. */
 @media (max-width: 768px) {
   :root {
@@ -37,6 +43,9 @@ html {
 @layer components {
   .btn {
     @apply h-15 w-full rounded-full px-10 flex items-center font-medium justify-center gap-2;
+  }
+  * {
+    /* @apply transform active:scale-[1.01]; */
   }
 }
 

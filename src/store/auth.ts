@@ -8,9 +8,12 @@ export interface BaseI {
   DeletedAt?: string;
 }
 
+type UserRole = "user" | "admin";
+
 export interface UserI extends Partial<BaseI> {
   name: string;
   email?: string;
+  role?: UserRole;
   phone?: string;
   photo?: string;
   verified?: boolean;
@@ -21,6 +24,7 @@ export interface UserI extends Partial<BaseI> {
 const MockkUser: UserI = {
   ID: 1,
   name: "jamal alkhen saleem malkeen",
+  email: "vincent.kigongo@gmail.com",
   photo:
     "https://images.rawpixel.com/image_800/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvNDc5LW1rLTk2OTAtam9iNTgzLmpwZw.jpg",
   phone: "+256782147143",

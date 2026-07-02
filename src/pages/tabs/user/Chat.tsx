@@ -4,6 +4,7 @@ import FlexRender from "../../../components/base/FlexRender"
 import { BaseI, UserI, useUserStore } from "../../../store/auth"
 // import { ClockIcon } from "@heroicons/react/20/solid"
 import { useNavigate } from "react-router"
+import { TextCropper } from "../../../utils/text"
 
 export interface ChatCompnentI extends BaseI {
     sender: UserI
@@ -34,7 +35,7 @@ const ChatComponent = (c: ChatCompnentI) => {
                 </div>
 
                 <div className="flex items-start mt-1 justify-between">
-                    <p className=" text-text/50">{c?.lastMessage}</p>
+                    <p className=" text-text/50">{TextCropper(c?.lastMessage, 45)}</p>
                     <div className="flex items-center gap-1 text-sm font-semibold opacity-40">
                         {/* <ClockIcon className="h-4 w-4" /> */}
                         <p>{c?.CreatedAt}</p>

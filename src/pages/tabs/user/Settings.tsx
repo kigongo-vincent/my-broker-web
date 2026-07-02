@@ -1,10 +1,11 @@
-import { BadgeDecagramPercentSolid, ColourPalette3Solid, Envelope1Solid, PhoneSolid, PowerButtonSolid, TargetUserSolid, UserMultiple4Solid } from "@lineiconshq/free-icons"
+import { BadgeDecagramPercentSolid, Envelope1Solid, PhoneSolid, PowerButtonSolid, TargetUserSolid, UserMultiple4Solid } from "@lineiconshq/free-icons"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { ReactNode } from "react"
 import FlexRender from "../../../components/base/FlexRender"
+import { BaseI, } from "../../../store/auth"
 
 
-export interface SettingComponentI {
+export interface SettingComponentI extends BaseI {
     icon: ReactNode
     title: string
     caption: string
@@ -28,44 +29,52 @@ const SettingComponent = (s: SettingComponentI) => {
 
 const Settings = () => {
 
+
     const settings: SettingComponentI[] = [
+        // {
+        //     icon: <Lineicons icon={ColourPalette3Solid} />,
+        //     title: "Theme settings",
+        //     caption: "modify the appearance",
+        //     path: ""
+        // },
         {
-            icon: <Lineicons icon={ColourPalette3Solid} />,
-            title: "Theme settings",
-            caption: "modify the appearance",
-            path: ""
-        },
-        {
+
+            ID: 1,
             icon: <Lineicons icon={TargetUserSolid} />,
             title: "Profile & Account",
             caption: "customize your profile",
             path: ""
         },
         {
+            ID: 2,
             icon: <Lineicons icon={BadgeDecagramPercentSolid} />,
             title: "ID verification",
             caption: "earn a verification badger on your account",
             path: ""
         },
         {
+            ID: 3,
             icon: <Lineicons icon={PhoneSolid} />,
             title: "Change phone number",
             caption: "Transfer account to another phone number",
             path: ""
         },
         {
+            ID: 4,
             icon: <Lineicons icon={Envelope1Solid} />,
             title: "Change Email",
             caption: "Transfer account to another email",
             path: ""
         },
         {
+            ID: 5,
             icon: <Lineicons icon={UserMultiple4Solid} />,
             title: "Manage users",
             caption: "Review & manage users",
             path: ""
         },
         {
+            ID: 6,
             icon: <Lineicons icon={PowerButtonSolid} />,
             title: "Logout",
             caption: "logout from platform",
@@ -73,6 +82,15 @@ const Settings = () => {
         },
 
     ]
+
+    // const { user } = useUserStore()
+    // const filteredSettings = useMemo(() => {
+    //     const res: SettingComponentI[] = []
+    //     return settings.forEach(s => {
+    //         if (s?.id)
+    //     })
+
+    // }, [user])
 
     return (
         <div className="">

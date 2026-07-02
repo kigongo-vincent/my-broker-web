@@ -1,23 +1,30 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/20/solid"
-import { Search1Solid } from "@lineiconshq/free-icons"
+import { Search1Outlined } from "@lineiconshq/free-icons"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { InputHTMLAttributes } from "react"
+import { useNavigate } from "react-router"
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
     filter?: boolean
+    handleSubmit?: () => void
 }
 
-const Search = ({ filter, className, ...attr }: Props) => {
+const Search = ({ filter, className, value, handleSubmit, ...attr }: Props) => {
+
+    const navigate = useNavigate()
+
     return (
-        <div className="bg-pale w-full rounded-full h-17 flex gap-3 items-center pl-6 pr-4">
-            <Lineicons icon={Search1Solid} />
-            <input type="text" placeholder="search for rentals" className={`flex-1 outline-0 ${className}`} {...attr} />
+        <form
+            onSubmit={(e) => { e?.preventDefault(); value && handleSubmit?.() }}
+            className="bg-pale w-full rounded-full h-17 flex gap-3 items-center pl-6 pr-4">
+            <Lineicons icon={Search1Outlined} />
+            <input type="text" value={value} placeholder="search for rentals" className={`flex-1 outline-0 ${className}`} {...attr} />
             {
-                filter && <button>
+                filter && <button onClick={() => navigate(`/filters`)}>
                     <AdjustmentsHorizontalIcon className="h-14 w-14 p-2.5 rounded-full" />
                 </button>
             }
-        </div>
+        </form>
     )
 }
 

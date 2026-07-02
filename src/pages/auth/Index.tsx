@@ -15,8 +15,8 @@ const Index = () => {
 
             <main className="flex flex-col items-center w-full  justify-center gap-2">
                 <Logo className="h-24 mb-2" />
-                <h3 className="text-4xl black-ops-one-regular font-bold -mb-2">My Broker</h3>
-                <p className="  text-center   mb-8 max-w-[70%]">are you house hunting, get rentals at the comfort of your place</p>
+                <h3 className="text-3xl black-ops-one-regular font-bold -mb-2">My Broker</h3>
+                <p className="  text-center  leading-8 mt-8  mb-8 max-w-[70%]">are you house hunting, get rentals at the comfort of your place</p>
 
                 <button className="btn mb-2 text-white bg-primary">
                     <Lineicons icon={PhoneSolid} />

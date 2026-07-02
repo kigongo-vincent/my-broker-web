@@ -33,7 +33,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
     const sheetTransition = { duration: 0.26, ease: [0.22, 1, 0.36, 1] as const }
 
     var mode: string = "light"
-    const overlayStyles = mode == "light" ? "bg-black/10 " : "bg-black/40 backdrop-blur-sm"
+    const overlayStyles = mode == "light" ? "bg-black/5 backdrop-blur-md " : "bg-black/40 backdrop-blur-sm"
 
     const content = (
         <AnimatePresence>
@@ -46,7 +46,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                     transition={overlayTransition}
                     onPointerDown={handleClose}
                     ref={overlayRef}
-                    className={`fixed inset-0 z-50 flex ${overlayStyles} ${position === "right" ? "items-stretch justify-end" : "items-center justify-center"}`}>
+                    className={`fixed inset-0 z-100 flex ${overlayStyles} ${position === "right" ? "items-stretch justify-end" : "items-center justify-center"}`}>
 
                     {/* content  */}
                     {
