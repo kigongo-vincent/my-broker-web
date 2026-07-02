@@ -174,7 +174,7 @@ const Post = (p: PostI) => {
                     p.assets?.map((item, index) => (
 
                         <div
-                            onClick={handleClick}
+
                             key={index}
                             className="
                                 relative
@@ -273,6 +273,7 @@ const Post = (p: PostI) => {
 
                                         {/* details */}
                                         <div
+                                            onClick={handleClick}
                                             className="
                                                 flex
                                                 flex-col

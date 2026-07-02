@@ -10,13 +10,13 @@ const Index = () => {
     const navigate = useNavigate()
 
     return (
-        <div className="h-screen flex flex-col items-center overflow-hidden justify-around p-4">
+        <div className="gap-40 flex flex-col items-center overflow-hidden justify-around p-4">
             <div />
 
             <main className="flex flex-col items-center w-full  justify-center gap-2">
                 <Logo className="h-24 mb-2" />
                 <h3 className="text-3xl black-ops-one-regular font-bold -mb-2">My Broker</h3>
-                <p className="  text-center  leading-8 mt-8  mb-8 max-w-[70%]">are you house hunting, get rentals at the comfort of your place</p>
+                <p className="  text-center  leading-8 my-10 max-w-[80%]">are you house hunting, get rentals at the comfort of your place, and if you're. a landlord, get straight to the tenant, no middleman</p>
 
                 <button className="btn mb-2 text-white bg-primary">
                     <Lineicons icon={PhoneSolid} />

@@ -1,8 +1,11 @@
-import { BadgeDecagramPercentSolid, Envelope1Solid, PhoneSolid, PowerButtonSolid, TargetUserSolid, UserMultiple4Solid } from "@lineiconshq/free-icons"
+import { BadgeDecagramPercentSolid, PhoneSolid, PowerButtonSolid, TargetUserSolid, UserMultiple4Solid } from "@lineiconshq/free-icons"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { ReactNode } from "react"
+import { ReactNode, useState } from "react"
 import FlexRender from "../../../components/base/FlexRender"
 import { BaseI, } from "../../../store/auth"
+import Modal from "../../../components/base/Modal"
+import { ExclamationTriangleIcon } from "@heroicons/react/20/solid"
+import { useNavigate } from "react-router"
 
 
 export interface SettingComponentI extends BaseI {
@@ -15,7 +18,9 @@ export interface SettingComponentI extends BaseI {
 
 const SettingComponent = (s: SettingComponentI) => {
     return (
-        <div className="flex items-center gap-3">
+        <div
+            onClick={() => s?.onPress?.()}
+            className="flex items-center gap-3">
             <span className="h-18 w-18 rounded-xl flex items-center justify-center bg-pale">
                 {s?.icon}
             </span>
@@ -29,6 +34,7 @@ const SettingComponent = (s: SettingComponentI) => {
 
 const Settings = () => {
 
+    const [showLogoutModal, setShowlogoutModal] = useState(false)
 
     const settings: SettingComponentI[] = [
         // {
@@ -59,13 +65,13 @@ const Settings = () => {
             caption: "Transfer account to another phone number",
             path: ""
         },
-        {
-            ID: 4,
-            icon: <Lineicons icon={Envelope1Solid} />,
-            title: "Change Email",
-            caption: "Transfer account to another email",
-            path: ""
-        },
+        // {
+        //     ID: 4,
+        //     icon: <Lineicons icon={Envelope1Solid} />,
+        //     title: "Change Email",
+        //     caption: "Transfer account to another email",
+        //     path: ""
+        // },
         {
             ID: 5,
             icon: <Lineicons icon={UserMultiple4Solid} />,
@@ -78,7 +84,9 @@ const Settings = () => {
             icon: <Lineicons icon={PowerButtonSolid} />,
             title: "Logout",
             caption: "logout from platform",
-            path: ""
+            path: "",
+            onPress: () => setShowlogoutModal(true)
+
         },
 
     ]
@@ -92,11 +100,22 @@ const Settings = () => {
 
     // }, [user])
 
+    const navigate = useNavigate()
+
     return (
         <div className="">
             <p className="text-xl font-semibold  mt-10">Setting</p>
             <p className="text-sm mb-10 mt-2  text-text/80">adjust the nobs of the app to match your preference</p>
             <FlexRender className="gap-6" items={settings} render={(item, index) => <SettingComponent {...item} key={index} />} />
+
+            {/* logout  */}
+            <Modal actions={<><button onClick={() => setShowlogoutModal(false)} className="btn bg-pale">cancel</button><button onClick={() => navigate(`/`)} className="btn bg-primary text-white">confirm</button></>} open={showLogoutModal} onClose={() => setShowlogoutModal(false)}>
+
+                <p className="text-2xl font-semibold">Logout confirmation</p>
+                <p className="bg-yellow-600/5 text-yellow-600 p-4 flex items-center gap-2 rounded mt-4">
+                    <ExclamationTriangleIcon className="h-6 w-6" />
+                    Are you sure you want to logout</p>
+            </Modal>
         </div>
     )
 }
