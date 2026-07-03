@@ -34,11 +34,13 @@ export const Shell = ({ onBack, onNext, children, className }: ShellProps) => {
 
             {/* actions  */}
             <div className="flex fixed bottom-5 px-4 left-0 w-full items-center justify-between">
-                <button onClick={() => onBack?.()} className="btn bg-pale w-max">
-                    back
-                </button>
+                {
+                    onBack ? <button onClick={() => onBack?.()} className="btn bg-pale w-max">
+                        back
+                    </button> : <div></div>
+                }
                 <button onClick={() => onNext?.()} className="btn bg-primary text-white w-max">
-                    next
+                    {!onBack ? "confirm" : "next"}
                 </button>
             </div>
 

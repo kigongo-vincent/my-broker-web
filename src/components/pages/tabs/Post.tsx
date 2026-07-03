@@ -7,7 +7,7 @@ import {
     Message2Solid,
     Telephone1Solid
 } from "@lineiconshq/free-icons"
-import { Activity, useEffect, useState } from "react"
+import { Activity, ReactNode, useEffect, useState } from "react"
 import { CheckBadgeIcon } from "@heroicons/react/20/solid"
 import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
@@ -64,9 +64,10 @@ export interface PostI extends BaseI {
 
 export interface Props extends UserI {
     noActions?: boolean
+    actions?: ReactNode
 }
 
-export const User = ({ noActions, ...u }: Props) => {
+export const User = ({ noActions, actions, ...u }: Props) => {
 
     const { getUserPhoto } = useUserStore()
     const navigate = useNavigate()
@@ -86,17 +87,20 @@ export const User = ({ noActions, ...u }: Props) => {
 
                 <div className="flex flex-col">
 
-                    <div className="flex items-center gap-1">
-                        <p className="font-medium">
-                            {TextCropper(u?.name, 23)}
-                        </p>
-                        {
-                            u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />
-                        }
-                        {
-                            u?.broker && <div className="text-sm text-primary">broker</div>
-                        }
-                    </div>
+                    {
+
+                        <div className="flex items-center gap-1">
+                            <p className="font-medium">
+                                {TextCropper(u?.name, 23)}
+                            </p>
+                            {
+                                u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />
+                            }
+                            {
+                                u?.broker && <div className="text-sm text-primary">broker</div>
+                            }
+                        </div>
+                    }
 
                     <span className="text-sm text-text/50">
                         last seen {u.lastSeen}
@@ -108,20 +112,24 @@ export const User = ({ noActions, ...u }: Props) => {
 
 
             {
-                !noActions && <div className="flex gap-3">
+                actions
+                    ?
+                    actions
+                    :
+                    !noActions && <div className="flex gap-3">
 
-                    <button className="bg-pale h-16 w-16 flex items-center justify-center rounded-full">
-                        <Lineicons icon={Telephone1Solid} />
-                    </button>
+                        <button className="bg-pale h-16 w-16 flex items-center justify-center rounded-full">
+                            <Lineicons icon={Telephone1Solid} />
+                        </button>
 
 
-                    <button
-                        onClick={() => navigate(`/chat/1`)}
-                        className="bg-pale h-16 w-16 flex items-center justify-center rounded-full">
-                        <Lineicons icon={Message2Solid} />
-                    </button>
+                        <button
+                            onClick={() => navigate(`/chat/1`)}
+                            className="bg-pale h-16 w-16 flex items-center justify-center rounded-full">
+                            <Lineicons icon={Message2Solid} />
+                        </button>
 
-                </div>
+                    </div>
             }
 
         </div>

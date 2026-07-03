@@ -5,7 +5,7 @@ import FlexRender from "../../../components/base/FlexRender"
 import { BaseI, } from "../../../store/auth"
 import Modal from "../../../components/base/Modal"
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 
 
 export interface SettingComponentI extends BaseI {
@@ -18,7 +18,8 @@ export interface SettingComponentI extends BaseI {
 
 const SettingComponent = (s: SettingComponentI) => {
     return (
-        <div
+        <Link
+            to={s?.path ? s?.path : ""}
             onClick={() => s?.onPress?.()}
             className="flex items-center gap-3">
             <span className="h-18 w-18 rounded-xl flex items-center justify-center bg-pale">
@@ -28,7 +29,7 @@ const SettingComponent = (s: SettingComponentI) => {
                 <p className="font-medium text-lg">{s?.title}</p>
                 <p className=" text-text/50">{s?.caption}</p>
             </div>
-        </div>
+        </Link>
     )
 }
 
@@ -49,21 +50,21 @@ const Settings = () => {
             icon: <Lineicons icon={TargetUserSolid} />,
             title: "Profile & Account",
             caption: "customize your profile",
-            path: ""
+            path: "/account"
         },
         {
             ID: 2,
             icon: <Lineicons icon={BadgeDecagramPercentSolid} />,
             title: "ID verification",
             caption: "earn a verification badger on your account",
-            path: ""
+            path: "/verification"
         },
         {
             ID: 3,
             icon: <Lineicons icon={PhoneSolid} />,
             title: "Change phone number",
             caption: "Transfer account to another phone number",
-            path: ""
+            path: "/phone"
         },
         // {
         //     ID: 4,
@@ -77,7 +78,7 @@ const Settings = () => {
             icon: <Lineicons icon={UserMultiple4Solid} />,
             title: "Manage users",
             caption: "Review & manage users",
-            path: ""
+            path: "/users"
         },
         {
             ID: 6,

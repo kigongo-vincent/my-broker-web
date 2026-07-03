@@ -1,8 +1,11 @@
 
 import AppRouter from "./routes/Index"
+import SmoothScrollProvider from "./utils/scroll"
 const App = () => {
   return (
-    <AppRouter />
+    <SmoothScrollProvider>
+      <AppRouter />
+    </SmoothScrollProvider>
   )
 }
 

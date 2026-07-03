@@ -27,6 +27,11 @@ html {
   font-style: normal;
 }
 
+.shadow-custom {
+  box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.07),
+    -10px -10px 20px rgba(0, 0, 0, 0.02);
+}
+
 @media (min-width: 768px) {
   * {
     display: none;
@@ -84,7 +89,7 @@ button:active {
 :root[data-theme="light"] {
   --color-dark: #0b0e12;
   --color-text: #0b0e12ea;
-  --color-pale: #edf1f374;
+  --color-pale: #edf1f3;
   --color-paper: #ffffff;
   /* --color-primary: #ba9835; */
   --color-primary: #d5a97d;

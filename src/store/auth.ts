@@ -21,17 +21,7 @@ export interface UserI extends Partial<BaseI> {
   lastSeen?: string;
 }
 
-const MockkUser: UserI = {
-  ID: 1,
-  name: "jamal alkhen saleem malkeen",
-  email: "vincent.kigongo@gmail.com",
-  photo:
-    "https://images.rawpixel.com/image_800/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvNDc5LW1rLTk2OTAtam9iNTgzLmpwZw.jpg",
-  phone: "+256782147143",
-  lastSeen: "3 days ago",
-  verified: true,
-  broker: true,
-};
+const MockkUser: UserI | {} = {};
 
 export interface AuthStoreI {
   user: UserI | {};
@@ -43,7 +33,7 @@ export interface AuthStoreI {
 
 export const STORAGE_KEY = "_jdncjnsckchsbchkbcknsncknksjncchbfk";
 export const AVATAR_FALLBACK =
-  "https://media.istockphoto.com/id/2151669184/vector/vector-flat-illustration-in-grayscale-avatar-user-profile-person-icon-gender-neutral.jpg?s=612x612&w=0&k=20&c=UEa7oHoOL30ynvmJzSCIPrwwopJdfqzBs0q69ezQoM8=";
+  "https://media.easy-peasy.ai/6d171bea-8373-43be-b226-0f3205f1a9f1/cbeed891-c4e9-4291-94f0-4a3239c6f1f7_medium.webp";
 
 export const useUserStore = create<AuthStoreI>()(
   persist(

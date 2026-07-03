@@ -147,7 +147,7 @@ const ChatRoom = () => {
                 <div className="shrink-0 z-10">
                     <Header back />
                     <div className="w-full fixed z-200 top-25 px-4 pt-2">
-                        <div className="flex w-full bg-black/6 border  border-white backdrop-blur-lg px-6 py-4 rounded-full items-center justify-between">
+                        <div className="flex w-full bg-black/6 border  border-white dark:border-text/40 dark:bg-paper/80 backdrop-blur-lg px-6 py-4 rounded-full items-center justify-between">
                             <User name="vincent" noActions lastSeen="23hrs ago" />
                             <button onClick={() => setShowMenu(true)} className="h-12 w-12 flex items-center justify-center">
                                 <Lineicons icon={MenuMeatballs1Solid} />

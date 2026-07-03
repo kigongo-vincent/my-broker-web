@@ -23,7 +23,7 @@ const ChatComponent = (c: ChatCompnentI) => {
             onClick={() => navigate(`/chat/${c?.ID}`)}
             className="flex items-center bg-pale p-4 py-6 rounded-xl gap-3">
 
-            <img src={getUserPhoto?.(c?.sender?.photo)} className="h-18 w-18  rounded-2xl" alt="" />
+            <img src={getUserPhoto?.(c?.sender?.photo)} className="h-18 w-18  rounded-full" alt="" />
 
             <div className="flex-1">
 
@@ -35,7 +35,7 @@ const ChatComponent = (c: ChatCompnentI) => {
                 </div>
 
                 <div className="flex items-start mt-1 justify-between">
-                    <p className=" text-text/50">{TextCropper(c?.lastMessage, 45)}</p>
+                    <p className=" text-text/50">{TextCropper(c?.lastMessage, 38)}</p>
                     <div className="flex items-center gap-1 text-sm font-semibold opacity-40">
                         {/* <ClockIcon className="h-4 w-4" /> */}
                         <p>{c?.CreatedAt}</p>

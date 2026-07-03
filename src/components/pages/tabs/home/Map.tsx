@@ -10,9 +10,10 @@ const Map = ({ properties }: Props) => {
 
     const { theme } = useSystemTheme()
 
+
     return (
         <div className="h-[80vh] w-100vh rounded-2xl overflow-hidden">
-            <MapComponent theme={theme as ColorScheme} properties={properties} />
+            <MapComponent theme={theme?.toUpperCase() as ColorScheme} properties={properties} />
         </div>
     )
 }

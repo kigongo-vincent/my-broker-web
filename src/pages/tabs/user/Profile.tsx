@@ -322,7 +322,7 @@ const Profile = () => {
             <div className="mt-30 p-4">
 
                 <div className="bg-pale p-6 flex flex-col gap-1.5 rounded-xl">
-                    <h3 className="text-2xl font-bold black-ops-one-regular">{account?.user?.name}</h3>
+                    <h3 className="text-2xl font-bold ">{account?.user?.name}</h3>
                     <p>{account?.user?.email}</p>
                     <p>{account?.user?.phone}</p>
                 </div>

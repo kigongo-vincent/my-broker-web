@@ -14,6 +14,8 @@ import trashIcon from "../../../assets/upload/trash.png"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { ChatBubble2Solid } from "@lineiconshq/free-icons"
 import { UserI } from "../../../store/auth"
+import useSystemTheme from "../../../hooks/theme"
+import { ColorScheme } from "@vis.gl/react-google-maps"
 
 const PostDetails = () => {
 
@@ -22,6 +24,8 @@ const PostDetails = () => {
     const [post, setPost] = useState<PostI | undefined>()
     const [showMaP, setShowMap] = useState(false)
     const [image, setImage] = useState("")
+    const { theme } = useSystemTheme()
+
     const navigate = useNavigate()
 
     const ammenities: CategoryI[] = [
@@ -288,7 +292,7 @@ text-sm
 
                 <Modal open={showMaP} onClose={() => setShowMap(false)}>
                     <div className="h-[60vh] min-h-[60vh] rounded-xl overflow-hidden w-full min-w-full">
-                        <MapComponent />
+                        <MapComponent theme={theme?.toUpperCase() as ColorScheme} />
                     </div>
                 </Modal>
 

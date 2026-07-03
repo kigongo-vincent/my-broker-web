@@ -22,25 +22,29 @@ const Layout = ({ children }: Props) => {
     // const AdminLinks: LinkI[] = []
     const UserLinks: LinkI[] = [{
         icon: <Lineicons icon={Home2Solid} />,
-        path: `${BASE_URL}`
+        path: `${BASE_URL}`,
+        label: "home"
     },
     {
         icon: <Lineicons icon={Message2Solid} />,
         path: `${BASE_URL}/chat`,
         badge: 3,
+        label: "messages"
     },
     {
         icon: <Lineicons icon={PlusSolid} />,
-        path: `/upload`
+        path: `/upload`,
     },
     {
         icon: <Lineicons icon={HeartSolid} />,
         path: `${BASE_URL}/favourites`
-        , badge: 1
+        , badge: 1,
+        label: "favourites"
     },
     {
         icon: <Lineicons icon={Gear1Solid} />,
-        path: `${BASE_URL}/settings`
+        path: `${BASE_URL}/settings`,
+        label: "settings"
     },
     ]
 

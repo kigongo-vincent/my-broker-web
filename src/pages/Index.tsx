@@ -9,7 +9,7 @@ const Index = () => {
     useEffect(() => {
         const timeout = setTimeout(() => {
             navigate("/auth/");
-        }, 1500);
+        }, 2000);
 
         return () => clearTimeout(timeout);
     }, [navigate]);
@@ -18,10 +18,10 @@ const Index = () => {
         <div className="flex h-screen items-center justify-center">
             <AnimatePresence>
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.5 }}
+                    initial={{ opacity: 0, scale: 25 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 25 }}
+                    transition={{ duration: 1, ease: "easeInOut" }}
                 >
                     <Logo className="h-34" />
                 </motion.div>

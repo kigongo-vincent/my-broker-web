@@ -60,14 +60,13 @@ const MapComponent = ({ theme, properties }: Props) => {
                                 <Link
                                     to={`/post/${p?.ID}`}
                                     style={{
-                                        background: '#ffffff',
-                                        color: '#000000',
-                                        padding: '6px 10px',
-                                        borderRadius: '12px',
+                                        background: "var(--color-paper)",
+                                        color: 'var(--color-text)',
+                                        padding: '10px 20px',
+                                        borderRadius: '100px',
                                         fontWeight: 'bold',
                                         fontSize: '14px',
                                         boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                                        border: '1px solid #ddd',
                                         transform: 'translate(-50%, -100%)', // Centers the tag over the coordinate
                                         whiteSpace: 'nowrap'
                                     }}>

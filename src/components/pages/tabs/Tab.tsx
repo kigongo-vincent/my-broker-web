@@ -19,17 +19,20 @@ const Tab = (t: LinkI) => {
     console.log(`current: ${pathname}, path: ${t?.path}, active: ${isActive}`)
 
     return (
-        <div
-            onClick={() => navigate(t?.path)}
-            className={`h-16 cursor-pointer relative w-16 flex items-center justify-center rounded-2xl  ${isActive ? "text-text bg-paper " : "text-text/50"} ${uploadStyles}`}>
-            <span>{t?.icon}</span>
+        <div className="flex flex-col items-center ">
+            <div
+                onClick={() => navigate(t?.path)}
+                className={`h-16 cursor-pointer relative w-16 flex items-center justify-center rounded-2xl  ${isActive ? "text-text bg-paper " : "text-text/50"} ${uploadStyles}`}>
+                <span>{t?.icon}</span>
 
 
 
-            {/* badge  */}
-            <Activity mode={t?.badge ? "visible" : "hidden"}>
-                <span className="bg-danger top-0 flex items-center justify-center text-sm right-0 h-8 text-white w-8 rounded-full absolute">{t?.badge}</span>
-            </Activity>
+                {/* badge  */}
+                <Activity mode={t?.badge ? "visible" : "hidden"}>
+                    <span className="bg-danger top-0 flex items-center justify-center text-sm right-0 h-8 text-white w-8 rounded-full absolute">{t?.badge}</span>
+                </Activity>
+            </div>
+            <span className="text-[11.5px] font-medium ">{t?.label}</span>
         </div>
     )
 }

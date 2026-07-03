@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { HTMLAttributes, ReactNode, useRef } from "react"
 import { createPortal } from "react-dom"
 import { XMarkIcon } from "@heroicons/react/24/solid"
+import useSystemTheme from "../../hooks/theme"
 
 export interface ModalProps extends HTMLAttributes<HTMLDivElement> {
     open?: boolean
@@ -32,8 +33,9 @@ const Modal = ({ position = "center", onClose, children, className, open, action
     const overlayTransition = { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const }
     const sheetTransition = { duration: 0.26, ease: [0.22, 1, 0.36, 1] as const }
 
-    var mode: string = "light"
-    const overlayStyles = mode == "light" ? "bg-black/5 backdrop-blur-md " : "bg-black/40 backdrop-blur-sm"
+    const { theme } = useSystemTheme()
+
+    const overlayStyles = theme == "light" ? "bg-black/5 backdrop-blur-md " : " backdrop-blur-md"
 
     const content = (
         <AnimatePresence>
@@ -67,7 +69,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                                 {/* header - fixed at top, not scrollable */}
                                 <div className="flex mb-6 items-center justify-end shrink-0">
                                     <button onClick={onClose} className="hover:bg-pale">
-                                        <XMarkIcon className="h-10 w-10" />
+                                        <XMarkIcon className="h-8 w-8 m-6" />
                                     </button>
                                 </div>
 
@@ -100,7 +102,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                                 {/* header - fixed at top, not scrollable */}
                                 <div className="flex mb-6 items-center justify-end shrink-0">
                                     <button onClick={onClose} className="hover:bg-pale">
-                                        <XMarkIcon className="h-10 w-10" />
+                                        <XMarkIcon className="h-8 w-8" />
                                     </button>
                                 </div>
                                 <div className="max-h-[90vh] overflow-y-auto">
