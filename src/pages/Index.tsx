@@ -15,7 +15,7 @@ const Index = () => {
     }, [navigate]);
 
     return (
-        <div className="flex h-screen items-center justify-center">
+        <div className="flex h-screen items-center overflow-hidden w-full justify-center">
             <AnimatePresence>
                 <motion.div
                     initial={{ opacity: 0, scale: 25 }}
