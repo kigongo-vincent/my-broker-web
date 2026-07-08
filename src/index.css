@@ -2,9 +2,10 @@
 
 html {
   font-family: poppins, "Poppins", "sans-serif";
-  font-size: 13px;
-  line-height: calc(14.1px * 1.5);
+  font-size: 3.39vw;
+  line-height: calc(3.3vw * 1.5);
   color: var(--color-text);
+  font-weight: 300;
 }
 
 :root {
@@ -47,7 +48,7 @@ html {
 
 @layer components {
   .btn {
-    @apply h-15 w-full rounded-full px-10 flex items-center font-medium justify-center gap-2;
+    @apply h-14 min-w-14 w-max rounded px-6 flex items-center font-[400] justify-center gap-2;
   }
   * {
     /* @apply transform active:scale-[1.01]; */

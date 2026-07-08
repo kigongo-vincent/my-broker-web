@@ -51,7 +51,9 @@ const Layout = ({ children }: Props) => {
     return (
         <div>
             <Header />
-            <main className=" h-screen pt-[9vh] px-4 overscroll-y-auto">{children}
+            <main className=" h-screen px-4 overscroll-y-auto">
+                <div className="min-h-[11vh]"></div>
+                {children}
 
                 <div className="min-h-[14vh]"></div>
 

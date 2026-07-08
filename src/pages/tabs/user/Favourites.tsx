@@ -2,11 +2,10 @@
 import FlexRender from "../../../components/base/FlexRender"
 import Post, { PostI } from "../../../components/pages/tabs/Post"
 import { useUserStore } from "../../../store/auth"
-import { useGetFavourites } from "../../../hooks/queries"
 
 const Favourites = () => {
 
-    const { data, isLoading } = useGetFavourites()
+    const { data, isLoading } = { data: { content: [] }, isLoading: false }
     const posts = (data?.content as Partial<PostI>[]) || []
 
     const { user } = useUserStore()

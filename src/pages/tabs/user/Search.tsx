@@ -3,7 +3,6 @@ import FlexRender from "../../../components/base/FlexRender"
 import { useNavigate, useParams } from "react-router"
 import Post, { PostI } from "../../../components/pages/tabs/Post"
 
-import { useSearchProperties } from "../../../hooks/queries"
 
 
 const Search = () => {
@@ -11,7 +10,7 @@ const Search = () => {
     const tabs = ["users", "rentals",]
     const { query } = useParams()
     const [seletcedTab, setSlelectedTab] = useState(tabs[1])
-    const { data, isLoading } = useSearchProperties(query || "")
+    const { data, isLoading } = { data: { content: [] }, isLoading: false }
     const posts = (data?.content as Partial<PostI>[]) || []
 
     const navigate = useNavigate()

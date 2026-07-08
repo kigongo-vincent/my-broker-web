@@ -26,8 +26,9 @@ const MockkUser: UserI | {} = {};
 export interface AuthStoreI {
   user: UserI | {};
   token: string;
-  setUser: (u: UserI) => void;
+  setUser?: (u: UserI) => void;
   logout: () => void;
+  login: (o: { user: UserI; token: string }) => void;
   getUserPhoto?: (url?: string) => string;
 }
 
@@ -44,6 +45,10 @@ export const useUserStore = create<AuthStoreI>()(
 
       setUser: (u) => {
         set({ user: u });
+      },
+
+      login: ({ user, token }) => {
+        set({ user: user, token: token });
       },
 
       getUserPhoto: (url) => {

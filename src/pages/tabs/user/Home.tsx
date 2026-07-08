@@ -9,7 +9,6 @@ import { motion } from "framer-motion"
 import Modal from "../../../components/base/Modal"
 import Map from "../../../components/pages/tabs/home/Map"
 import { useNavigate } from "react-router"
-import { useGetProperties } from "../../../hooks/queries"
 
 interface FABProps extends HTMLAttributes<HTMLButtonElement> {
 
@@ -34,7 +33,7 @@ const Home = () => {
     const [showMap, setShowMap] = useState(false)
     const { user } = useUserStore()
 
-    const { data, isLoading } = useGetProperties({ limit: 10, page: 1 })
+    const { data, isLoading } = { data: { content: [] }, isLoading: false }
     const posts = (data?.content as Partial<PostI>[]) || []
     const properties = posts
 

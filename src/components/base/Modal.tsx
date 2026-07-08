@@ -63,13 +63,13 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                                 exit={{ y: 28, opacity: 0 }}
                                 transition={sheetTransition}
                                 onClick={(e) => e.stopPropagation()}
-                                className={`bg-paper mx-3 sm:mx-4 w-[min(100%,98vw)] sm:w-[min(92vw,36rem)] md:w-[min(40vw,42rem)] max-h-[90vh] rounded-lg p-4 sm:p-6 flex flex-col ${className ?? ""}`}
+                                className={`bg-paper mx-3 sm:mx-4 w-[min(100%,98vw)] sm:w-[min(92vw,36rem)] md:w-[min(40vw,42rem)] max-h-[90vh] rounded-lg p-4 sm:p-6 flex flex-col ${className ?? ""} dark:border border-text/10`}
                             >
 
                                 {/* header - fixed at top, not scrollable */}
                                 <div className="flex mb-6 items-center justify-end shrink-0">
-                                    <button onClick={onClose} className="hover:bg-pale">
-                                        <XMarkIcon className="h-8 w-8 m-6" />
+                                    <button onClick={onClose} className="">
+                                        <XMarkIcon className="h-8 w-8" />
                                     </button>
                                 </div>
 
@@ -80,7 +80,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
 
                                 {/* actions - fixed at bottom, not scrollable */}
                                 {actions && (
-                                    <div className="shrink-0 min-w-max mt-4 gap-3 pt-4 flex justify-end border-t border-text/10">
+                                    <div className="shrink-0 min-w-max mt-4 gap-3 pt-4 flex justify-end ">
                                         {actions}
                                     </div>
                                 )}

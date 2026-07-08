@@ -32,7 +32,7 @@ const Tab = (t: LinkI) => {
                     <span className="bg-danger top-0 flex items-center justify-center text-sm right-0 h-8 text-white w-8 rounded-full absolute">{t?.badge}</span>
                 </Activity>
             </div>
-            <span className="text-[11.5px] font-medium ">{t?.label}</span>
+            <span className="text-[2.9vw] font-medium">{t?.label}</span>
         </div>
     )
 }

@@ -21,7 +21,7 @@ const Search = ({ filter, className, value, handleSubmit, ...attr }: Props) => {
             <input type="text" value={value} placeholder="search for rentals" className={`flex-1 outline-0 ${className}`} {...attr} />
             {
                 filter && <button onClick={() => navigate(`/filters`)}>
-                    <AdjustmentsHorizontalIcon className="h-14 w-14 p-2.5 rounded-full" />
+                    <AdjustmentsHorizontalIcon className="h-13 w-13 p-2.5 " />
                 </button>
             }
         </form>

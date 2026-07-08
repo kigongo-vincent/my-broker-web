@@ -1,11 +1,11 @@
-import Header from "../../../components/pages/tabs/Header"
+
 import { User } from "../../../components/pages/tabs/Post"
 import BGL from "../../../assets/light.png"
 import BGD from "../../../assets/dark.png"
 import useSystemTheme from "../../../hooks/theme"
 import { useState } from "react"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { Camera1Solid, HandTakingUserSolid, MenuMeatballs1Solid, Trash3Solid, User4Solid, User4Stroke } from "@lineiconshq/free-icons"
+import { ArrowLeftCircleSolid, Camera1Solid, HandTakingUserSolid, MenuMeatballs1Solid, Trash3Solid, User4Solid, User4Stroke } from "@lineiconshq/free-icons"
 import { BaseI, UserI } from "../../../store/auth"
 import Modal from "../../../components/base/Modal"
 import FlexRender from "../../../components/base/FlexRender"
@@ -137,27 +137,33 @@ const ChatRoom = () => {
     const navigate = useNavigate()
 
     return (
-        <div className="relative  overflow-hidden flex-1 h-[100dvh]">
+        <div className="relative  overflow-hidden flex-1 h-screen">
 
             <img src={bg} className="absolute h-full w-full object-cover" alt="" />
 
             <div className={`absolute inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
 
                 {/* fixed header block */}
-                <div className="shrink-0 z-10">
-                    <Header back />
-                    <div className="w-full fixed z-200 top-25 px-4 pt-2">
-                        <div className="flex w-full bg-black/6 border  border-white dark:border-text/40 dark:bg-paper/80 backdrop-blur-lg px-6 py-4 rounded-full items-center justify-between">
-                            <User name="vincent" noActions lastSeen="23hrs ago" />
-                            <button onClick={() => setShowMenu(true)} className="h-12 w-12 flex items-center justify-center">
-                                <Lineicons icon={MenuMeatballs1Solid} />
+
+                <div className="w-full fixed z-200 top-0 ">
+                    <div className="flex w-full bg-black/6 border-b  border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4  items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => navigate(-1)} className="h-14 ">
+                                <Lineicons icon={ArrowLeftCircleSolid} />
                             </button>
+                            <User name="vincent" noActions lastSeen="23hrs ago" />
                         </div>
+
+                        <button onClick={() => setShowMenu(true)} className="h-12 w-12 flex items-center justify-center">
+                            <Lineicons icon={MenuMeatballs1Solid} className="transform rotate-z-[90deg]" />
+                        </button>
                     </div>
                 </div>
 
+                <div className="min-h-[11vh] "></div>
+
                 {/* scrollable messages only */}
-                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-5 w-full p-4 pt-[21vh]">
+                <div className=" min-h-0 max-h-[95vh] overflow-y-auto flex flex-col gap-5 w-full p-4">
                     <FlexRender items={messages} render={(item, index) => <Message {...item} key={index} />} />
                 </div>
 
@@ -179,7 +185,7 @@ const ChatRoom = () => {
             {/* message sender actions  */}
             <Modal open={showUserMenu} className="" onClose={() => setShowMenu(false)}>
 
-                <div className="flex flex-col gap-4 text-lg">
+                <div className="flex flex-col gap-4 ">
                     <button
                         onClick={() => navigate(`/profile/${1}`)}
                         className="btn justify-start gap-5">

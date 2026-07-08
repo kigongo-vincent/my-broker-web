@@ -123,9 +123,7 @@ const Filter = () => {
         <AnimatePresence mode="sync">
 
             <motion.div
-                initial={{ opacity: 0.4, x: -10 }}
-                exit={{ opacity: 0.4, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
+
 
             >
                 <Header back />
@@ -138,7 +136,7 @@ const Filter = () => {
                         </div>
 
                         <button
-                            className="btn bg-primary text-white disabled:opacity-60"
+                            className="btn bg-primary rounded-full w-full text-white disabled:opacity-60"
                             onClick={handleUseCurrentLocation}
                             disabled={locating}
                         >
@@ -146,7 +144,7 @@ const Filter = () => {
                             <span>{locating ? "locating..." : "use current location"}</span>
                         </button>
 
-                        <div className="bg-pale w-full dark:border border-text/10 rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
+                        <div className="bg-pale  w-full dark:border border-text/10 rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
                             <Lineicons icon={MapMarker5Solid} className="text-text/50" />
                             <input
                                 type="text"
@@ -231,10 +229,10 @@ const Filter = () => {
                         </div>
 
                         <div className="flex gap-2 mt-2">
-                            <button className="btn bg-pale flex-1" onClick={handleReset}>
+                            <button className="btn rounded-full bg-pale flex-1" onClick={handleReset}>
                                 reset
                             </button>
-                            <button className="btn bg-primary text-white flex-1" onClick={handleApplyFilters}>
+                            <button className="btn bg-primary rounded-full text-white flex-1" onClick={handleApplyFilters}>
                                 apply filters
                             </button>
                         </div>

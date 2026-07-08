@@ -21,20 +21,20 @@ const ChatComponent = (c: ChatCompnentI) => {
     return (
         <div
             onClick={() => navigate(`/chat/${c?.ID}`)}
-            className="flex items-center bg-pale p-4 py-6 rounded-xl gap-3">
+            className="flex items-center    gap-3">
 
-            <img src={getUserPhoto?.(c?.sender?.photo)} className="h-18 w-18  rounded-full" alt="" />
+            <img src={getUserPhoto?.(c?.sender?.photo)} className="h-15 w-15  rounded-full" alt="" />
 
             <div className="flex-1">
 
 
                 {/* header  */}
-                <div className="flex items-end justify-between">
+                <div className="flex items-center justify-between">
                     <p className="font-medium">{c?.sender?.name}</p>
                     {c?.newMessages != 0 && <span className="bg-danger text-white h-8 w-8 text-sm flex items-center justify-center rounded-full">{c?.newMessages}</span>}
                 </div>
 
-                <div className="flex items-start mt-1 justify-between">
+                <div className="flex items-center mt-1 justify-between">
                     <p className=" text-text/50">{TextCropper(c?.lastMessage, 38)}</p>
                     <div className="flex items-center gap-1 text-sm font-semibold opacity-40">
                         {/* <ClockIcon className="h-4 w-4" /> */}
@@ -136,9 +136,9 @@ const Chat = () => {
             <Search placeholder="search for chats" />
             <FlexRender row className="flex-row my-4 gap-2" items={tabs} render={(item, index) => <div
                 onClick={() => setSlelectedTab(item)}
-                className={`bg-pale px-5 py-3 rounded-full cursor-pointer ${seletcedTab == item && "bg-primary text-white"}`} key={index}>{item}
+                className={` px-5 py-3 flex-1 text-center cursor-pointer ${seletcedTab == item && "border-primary border-b-2 text-primary"}`} key={index}>{item}
             </div>} />
-            <FlexRender className="gap-2" items={chats} render={(item, index) => <ChatComponent {...item} key={index} />} />
+            <FlexRender className="gap-10" items={chats} render={(item, index) => <ChatComponent {...item} key={index} />} />
         </div>
     )
 }

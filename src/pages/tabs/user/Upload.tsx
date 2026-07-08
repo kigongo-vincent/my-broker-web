@@ -1,306 +1,958 @@
-import { GallerySolid, MapMarker1Solid, MapMarker5Solid, Trash3Solid, XmarkSolid } from "@lineiconshq/free-icons"
-import Lineicons from "@lineiconshq/react-lineicons"
-import { HTMLAttributes, ReactNode, useMemo, useState } from "react"
-import { useNavigate } from "react-router"
-// import MapComponent from "../../../components/pages/upload/Map"
-import FlexRender from "../../../components/base/FlexRender"
-import commercialIcon from "../../../assets/upload/commercial.png"
-import residentialIcon from "../../../assets/upload/residential.png"
-import hostelIcon from "../../../assets/upload/hostel.png"
-import electricityIcon from "../../../assets/upload/electricity.png"
-import waterIcon from "../../../assets/upload/water.png"
-import parkingIcon from "../../../assets/upload/parking.png"
-import trashIcon from "../../../assets/upload/trash.png"
-import Modal from "../../../components/base/Modal"
+// @ts-nocheck
+import { GallerySolid, MapMarker5Solid, Trash3Solid, XmarkSolid } from "@lineiconshq/free-icons";
+import Lineicons from "@lineiconshq/react-lineicons";
+import { HTMLAttributes, ReactNode, useMemo, useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router";
+import { motion, AnimatePresence } from "framer-motion";
+import Cropper from "react-easy-crop";
+import Modal from "../../../components/base/Modal";
+import { useAddPost, AddPostInput } from "../../../hooks/posts";
 
+import commercialIcon from "../../../assets/upload/commercial.png";
+import residentialIcon from "../../../assets/upload/residential.png";
+import hostelIcon from "../../../assets/upload/hostel.png";
+import electricityIcon from "../../../assets/upload/electricity.png";
+import waterIcon from "../../../assets/upload/water.png";
+import parkingIcon from "../../../assets/upload/parking.png";
+import trashIcon from "../../../assets/upload/trash.png";
+
+export interface CategoryI {
+    label: string
+    icon: string
+    selected?: boolean
+}
 export interface StepI {
-    id: number
-    content: ReactNode
+    id: number;
+    content: ReactNode;
 }
 
 interface ShellProps extends HTMLAttributes<HTMLDivElement> {
-    children: ReactNode
-    onBack?: () => void
-    onNext?: () => void
+    children: ReactNode;
+    onBack?: () => void;
+    onNext?: () => void;
+    nextText?: string;
+    disabled?: boolean;
+    globalProgress?: number;
+    showProgressBar?: boolean;
 }
 
-export const Shell = ({ onBack, onNext, children, className }: ShellProps) => {
+/* ---------------------------------------------------------------------- */
+/* MUI-style Linear Progress (indeterminate + determinate)                */
+/* ---------------------------------------------------------------------- */
+const LinearProgress = ({ value }: { value: number }) => {
+    const indeterminate = value <= 0;
+    return (
+        <div className="relative w-full h-1.5 rounded-full overflow-hidden bg-primary/15">
+            {indeterminate ? (
+                <>
+                    <motion.div
+                        className="absolute top-0 left-0 h-full bg-primary rounded-full"
+                        style={{ width: "40%" }}
+                        animate={{ x: ["-40%", "120%"] }}
+                        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                        className="absolute top-0 left-0 h-full bg-primary/50 rounded-full"
+                        style={{ width: "25%" }}
+                        animate={{ x: ["-25%", "150%"] }}
+                        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                    />
+                </>
+            ) : (
+                <motion.div
+                    className="h-full bg-primary rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(value, 100)}%` }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                />
+            )}
+        </div>
+    );
+};
+
+export const Shell = ({ onBack, onNext, children, className, nextText, disabled, globalProgress, showProgressBar }: ShellProps) => {
     return (
         <div className={`flex h-screen flex-col p-4 justify-between ${className}`}>
+            <div className="overflow-y-auto mb-24">{children}</div>
 
-            <div className="p-4">
-                {children}
-            </div>
-
-            {/* actions  */}
-            <div className="flex fixed bottom-5 px-4 left-0 w-full items-center justify-between">
-                {
-                    onBack ? <button onClick={() => onBack?.()} className="btn bg-pale w-max">
-                        back
-                    </button> : <div></div>
-                }
-                <button onClick={() => onNext?.()} className="btn bg-primary text-white w-max">
-                    {!onBack ? "confirm" : "next"}
-                </button>
-            </div>
-
-        </div>
-    )
-}
-
-export interface CategoryI {
-
-    icon: string,
-    label: string,
-    selected?: boolean
-    onPress?: () => void
-
-
-}
-
-export const Category = (c: CategoryI) => {
-    return (
-        <div
-            onClick={() => c?.onPress?.()}
-            className="h-50 min-w-[28%]  bg-pale flex-1 rounded-xl flex items-center justify-center flex-col">
-            <img src={c?.icon} className="h-20 mb-3 min-w-auto" alt="" />
-            <span>{c?.label}</span>
-        </div>
-    )
-}
-
-const Upload = () => {
-
-    const [photo] = useState("https://images.pexels.com/photos/34574610/pexels-photo-34574610.jpeg")
-    const navigate = useNavigate()
-    const [currentStepID, setCurrentStepID] = useState<number>(1)
-    const [showNegotiationModal, setShowNegotiationModal] = useState(false)
-    const [selectedPhotos, setSelectedPhotos] = useState<string[]>(["https://images.pexels.com/photos/20200292/pexels-photo-20200292.jpeg", "https://images.pexels.com/photos/37460680/pexels-photo-37460680.jpeg", "https://images.pexels.com/photos/37460692/pexels-photo-37460692.jpeg"])
-    const handleRemovePhoto = (url?: string) => {
-        setSelectedPhotos(prev => prev?.filter(p => p != url))
-    }
-    const categories: CategoryI[] = ([
-        {
-            icon: commercialIcon,
-            label: "commercial"
-        },
-        {
-            icon: residentialIcon,
-            label: "residential"
-        },
-        {
-            icon: hostelIcon,
-            label: "hostel"
-        }
-    ])
-
-    const ammenities: CategoryI[] = [
-        {
-            icon: waterIcon,
-            label: "water",
-            selected: true
-        },
-        {
-            icon: electricityIcon,
-            label: "electricity"
-        },
-        {
-            icon: trashIcon,
-            label: "trash",
-            selected: true
-        },
-        {
-            icon: parkingIcon,
-            label: "parking"
-        },
-    ]
-
-    const steps: StepI[] = useMemo(() => [
-        {
-            id: 1,
-            content: <div className="h-screen relative">
-
-                {/* bg image  */}
-                <img src={photo} className="absolute  h-full w-full" alt="" />
-
-                {/* selected images  */}
-                {
-                    selectedPhotos?.length != 0 && <div className="fixed z-400 bottom-[20vh] left-4">
-                        <FlexRender row className="overflow-x-scroll" items={selectedPhotos} render={(item, index) => <div key={index} className="h-20 relative w-20 rounded-xl">
-                            <img src={item} alt="" className="h-full absolute w-full rounded-2xl" />
-                            <div
-                                onClick={() => handleRemovePhoto?.(item)}
-                                className="absolute h-full w-full bg-black/10 rounded-2xl text-white flex items-center justify-center">
-                                <Lineicons className="" icon={Trash3Solid} />
-                            </div>
-                        </div>} />
+            <div className="flex fixed bottom-5 px-4 left-0 w-full flex-col items-center gap-2 z-50">
+                {showProgressBar && (
+                    <div className="w-full mb-1">
+                        <LinearProgress value={globalProgress ?? 0} />
+                        <p className="text-[11px] text-text/50 mt-1">
+                            {globalProgress && globalProgress > 0 ? `Uploading… ${globalProgress}%` : "Uploading…"}
+                        </p>
                     </div>
+                )}
+
+                <div className="flex w-full items-center justify-between">
+                    {onBack ? (
+                        <button type="button" onClick={() => onBack?.()} className="btn bg-pale rounded-full w-max">
+                            back
+                        </button>
+                    ) : (
+                        <div />
+                    )}
+                    <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => onNext?.()}
+                        className="btn bg-primary rounded-full text-white w-max disabled:opacity-50"
+                    >
+                        {nextText || (!onBack ? "confirm" : "next")}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+interface AnimatedSelectProps {
+    options: { label: string; icon: string; value: string }[];
+    selectedValue: string;
+    onChange: (value: string) => void;
+}
+
+export const AnimatedSelect = ({ options, selectedValue, onChange }: AnimatedSelectProps) => {
+    return (
+        <div className="grid grid-cols-2 gap-4">
+            {options.map((option) => {
+                const isSelected = selectedValue === option.value;
+                return (
+                    <div
+                        key={option.value}
+                        onClick={() => onChange(option.value)}
+                        className="h-40 bg-pale relative rounded-xl flex items-center justify-center flex-col cursor-pointer"
+                    >
+                        {isSelected && (
+                            <motion.div
+                                layoutId="activeSelectionRing"
+                                className="absolute inset-0 border border-primary bg-primary/5 rounded-xl z-0"
+                                transition={{ duration: 0.2 }}
+                            />
+                        )}
+                        <div className="relative z-10 flex flex-col items-center justify-center">
+                            <img src={option.icon} className="h-16 mb-3 object-contain" alt="" />
+                            <span className="font-medium capitalize text-sm">{option.label}</span>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
+/* ---------------------------------------------------------------------- */
+/* Helper to crop image onto an HTML5 canvas element                      */
+/* ---------------------------------------------------------------------- */
+const getCroppedImg = (imageSrc: string, pixelCrop: { x: number; y: number; width: number; height: number }): Promise<File> => {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.src = imageSrc;
+        image.setAttribute("crossOrigin", "anonymous");
+        image.onload = () => {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return reject(new Error("No 2d context"));
+
+            canvas.width = pixelCrop.width;
+            canvas.height = pixelCrop.height;
+
+            ctx.drawImage(
+                image,
+                pixelCrop.x,
+                pixelCrop.y,
+                pixelCrop.width,
+                pixelCrop.height,
+                0,
+                0,
+                pixelCrop.width,
+                pixelCrop.height
+            );
+
+            canvas.toBlob((blob) => {
+                if (!blob) return reject(new Error("Canvas is empty"));
+                const file = new File([blob], `cropped-${Date.now()}.jpg`, { type: "image/jpeg" });
+                resolve(file);
+            }, "image/jpeg", 0.95);
+        };
+        image.onerror = (err) => reject(err);
+    });
+};
+
+/* ---------------------------------------------------------------------- */
+/* Currency formatting helpers                                            */
+/* ---------------------------------------------------------------------- */
+const formatUGX = (n: number) => {
+    if (!n && n !== 0) return "";
+    return new Intl.NumberFormat("en-UG", { maximumFractionDigits: 0 }).format(n);
+};
+
+const parseFormattedNumber = (s: string) => {
+    const digits = s.replace(/[^\d]/g, "");
+    return digits ? Number(digits) : 0;
+};
+
+/* ---------------------------------------------------------------------- */
+/* Main Form Component                                                    */
+/* ---------------------------------------------------------------------- */
+const Upload = () => {
+    const navigate = useNavigate();
+    const { mutate: addPost, isPending } = useAddPost();
+
+    const [currentStepID, setCurrentStepID] = useState<number>(1);
+    const [showNegotiationModal, setShowNegotiationModal] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
+    const [uploadingImages, setUploadingImages] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+
+    const [locationLoading, setLocationLoading] = useState(false);
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const locationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const locationBoxRef = useRef<HTMLDivElement>(null);
+
+    // Store uploaded image URLs (from background upload)
+    const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+
+    // Raw files and processed/cropped files lists
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+    // Cropper specific workflow state management
+    const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const [cameraStatus, setCameraStatus] = useState<"loading" | "ready" | "denied">("loading");
+
+    // custom months-upfront pad selection
+    const [monthsPad, setMonthsPad] = useState<"2" | "3" | "4" | "other">("2");
+
+    const globalProgress = useMemo(() => {
+        const values = Object.values(uploadProgress);
+        if (!values.length) return 0;
+        return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+    }, [uploadProgress]);
+
+    const previewUrls = useMemo(() => {
+        return selectedFiles.map((file) => URL.createObjectURL(file));
+    }, [selectedFiles]);
+
+    // Revoke object URLs on cleanup to avoid leaks
+    useEffect(() => {
+        return () => {
+            previewUrls.forEach((u) => URL.revokeObjectURL(u));
+        };
+    }, [previewUrls]);
+
+    const [form, setForm] = useState({
+        type: "residential",
+        bathrooms: 0,
+        bedrooms: 0,
+        toilets: 0,
+        negotiable: false,
+        months: 2,
+        units: 1,
+        price: { Amount: 0, Currency: "UGX" },
+        location: { Name: "", Coordinates: { Lat: 0.3476, Lon: 32.5825 } },
+        amenities: [] as string[],
+        extras: [] as string[],
+    });
+
+    /* -------------------------------------------------------------- */
+    /* Camera lifecycle: start on step 1, stop on leaving/cancel/unmount */
+    /* -------------------------------------------------------------- */
+    const killCameraStream = useCallback(() => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track) => {
+                track.stop();
+            });
+            streamRef.current = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+        setCameraStatus("loading");
+    }, []);
+
+    const startCameraStream = useCallback(async () => {
+        // stop any previous stream first to avoid device-in-use errors
+        killCameraStream();
+        setCameraStatus("loading");
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment" },
+                audio: false,
+            });
+            streamRef.current = stream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                // some browsers need an explicit play() call after assigning srcObject
+                videoRef.current.play().catch(() => { });
+            }
+            setCameraStatus("ready");
+        } catch (err) {
+            console.error("Camera permission/access error:", err);
+            setCameraStatus("denied");
+        }
+    }, [killCameraStream]);
+
+    useEffect(() => {
+        if (currentStepID === 1) {
+            startCameraStream();
+        } else {
+            killCameraStream();
+        }
+        // stop camera on unmount too (navigating away entirely)
+        return () => killCameraStream();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStepID]);
+
+    // Also stop the camera if the tab becomes hidden, and try to resume when it's visible again on step 1
+    useEffect(() => {
+        const handleVisibility = () => {
+            if (document.hidden) {
+                killCameraStream();
+            } else if (currentStepID === 1) {
+                startCameraStream();
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibility);
+        return () => document.removeEventListener("visibilitychange", handleVisibility);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStepID]);
+
+    const capturePhotoFromCamera = () => {
+        if (videoRef.current && cameraStatus === "ready") {
+            const video = videoRef.current;
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext("2d");
+            if (context) {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL("image/jpeg");
+                setImageToCrop(dataUrl);
+            }
+        }
+    };
+
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.addEventListener("load", () => {
+                setImageToCrop(reader.result as string);
+            });
+            reader.readAsDataURL(file);
+            // reset input so selecting the same file again re-triggers onChange
+            e.target.value = "";
+        }
+    }, []);
+
+    const onCropComplete = useCallback((_croppedArea: any, currentPixels: any) => {
+        setCroppedAreaPixels(currentPixels);
+    }, []);
+
+    const saveCroppedPhoto = useCallback(async () => {
+        if (imageToCrop && croppedAreaPixels) {
+            try {
+                const croppedFile = await getCroppedImg(imageToCrop, croppedAreaPixels);
+                setSelectedFiles((prev) => [...prev, croppedFile]);
+                setImageToCrop(null);
+                // Reset crop state for next image
+                setCrop({ x: 0, y: 0 });
+                setZoom(1);
+                setCroppedAreaPixels(null);
+            } catch (e) {
+                console.error("Failed executing canvas transform context matrix:", e);
+            }
+        }
+    }, [imageToCrop, croppedAreaPixels]);
+
+    /* -------------------------------------------------------------- */
+    /* Location lookup: on focus (show existing suggestions) + on type */
+    /* -------------------------------------------------------------- */
+    const fetchLocationSuggestions = async (query: string) => {
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+            );
+            const data = await res.json();
+            setSuggestions(data);
+            setShowSuggestions(true);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleLocationTyping = (query: string) => {
+        setForm((p) => ({ ...p, location: { ...p.location, Name: query } }));
+
+        if (locationDebounceRef.current) clearTimeout(locationDebounceRef.current);
+
+        if (query.trim().length < 3) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        locationDebounceRef.current = setTimeout(() => {
+            fetchLocationSuggestions(query);
+        }, 350);
+    };
+
+    const handleLocationFocus = () => {
+        if (form.location.Name.trim().length >= 3) {
+            if (suggestions.length > 0) {
+                setShowSuggestions(true);
+            } else {
+                fetchLocationSuggestions(form.location.Name);
+            }
+        }
+    };
+
+    // close suggestions when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (locationBoxRef.current && !locationBoxRef.current.contains(e.target as Node)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleGetCurrentLocation = () => {
+        if (!navigator.geolocation) return;
+        setLocationLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                try {
+                    const res = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                    );
+                    const data = await res.json();
+                    setForm((p) => ({
+                        ...p,
+                        location: {
+                            Name: data.display_name || `${latitude}, ${longitude}`,
+                            Coordinates: { Lat: latitude, Lon: longitude },
+                        },
+                    }));
+                } catch {
+                    setForm((p) => ({
+                        ...p,
+                        location: {
+                            Name: `Coordinates: ${latitude}, ${longitude}`,
+                            Coordinates: { Lat: latitude, Lon: longitude },
+                        },
+                    }));
                 }
+                setLocationLoading(false);
+                setShowSuggestions(false);
+            },
+            () => setLocationLoading(false)
+        );
+    };
 
-                {/* overlay  */}
-                <div className="absolute bg-black/10 flex flex-col justify-end  h-full w-full">
+    /* -------------------------------------------------------------- */
+    /* Background upload of images when leaving step 1                 */
+    /* -------------------------------------------------------------- */
+    const beginBackgroundUpload = useCallback(() => {
+        if (uploadingImages || selectedFiles.length === 0) return;
+        setUploadingImages(true);
+        setUploadError(null);
 
-                    {/* actions  */}
-                    <div className="flex items-center fixed w-full text-white bottom-0 justify-around bg-black/80 p-10">
+        addPost(
+            {
+                images: selectedFiles,
+                onProgress: (progress) => setUploadProgress(progress),
+            } as AddPostInput,
+            {
+                onSuccess: (res: any) => {
+                    if (res?.imageUrls && Array.isArray(res.imageUrls)) {
+                        setUploadedImageUrls(res.imageUrls);
+                    }
+                },
+                onError: (err: any) => {
+                    setUploadError(err?.message || "Image upload failed");
+                    setUploadingImages(false);
+                },
+            }
+        );
+    }, [addPost, selectedFiles, uploadingImages]);
 
-                        <button className="bg-white/10 p-5 rounded-full">
+    const goToStep2 = useCallback(() => {
+        killCameraStream();
+        beginBackgroundUpload();
+        setCurrentStepID(2);
+    }, [killCameraStream, beginBackgroundUpload]);
+
+    const handleBackToStep1 = useCallback(() => {
+        // Reset cropper state when returning to step 1
+        setImageToCrop(null);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setCroppedAreaPixels(null);
+        setCurrentStepID(1);
+    }, []);
+
+    /* -------------------------------------------------------------- */
+    /* Final submission uses already-uploaded image URLs               */
+    /* -------------------------------------------------------------- */
+    const handleFinalSubmit = useCallback(() => {
+        const payload: AddPostInput = {
+            ...form,
+            imageUrls: uploadedImageUrls.length > 0 ? uploadedImageUrls : undefined,
+            images: uploadedImageUrls.length === 0 ? selectedFiles : undefined,
+            onProgress: (progress) => setUploadProgress(progress),
+        };
+        addPost(payload, {
+            onSuccess: () => navigate("/tabs/users"),
+            onError: (err) => alert(err?.message || "Post creation failed"),
+        });
+    }, [form, uploadedImageUrls, selectedFiles, addPost, navigate]);
+
+    const categories = [
+        { icon: commercialIcon, label: "commercial", value: "commercial" },
+        { icon: residentialIcon, label: "residential", value: "residential" },
+        { icon: hostelIcon, label: "hostel", value: "hostel" },
+    ];
+
+    const monthsPadOptions = ["2", "3", "4", "other"] as const;
+
+    const cameraStep = (
+        <div className="h-screen relative bg-neutral-950 overflow-hidden">
+            <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                aria-label="Select image from gallery"
+                key={`file-input-${currentStepID}`}
+            />
+
+            {cameraStatus === "ready" ? (
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="absolute inset-0 h-full w-full object-cover z-0"
+                />
+            ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white/60 z-0 gap-3">
+                    <p className="text-sm">
+                        {cameraStatus === "loading"
+                            ? "Requesting camera access…"
+                            : "Camera access was blocked. Enable it in your browser/site settings, or use the gallery button below."}
+                    </p>
+                    {cameraStatus === "denied" && (
+                        <button
+                            type="button"
+                            onClick={startCameraStream}
+                            className="text-xs px-4 py-2 rounded-full bg-white/10 hover:bg-white/20"
+                        >
+                            Try again
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {previewUrls.length > 0 && (
+                <div className="fixed z-40 bottom-[22vh] left-4 right-4">
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                        {previewUrls.map((url, index) => (
+                            <div
+                                key={index}
+                                className="h-20 w-20 relative flex-shrink-0 rounded-xl overflow-hidden border border-white/10 shadow-2xl"
+                            >
+                                <img src={url} alt="" className="h-full w-full object-cover absolute" />
+                                <div
+                                    onClick={() => setSelectedFiles((p) => p.filter((_, i) => i !== index))}
+                                    className="absolute inset-0 bg-black/50 text-white flex items-center justify-center cursor-pointer opacity-0 hover:opacity-100 transition"
+                                >
+                                    <Lineicons icon={Trash3Solid} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end z-10">
+                <div className="flex flex-col gap-6 items-center fixed w-full text-white bottom-0 p-10 backdrop-blur-sm bg-black/40">
+                    <div className="flex items-center w-full justify-around">
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="bg-white/10 p-5 rounded-full hover:bg-white/20 active:scale-95 transition"
+                            aria-label="Open gallery"
+                        >
                             <Lineicons icon={GallerySolid} size={30} />
                         </button>
 
                         <div className="p-1 flex items-center justify-center border-2 border-white rounded-full">
                             <button
-                                onClick={() => setCurrentStepID(2)}
-                                className="bg-white h-20 rounded-full w-20">
-
-                            </button>
+                                type="button"
+                                disabled={cameraStatus !== "ready"}
+                                onClick={capturePhotoFromCamera}
+                                className="bg-white h-20 rounded-full w-20 active:scale-90 transition disabled:opacity-40"
+                                aria-label="Take photo"
+                            />
                         </div>
 
                         <button
-                            onClick={() => navigate(-1)}
-                            className="bg-white/10 p-5 rounded-full">
+                            type="button"
+                            onClick={() => {
+                                killCameraStream();
+                                navigate("/tabs/user");
+                            }}
+                            className="bg-white/10 p-5 rounded-full hover:bg-white/20 active:scale-95 transition"
+                            aria-label="Cancel"
+                        >
                             <Lineicons icon={XmarkSolid} size={30} />
                         </button>
-
                     </div>
 
+                    {selectedFiles.length > 0 && (
+                        <motion.button
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            type="button"
+                            onClick={goToStep2}
+                            className="w-full py-4 bg-primary rounded-full text-white text-center shadow-lg"
+                        >
+                            Next Step ({selectedFiles.length} images)
+                        </motion.button>
+                    )}
                 </div>
-
             </div>
-        }, {
-            content: <Shell onBack={() => setCurrentStepID(prev => prev - 1)} onNext={() => setCurrentStepID(prev => prev + 1)}>
-                <div className="flex gap-4  flex-col relative">
+        </div>
+    );
 
-
-                    {/* <div className="h-[50vh] rounded-2xl overflow-hidden">
-                        <MapComponent />
-                    </div> */}
-
-                    <div>
-                        <p className="text-xl font-semibold">Property loaction</p>
-                        <p className="text-text/50 text-sm mt-1">please provide the location of the property</p>
-                    </div>
-
-                    <button className="btn bg-primary text-white">
-                        <Lineicons icon={MapMarker1Solid} />
-                        <span>use current location</span>
-                    </button>
-
-                    <div className="bg-pale w-full dark:border border-text/10 rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
-                        <Lineicons icon={MapMarker5Solid} className="text-text/50" />
-                        <input type="text" placeholder="provide the location" className={`flex-1 outline-0 `} />
-                    </div>
-
-                </div>
-            </Shell>,
-            id: 2
-        },
-        {
-            id: 3,
-            content: <Shell onBack={() => setCurrentStepID(prev => prev - 1)} onNext={() => setCurrentStepID(prev => prev + 1)}>
-                <div>
-                    <p className="text-xl font-semibold">Property Type</p>
-                    <p className="text-text/50 text-sm mt-1">please provide the category of property you're uploading</p>
-                    <br />
-                    <FlexRender className="grid grid-cols-2" row items={categories} render={(item, index) => <Category key={index} {...item} />} />
-
-                </div>
-            </Shell>
-        }
-        , {
-            id: 4,
-            content: <Shell onBack={() => setCurrentStepID(prev => prev - 1)} onNext={() => setCurrentStepID(prev => prev + 1)}>
-                <div>
-                    <p className="text-xl font-semibold">Bedrooms, Bathrooms & Toilets</p>
-                    <p className="text-text/50 text-sm mt-1">please provide the bedrooms, bathrooms & toilet situation of the property</p>
-                    <br />
-
-                    <div className="flex flex-col gap-4 mt-6   rounded-lg">
-
-                        <div className="flex flex-col gap-2">
-                            <span className="text-sm">bedroom</span>
-                            <input type="number" className="outline-0 bg-pale h-14 rounded-lg px-6" placeholder="bedroom e.g 4" />
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                            <span className="text-sm">bathroom</span>
-                            <input type="number" className="outline-0 bg-pale h-14 rounded-lg px-6" placeholder="bathroom e.g 4" />
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                            <span className="text-sm">toilets</span>
-                            <input type="number" className="outline-0 bg-pale h-14 rounded-lg px-6" placeholder="toilets e.g 4" />
-                        </div>
-
-                    </div>
-
-                </div>
-            </Shell>
-        }, {
-            id: 5,
-            content: <Shell onBack={() => setCurrentStepID(prev => prev - 1)} onNext={() => setShowNegotiationModal(true)}>
-                <div>
-                    <p className="text-xl font-semibold">Property Pricing</p>
-                    <p className="text-text/50 text-sm mt-1">please provide the required monthly rent</p>
-                    <br />
-
-                    <div className="flex flex-col gap-2">
-                        <span className="text-sm">Price</span>
-                        <input type="text" className="outline-0 bg-pale h-14 rounded-lg px-6" placeholder="how much..." />
-                    </div>
-                </div>
-            </Shell>
-        }
-        , {
-            id: 6,
-            content: <Shell onBack={() => setCurrentStepID(prev => prev - 1)} onNext={() => setCurrentStepID(prev => prev + 1)}>
-                <div>
-                    <p className="text-xl font-semibold">Ammenities</p>
-                    <p className="text-text/50 text-sm mt-1">please provide define whats inclusive on the monthly rent</p>
-
-                    <br />
-                    <div className="grid gap-4 grid-cols-2">
-
-                        {
-                            ammenities?.map(a => <div key={a?.label} className={`flex px-4 py-10 rounded-xl bg-pale  flex-col items-center justify-center  ${a?.selected && "border border-primary/20 bg-primary/2"}`}>
-                                <img src={a?.icon} className="h-20 object-contain" alt="" />
-                                <p className="mt-6">{a?.label}</p>
-                            </div>)
-                        }
-
-                    </div>
-
-                </div>
-            </Shell>
-        }, {
-            id: 7,
-            content: <Shell onBack={() => setCurrentStepID(prev => prev - 1)} onNext={() => navigate(-1)}>
-                <div>
-                    <p className="text-xl font-semibold">Initial Payment</p>
-                    <p className="text-text/50 text-sm mt-1">please provide the number of months acceptable for the first month</p>
-                    <br />
-                    <div className="flex flex-col gap-2">
-                        <span className="text-sm">Months payment required for the first month</span>
-                        <input type="text" className="outline-0 bg-pale h-14 rounded-lg px-6" placeholder="3 months" />
-                    </div>
-                </div>
-            </Shell>
-        }
-    ], [photo, currentStepID, showNegotiationModal, selectedPhotos])
     return (
         <>
-            {steps.find(s => s?.id == currentStepID)?.content}
+            {currentStepID === 1 && cameraStep}
+
+            {currentStepID === 2 && (
+                <Shell
+                    onBack={handleBackToStep1}
+                    onNext={() => setCurrentStepID(3)}
+                    disabled={!form.location.Name}
+                    globalProgress={globalProgress}
+                    showProgressBar={uploadingImages}
+                >
+                    <div className="flex gap-4 flex-col relative" ref={locationBoxRef}>
+                        <div>
+                            <p className="text-xl font-semibold">Property Location</p>
+                            <p className="text-text/50 text-sm mt-1">Provide location data</p>
+                        </div>
+
+                        {uploadError && (
+                            <p className="text-red-500 text-xs -mt-2">
+                                {uploadError} — you can continue, we'll retry on submit.
+                            </p>
+                        )}
+
+                        <div className="bg-pale w-full rounded-full h-15 flex gap-1 items-center px-6 relative">
+                            <Lineicons icon={MapMarker5Solid} className="text-text/50" />
+                            <input
+                                type="text"
+                                value={form.location.Name}
+                                onFocus={handleLocationFocus}
+                                onChange={(e) => handleLocationTyping(e.target.value)}
+                                placeholder="Type address..."
+                                className="flex-1 text-base outline-0 bg-transparent"
+                            />
+                        </div>
+
+                        <button
+                            type="button"
+                            disabled={locationLoading}
+                            onClick={handleGetCurrentLocation}
+                            className="btn bg-primary w-full rounded-full text-white"
+                        >
+                            <span>{locationLoading ? "Fetching..." : "Use current location"}</span>
+                        </button>
+
+                        {showSuggestions && suggestions.length > 0 && (
+                            <div className="bg-pale rounded flex flex-col divide-y divide-text/5 overflow-hidden absolute top-[calc(100%-1rem)] left-0 right-0 z-20 shadow-lg max-h-64 overflow-y-auto">
+                                {suggestions.map((item, i) => (
+                                    <div
+                                        key={i}
+                                        onClick={() => {
+                                            setForm((p) => ({
+                                                ...p,
+                                                location: {
+                                                    Name: item.display_name,
+                                                    Coordinates: { Lat: parseFloat(item.lat), Lon: parseFloat(item.lon) },
+                                                },
+                                            }));
+                                            setSuggestions([]);
+                                            setShowSuggestions(false);
+                                        }}
+                                        className="p-4 text-text/80 hover:bg-black/5 cursor-pointer text-sm"
+                                    >
+                                        {item.display_name}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </Shell>
+            )}
+
+            {currentStepID === 3 && (
+                <Shell
+                    onBack={() => setCurrentStepID(2)}
+                    onNext={() => setCurrentStepID(4)}
+                    globalProgress={globalProgress}
+                    showProgressBar={uploadingImages}
+                >
+                    <div>
+                        <p className="text-xl font-semibold">Property Type</p>
+                        <br />
+                        <AnimatedSelect
+                            options={categories}
+                            selectedValue={form.type}
+                            onChange={(val) => setForm((p) => ({ ...p, type: val }))}
+                        />
+                    </div>
+                </Shell>
+            )}
+
+            {currentStepID === 4 && (
+                <Shell
+                    onBack={() => setCurrentStepID(3)}
+                    onNext={() => setCurrentStepID(5)}
+                    globalProgress={globalProgress}
+                    showProgressBar={uploadingImages}
+                >
+                    <div>
+                        <p className="text-xl font-semibold">Bedrooms, Bathrooms & Toilets</p>
+                        <div className="flex flex-col gap-4 mt-6">
+                            {["bedrooms", "bathrooms", "toilets"].map((field) => (
+                                <div key={field} className="flex flex-col gap-2">
+                                    <span className="text-sm capitalize">{field}</span>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={form[field] || ""}
+                                        onChange={(e) => setForm((p) => ({ ...p, [field]: Number(e.target.value) }))}
+                                        placeholder={`number of ${field}`}
+                                        className="outline-0 bg-pale h-14 rounded-lg px-6"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </Shell>
+            )}
+
+            {currentStepID === 5 && (
+                <Shell
+                    onBack={() => setCurrentStepID(4)}
+                    onNext={() => setShowNegotiationModal(true)}
+                    globalProgress={globalProgress}
+                    showProgressBar={uploadingImages}
+                >
+                    <div>
+                        <p className="text-xl font-semibold">Property Pricing</p>
+                        <div className="flex flex-col gap-2 mt-4">
+                            <span className="text-sm">Price Amount (UGX)</span>
+                            <div className="bg-pale h-14 rounded-lg px-6 flex items-center gap-2">
+                                <span className="text-text/50 text-sm font-medium">UGX</span>
+                                <input
+                                    inputMode="numeric"
+                                    placeholder="how much is rent per month"
+                                    value={formatUGX(form.price.Amount)}
+                                    onChange={(e) =>
+                                        setForm((p) => ({
+                                            ...p,
+                                            price: { ...p.price, Amount: parseFormattedNumber(e.target.value) },
+                                        }))
+                                    }
+                                    className="outline-0 bg-transparent flex-1 h-full"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </Shell>
+            )}
+
+            {currentStepID === 6 && (
+                <Shell
+                    onBack={() => setCurrentStepID(5)}
+                    onNext={() => setCurrentStepID(7)}
+                    globalProgress={globalProgress}
+                    showProgressBar={uploadingImages}
+                >
+                    <div>
+                        <p className="text-xl font-semibold">Amenities</p>
+                        <div className="grid gap-4 grid-cols-2 mt-4">
+                            {[
+                                { icon: waterIcon, label: "water" },
+                                { icon: electricityIcon, label: "electricity" },
+                                { icon: trashIcon, label: "trash" },
+                                { icon: parkingIcon, label: "parking" },
+                            ].map((a) => {
+                                const isSelected = form.amenities.includes(a.label);
+                                return (
+                                    <div
+                                        key={a.label}
+                                        onClick={() =>
+                                            setForm((p) => ({
+                                                ...p,
+                                                amenities: isSelected
+                                                    ? p.amenities.filter((item) => item !== a.label)
+                                                    : [...p.amenities, a.label],
+                                            }))
+                                        }
+                                        className={`flex px-4 py-10 rounded-xl bg-pale flex-col items-center justify-center cursor-pointer border-2 ${isSelected ? "border-primary/40 bg-primary/5" : "border-transparent"
+                                            }`}
+                                    >
+                                        <img src={a.icon} className="h-20 object-contain" alt="" />
+                                        <p className="mt-6 capitalize font-medium">{a.label}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </Shell>
+            )}
+
+            {currentStepID === 7 && (
+                <Shell
+                    onBack={() => setCurrentStepID(6)}
+                    onNext={handleFinalSubmit}
+                    nextText={isPending ? "Publishing..." : "Publish Post"}
+                    disabled={isPending || (monthsPad === "other" && (!form.months || form.months < 1))}
+                    globalProgress={globalProgress}
+                    showProgressBar={isPending}
+                >
+                    <div>
+                        <p className="text-xl font-semibold">Initial Payment</p>
+                        <p className="text-text/50 text-sm mt-1">Months upfront collection threshold</p>
+
+                        <div className="grid grid-cols-4 gap-3 mt-4">
+                            {monthsPadOptions.map((opt) => {
+                                const isSelected = monthsPad === opt;
+                                return (
+                                    <div
+                                        key={opt}
+                                        onClick={() => {
+                                            setMonthsPad(opt);
+                                            if (opt !== "other") {
+                                                setForm((p) => ({ ...p, months: Number(opt) }));
+                                            }
+                                        }}
+                                        className="relative h-16 bg-pale rounded-xl flex items-center justify-center cursor-pointer"
+                                    >
+                                        {isSelected && (
+                                            <motion.div
+                                                layoutId="monthsPadRing"
+                                                className="absolute inset-0 border border-primary bg-primary/5 rounded-xl z-0"
+                                                transition={{ duration: 0.2 }}
+                                            />
+                                        )}
+                                        <span className="relative z-10 font-medium capitalize text-sm">
+                                            {opt === "other" ? "Other" : opt}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {monthsPad === "other" && (
+                            <div className="flex flex-col gap-2 mt-4">
+                                <span className="text-sm">Custom number of months</span>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={form.months || ""}
+                                    onChange={(e) => setForm((p) => ({ ...p, months: Number(e.target.value) }))}
+                                    placeholder="e.g. 6"
+                                    className="outline-0 bg-pale h-14 rounded-lg px-6"
+                                />
+                            </div>
+                        )}
+                    </div>
+                </Shell>
+            )}
+
+            <AnimatePresence mode="wait">
+                {imageToCrop && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-paper z-[999] flex flex-col justify-between"
+                    >
+                        <div className="relative flex-1 bg-paper">
+                            <Cropper
+                                image={imageToCrop}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={4 / 3}
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                            />
+                        </div>
+                        <div className="bg-paper p-6 flex items-center justify-between gap-4">
+                            <button type="button" onClick={() => setImageToCrop(null)} className="btn bg-pale rounded-full text-white flex-1">
+                                Cancel
+                            </button>
+                            <button type="button" onClick={saveCroppedPhoto} className="btn bg-primary rounded-full text-white flex-1">
+                                Save & Add Photo
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <Modal
                 className="p-10"
-                actions={<><button onClick={() => setShowNegotiationModal(false)} className="btn bg-pale">no</button><button onClick={() => { setCurrentStepID(prev => prev + 1); setShowNegotiationModal(false) }} className="btn bg-primary text-white">yes</button></>}
-                open={showNegotiationModal} onClose={() => setShowNegotiationModal(false)}>
+                actions={
+                    <>
+                        <button
+                            onClick={() => {
+                                setForm((p) => ({ ...p, negotiable: false }));
+                                setCurrentStepID(6);
+                                setShowNegotiationModal(false);
+                            }}
+                            className="btn bg-pale"
+                        >
+                            no
+                        </button>
+                        <button
+                            onClick={() => {
+                                setForm((p) => ({ ...p, negotiable: true }));
+                                setCurrentStepID(6);
+                                setShowNegotiationModal(false);
+                            }}
+                            className="btn bg-primary text-white"
+                        >
+                            yes
+                        </button>
+                    </>
+                }
+                open={showNegotiationModal}
+                onClose={() => setShowNegotiationModal(false)}
+            >
                 <p className="text-xl font-semibold">Negotiation terms</p>
-                <p className="text-text/50 text-sm mt-1">is the price of the property negotiable</p>
-
-
-
+                <p className="text-text/50 text-sm mt-1">Is the price layout of this property negotiable?</p>
             </Modal>
         </>
-    )
-}
+    );
+};
 
-export default Upload
+export default Upload;
