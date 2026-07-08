@@ -6,16 +6,17 @@ import { useNavigate } from "react-router"
 export interface props {
     back?: boolean
     title?: string
+    noblur?: boolean
 }
 
-const Header = ({ back, title }: props) => {
+const Header = ({ back, title, noblur }: props) => {
 
     const { getUserPhoto } = useUserStore()
     const photo = getUserPhoto?.()
     const navigate = useNavigate()
 
     return (
-        <div className=" fixed max-h-[9vh] min-h-[9vh] border-b border-text/10 z-50 bg-paper dark:bg-paper/80 dark:backdrop-blur-sm top-0 w-full h-[8vh] flex items-center justify-between px-4">
+        <div className={`fixed max-h-[9vh] min-h-[9vh] border-b border-text/10 z-50 bg-paper  ${!noblur && "dark:backdrop-blur-sm dark:bg-paper/80"} top-0 w-full h-[8vh] flex items-center justify-between px-4`}>
 
             {
                 !back

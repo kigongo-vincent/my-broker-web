@@ -307,7 +307,7 @@ const Profile = () => {
 
     return (
         <div>
-            <div className='bg-primary p-10 relative h-[18vh]'>
+            <div className='bg-[url(https://images.pexels.com/photos/13551577/pexels-photo-13551577.jpeg)] bg-center bg-cover p-10 relative h-[18vh]'>
 
                 <button
                     onClick={() => navigate(-1)}

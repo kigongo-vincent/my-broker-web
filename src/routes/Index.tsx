@@ -12,6 +12,7 @@ import Users from "../pages/tabs/admin/Users"
 import Account from "../pages/tabs/user/Account"
 import Verify from "../pages/tabs/user/Verify"
 import PhoneChange from "../pages/tabs/user/PhoneChange"
+import MapP from "../pages/tabs/user/MapP"
 
 
 const Index = () => {
@@ -33,6 +34,7 @@ const Index = () => {
                 <Route path="/post/:id" Component={PostDetails} />
                 <Route path="/profile/:id" Component={Profile} />
                 <Route path="/search/:query" Component={Search} />
+                <Route path="/map" Component={MapP} />
                 <Route path="/filters" Component={Filter} />
                 <>
                     {/* <Header back /> */}
