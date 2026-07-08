@@ -26,7 +26,7 @@ const SettingComponent = (s: SettingComponentI) => {
                 {s?.icon}
             </span>
             <div className="flex flex-col  justify-center">
-                <p className="font-medium text-lg">{s?.title}</p>
+                <p className="font-medium ">{s?.title}</p>
                 <p className=" text-text/50">{s?.caption}</p>
             </div>
         </Link>
@@ -105,16 +105,18 @@ const Settings = () => {
 
     return (
         <div className="">
-            <p className="text-xl font-semibold  mt-10">Setting</p>
-            <p className="text-sm mb-10 mt-2  text-text/80">adjust the nobs of the app to match your preference</p>
+            <p className="text-xl font-medium  mt-10">Setting</p>
+            <p className="text-sm mb-10 mt-1  text-text/80">adjust the nobs of the app to match your preference</p>
             <FlexRender className="gap-6" items={settings} render={(item, index) => <SettingComponent {...item} key={index} />} />
 
             {/* logout  */}
             <Modal actions={<><button onClick={() => setShowlogoutModal(false)} className="btn bg-pale">cancel</button><button onClick={() => navigate(`/`)} className="btn bg-primary text-white">confirm</button></>} open={showLogoutModal} onClose={() => setShowlogoutModal(false)}>
 
-                <p className="text-2xl font-semibold">Logout confirmation</p>
-                <p className="bg-yellow-600/5 text-yellow-600 p-4 flex items-center gap-2 rounded mt-4">
-                    <ExclamationTriangleIcon className="h-6 w-6" />
+                <p className="text-2xl flex items-center mb-4 gap-2 font-semibold">
+
+                    <ExclamationTriangleIcon className="h-8 w-8" />
+                    Logout confirmation</p>
+                <p className="text-text/70">
                     Are you sure you want to logout</p>
             </Modal>
         </div>

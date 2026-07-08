@@ -50,7 +50,7 @@ const Home = () => {
                 <FlexRender className="gap-10" items={posts?.map(p => ({ ...p, author: user as UserI }))} render={(item, index) => <Post {...(item as PostI)} key={index} />} />
             }
 
-            <FAB onClick={() => setShowMap(true)} />
+            <FAB onClick={() => navigate(`/map`)} />
 
             <Modal position="right" open={showMap} onClose={() => setShowMap(false)}>
                 <Map properties={properties} />
