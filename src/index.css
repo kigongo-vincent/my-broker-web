@@ -5,7 +5,7 @@ html {
   font-size: 3.39vw;
   line-height: calc(3.3vw * 1.5);
   color: var(--color-text);
-  font-weight: 300;
+  font-weight: 400;
 }
 
 :root {

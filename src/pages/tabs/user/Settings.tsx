@@ -22,7 +22,7 @@ const SettingComponent = (s: SettingComponentI) => {
             to={s?.path ? s?.path : ""}
             onClick={() => s?.onPress?.()}
             className="flex items-center gap-3">
-            <span className="h-18 w-18 rounded-xl flex items-center justify-center bg-pale">
+            <span className="h-16 w-16 rounded-xl flex items-center justify-center bg-pale">
                 {s?.icon}
             </span>
             <div className="flex flex-col  justify-center">
@@ -105,8 +105,8 @@ const Settings = () => {
 
     return (
         <div className="">
-            <p className="text-xl font-medium  mt-10">Setting</p>
-            <p className="text-sm mb-10 mt-1  text-text/80">adjust the nobs of the app to match your preference</p>
+            <p className="text-xl font-medium  ">Setting</p>
+            <p className="text-sm mb-5 mt-1  text-text/80">adjust the nobs of the app to match your preference</p>
             <FlexRender className="gap-6" items={settings} render={(item, index) => <SettingComponent {...item} key={index} />} />
 
             {/* logout  */}

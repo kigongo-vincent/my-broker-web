@@ -19,7 +19,7 @@ const Index = () => {
 
     const click = (e: { preventDefault?: () => void }) => {
         e?.preventDefault?.()
-        navigator.vibrate(50)
+        // navigator.vibrate(50)
     }
 
     return (
