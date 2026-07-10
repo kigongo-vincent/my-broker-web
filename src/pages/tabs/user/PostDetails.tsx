@@ -213,7 +213,7 @@ text-sm
                     </button>
                 </div>
 
-                <Modal position="right" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>
+                <Modal position="bottom" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>
                     <div className="h-[90vh]   overflow-hidden w-full min-w-full">
                         <MapComponent theme={theme?.toUpperCase() as ColorScheme} />
                     </div>

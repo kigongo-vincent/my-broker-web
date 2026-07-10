@@ -8,7 +8,7 @@ const Index = () => {
 
     useEffect(() => {
         const timeout = setTimeout(() => {
-            navigate("/auth/");
+            navigate("/tabs/user");
         }, 2000);
 
         return () => clearTimeout(timeout);

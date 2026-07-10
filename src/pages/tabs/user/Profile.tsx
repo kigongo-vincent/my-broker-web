@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { UserI, useUserStore } from '../../../store/auth'
 import Post, { PostI } from '../../../components/pages/tabs/Post'
-import { useNavigate } from 'react-router'
 import FlexRender from '../../../components/base/FlexRender'
+import Header from '../../../components/pages/tabs/Header'
 
 export interface AccountI {
     user: Partial<UserI>
@@ -300,20 +300,19 @@ const Profile = () => {
             available: false,
         },
     ])
-    const navigate = useNavigate()
     useEffect(() => {
         setAccount(() => ({ posts: posts as PostI[], user: user }))
     }, [user])
 
     return (
         <div>
-            <div className='bg-[url(https://images.pexels.com/photos/13551577/pexels-photo-13551577.jpeg)] bg-center bg-cover p-10 relative h-[18vh]'>
+            <Header back title='vincent' caption='last seen 2hrs ago' />
 
-                <button
-                    onClick={() => navigate(-1)}
-                    className=' p-3 active:opacity-60 text-white rounded-full bg-white/10 px-8'>back</button>
+            <div className="h-[4vh]"></div>
 
-                <img src={getUserPhoto?.(account?.user?.photo)} className='h-50 w-50 left-[50%] transform -translate-x-[50%] top-20 border-4 border-paper absolute rounded-full object-cover' alt="" />
+            <div className='bg-pale bg-center bg-cover p-10 relative h-[18vh]'>
+
+                <img src={getUserPhoto?.(account?.user?.photo)} className='h-30 w-30 left-[50%] transform -translate-x-[50%] top-25 border-4 border-paper absolute rounded-full object-cover' alt="" />
 
 
 
