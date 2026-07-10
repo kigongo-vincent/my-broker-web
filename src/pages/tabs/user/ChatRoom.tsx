@@ -21,7 +21,7 @@ interface MessageI extends BaseI {
 const Message = ({ sender, attachment, text, CreatedAt }: MessageI) => {
 
     return (
-        <div className={`bg-paper ${sender && "bg-primary self-end text-white"} p-6 rounded-3xl max-w-[90%]`}>
+        <div className={`bg-pale ${sender && "bg-primary self-end text-white"} p-6 rounded-3xl max-w-[90%]`}>
             {text}
 
             {/* attachment  */}
@@ -139,7 +139,7 @@ const ChatRoom = () => {
     return (
         <div className="relative  overflow-hidden flex-1 h-screen">
 
-            <img src={bg} className="absolute h-full w-full object-cover" alt="" />
+            <img src={bg} className="absolute h-full dark:hidden w-full object-cover" alt="" />
 
             <div className={`absolute inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
 
@@ -169,7 +169,7 @@ const ChatRoom = () => {
 
                 {/* fixed input bar */}
                 <div className="shrink-0 flex items-center px-4 pb-5 pt-2 gap-2 w-full">
-                    <div className="rounded-full flex items-center px-6 bg-paper h-18 flex-1">
+                    <div className="rounded-full flex items-center px-6  border border-text/10 h-18 flex-1">
                         <input type="text" placeholder="say something" className="flex-1 outline-0" />
                         <button className="h-14 w-16 text-text/60 flex items-center justify-center">
                             <Lineicons icon={Camera1Solid} size={30} />
