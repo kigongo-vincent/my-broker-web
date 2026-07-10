@@ -31,18 +31,18 @@ const Index = () => {
                 <Route path="/upload" Component={Upload} />
                 <Route path="/tabs/*" Component={tabs} />
                 <Route path="/chat/:id" Component={ChatRoom} />
-                <Route path="/post/:id" Component={PostDetails} />
+                <Route path="/post/:postId" Component={PostDetails} />
                 <Route path="/profile/:id" Component={Profile} />
                 <Route path="/search/:query" Component={Search} />
                 <Route path="/map" Component={MapP} />
                 <Route path="/filters" Component={Filter} />
                 <>
-                    {/* <Header back /> */}
                     <>
                         <Route path="/users" Component={Users} />
                         <Route path="/account" Component={Account} />
                         <Route path="/verification" Component={Verify} />
-                        <Route path="/phone" Component={PhoneChange} /></>
+                        <Route path="/phone" Component={PhoneChange} />
+                    </>
                 </>
 
             </Routes>

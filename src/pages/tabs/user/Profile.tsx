@@ -61,7 +61,7 @@ const Profile = () => {
             bedrooms: 4,
             toilets: 4,
 
-            ammenities: [
+            amenities: [
                 "WiFi",
                 "Parking",
                 "24/7 Security",
@@ -131,7 +131,7 @@ const Profile = () => {
             bedrooms: 3,
             toilets: 2,
 
-            ammenities: [
+            amenities: [
                 "Parking",
                 "Security",
                 "WiFi",
@@ -200,7 +200,7 @@ const Profile = () => {
             bedrooms: 2,
             toilets: 2,
 
-            ammenities: [
+            amenities: [
                 "Netflix",
                 "Smart TV",
                 "WiFi",
@@ -274,7 +274,7 @@ const Profile = () => {
             bedrooms: 5,
             toilets: 5,
 
-            ammenities: [
+            amenities: [
                 "Swimming Pool",
                 "Gym",
                 "Parking",

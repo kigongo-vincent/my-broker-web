@@ -11,6 +11,9 @@ import { useInfinitePosts } from "../../../hooks/posts"
 interface FABProps extends HTMLAttributes<HTMLButtonElement> { }
 
 const FAB = ({ ...attr }: FABProps) => {
+
+
+
     return (
         <motion.button
             drag
@@ -43,12 +46,13 @@ const Home = () => {
         refetch,
     } = useInfinitePosts({ limit: LIMIT })
 
+
     const posts = useMemo(
         () => data?.pages.flatMap((page) => page.data) ?? [],
         [data]
     )
 
-    // console.log(posts[0])
+    console.log(posts)
 
     const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -82,14 +86,21 @@ const Home = () => {
         <div>
             <Search
                 filter
-                handleSubmit={() => navigate(`/search/${query}`)}
                 value={query}
                 onChange={(e) => setQuery(e?.currentTarget?.value || "")}
             />
 
+            <div className="mb-4 border border-primary/40 mt-5 h-[16vh] flex items-center gap-4 p-4 py-2 bg-primary/5 rounded-2xl">
+                <img src="https://static.vecteezy.com/system/resources/thumbnails/060/043/598/small/tranquil-picturesque-modern-apartment-building-facade-modular-design-no-background-with-transparent-background-sharp-free-png.png" className="  object-contain object-bottom rounded-xl h-full w-[35%]" alt="" />
+                <div className="flex flex-col items-start">
+                    <p className="text-lg font-semibold">20+ New listings</p>
+                    <p className="text-sm text-text/60 leading-5 mt-1">house hunting has never been easier & cheaper</p>
+                </div>
+            </div>
+
             <FlexRender
                 row
-                className="flex-row my-4 gap-2"
+                className="flex-row hidden my-4 gap-2"
                 items={tabs}
                 render={(item, index) => (
                     <div

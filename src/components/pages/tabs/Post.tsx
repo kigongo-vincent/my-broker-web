@@ -4,7 +4,6 @@ import { BaseI, UserI, useUserStore } from "../../../store/auth"
 import {
     HeartOutlined,
     HeartSolid,
-    MapMarker5Solid,
     Message2Solid,
     Telephone1Solid
 } from "@lineiconshq/free-icons"
@@ -13,8 +12,8 @@ import { CheckBadgeIcon } from "@heroicons/react/20/solid"
 import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
 
-export type PostType = "rental" | "short-stay"
-export type PostAssetType = "image" | "video"
+export type PostType = "rental" | "short-stay" | "residential"
+export type PostAssetType = "image" | "video" | "thumb"
 
 export interface PostAssetI {
     url: string
@@ -47,7 +46,7 @@ export interface PostI extends BaseI {
     bathrooms: number
     bedrooms: number
     toilets: number
-    ammenities: string[]
+    amenities: string[]
     negotiable: boolean
     extras: string[]
     months: number
@@ -122,6 +121,34 @@ export const User = ({ noActions, actions, ...u }: Props) => {
     )
 }
 
+// Reusable Native Image component to handle smooth transitions inside carousels safely
+const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholderSrc?: string; alt: string }) => {
+    const [highResLoaded, setHighResLoaded] = useState(false);
+
+    return (
+        <div className="absolute inset-0 w-full h-full bg-pale overflow-hidden">
+            {/* 1. Low-res blurred preview background layer */}
+            {placeholderSrc && !highResLoaded && (
+                <img
+                    src={placeholderSrc}
+                    className="absolute inset-0 w-full h-full object-cover scale-105 blur-xl transition-opacity duration-300 pointer-events-none"
+                    alt=""
+                />
+            )}
+
+            {/* 2. High-res target layer */}
+            <img
+                src={src}
+                alt={alt}
+                loading="lazy" // Native browser scheduling
+                onLoad={() => setHighResLoaded(true)}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-in-out ${highResLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+            />
+        </div>
+    );
+};
+
 const Post = (p: PostI) => {
     const [liked, setLiked] = useState(false)
     const navigate = useNavigate()
@@ -131,17 +158,14 @@ const Post = (p: PostI) => {
     }, [p?.liked])
 
     const handleLike = async (e: React.MouseEvent) => {
-        e.stopPropagation() // Prevents the click from triggering the post detail navigation
+        e.stopPropagation()
 
-        // 1. Optimistic UI update (Instant feedback)
         const previousLikedState = liked
         setLiked(!previousLikedState)
 
         try {
-            // 2. Fire the toggle request as a GET to match the backend router
             await ApiGet<any>(`posts/${p.ID}/favourite`)
         } catch (error) {
-            // 3. Rollback seamlessly if the server errors out
             setLiked(previousLikedState)
             console.error("Failed to toggle favourite on server:", error)
         }
@@ -152,79 +176,87 @@ const Post = (p: PostI) => {
     }
 
     return (
-        <div className="flex flex-col gap-4" onDoubleClick={handleClick}>
+        <div className="flex flex-col gap-4" onClick={handleClick}>
             {/* user */}
             <User {...p.author} />
 
             {/* assets */}
             <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide">
-                {p.assets?.map((item, index) => (
-                    <div
-                        key={index}
-                        className="relative shrink-0 snap-center w-[100%] h-[50vh] rounded-2xl overflow-hidden bg-pale"
-                    >
-                        {item.type === "image" ? (
-                            <img
-                                src={item.url}
-                                className="absolute inset-0 w-full h-full object-cover"
-                                alt=""
-                            />
-                        ) : (
-                            <video
-                                src={item.url}
-                                controls
-                                className="absolute inset-0 w-full h-full object-cover"
-                            />
-                        )}
+                {p.assets?.[0] && p.assets
+                    .filter(item => item.type === "image" || item.type === "video")
+                    .map((item, index) => {
+                        const originalIndex = p.assets.findIndex(a => a.url === item.url);
+                        const nextAsset = p.assets[originalIndex + 1];
+                        const thumbnailSrc = nextAsset && nextAsset.type === "thumb" ? nextAsset.url : undefined;
 
-                        {/* first asset overlay only */}
-                        {index === 0 && (
-                            <div className="absolute inset-0 p-8 flex flex-col justify-between bg-gradient-to-t from-black to-black/30">
-                                {/* actions */}
-                                <div className="flex justify-end z-10">
-                                    <button
-                                        onClick={handleLike}
-                                        className="bg-white/30 text-white p-4 rounded-2xl transition-transform active:scale-95"
-                                    >
-                                        <Lineicons icon={liked ? HeartSolid : HeartOutlined} />
-                                    </button>
-                                </div>
+                        return (
+                            <div
+                                key={index}
+                                className="relative shrink-0 snap-center w-[100%] h-[50vh] rounded-2xl overflow-hidden bg-pale"
+                            >
+                                {item.type === "image" ? (
+                                    <NativeLazyImage
+                                        alt={p.location?.name || ""}
+                                        src={item.url}
+                                        placeholderSrc={thumbnailSrc}
+                                    />
+                                ) : (
+                                    <video
+                                        src={item.url}
+                                        controls
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                    />
+                                )}
 
-                                {/* details */}
-                                <div onClick={handleClick} className="flex flex-col gap-3 text-white cursor-pointer">
-                                    <div className="flex gap-2 items-center">
-                                        <h2 className="text-2xl font-medium">
-                                            {p.price.currency} {p.price.amount.toLocaleString("en-US")}
-                                        </h2>
-
-                                        <Activity mode={p.negotiable ? "visible" : "hidden"}>
-                                            <span className="bg-primary/20 text-primary px-4 py-2 rounded-full text-sm">
-                                                negotiable
-                                            </span>
-                                        </Activity>
-                                    </div>
-
-                                    <div className="flex items-center gap-1 text-sm">
-                                        <Lineicons icon={MapMarker5Solid} className="h-6" />
-                                        <span className="underline">{p.location.name}</span>
-                                    </div>
-
-                                    <div className="flex gap-2 flex-wrap">
-                                        <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
-                                            {p.toilets} toilet{p.toilets !== 1 && "s"}
+                                {/* first asset overlay only */}
+                                {index === 0 && (
+                                    <div className="absolute inset-0 p-8 flex flex-col justify-between bg-gradient-to-t from-black to-black/30 ">
+                                        {/* actions */}
+                                        <div className="flex justify-end ">
+                                            <button
+                                                onClick={handleLike}
+                                                className="bg-white/30 text-white p-4 rounded-2xl transition-transform active:scale-95"
+                                            >
+                                                <Lineicons icon={liked ? HeartSolid : HeartOutlined} />
+                                            </button>
                                         </div>
-                                        <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
-                                            {p.bathrooms} bathroom{p.bathrooms !== 1 && "s"}
-                                        </div>
-                                        <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
-                                            {p.bedrooms} bedroom{p.bedrooms !== 1 && "s"}
+
+                                        {/* details */}
+                                        <div onClick={handleClick} className="flex flex-col gap-3 text-white cursor-pointer">
+                                            <div className="flex gap-2 items-center">
+                                                <h2 className="text-2xl font-medium">
+                                                    {p.price.currency} {p.price.amount.toLocaleString("en-US")}
+                                                </h2>
+
+                                                <Activity mode={p.negotiable ? "visible" : "hidden"}>
+                                                    <span className="bg-primary/20 text-primary px-4 py-2 rounded-full text-sm">
+                                                        negotiable
+                                                    </span>
+                                                </Activity>
+                                            </div>
+
+                                            <div className="flex items-center gap-1 text-sm">
+                                                <span>{p.location.name}</span>
+                                            </div>
+
+                                            <div className="flex gap-2 flex-wrap">
+                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
+                                                    {p.toilets} toilet{p.toilets !== 1 && "s"}
+                                                </div>
+                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
+                                                    {p.bathrooms} bathroom{p.bathrooms !== 1 && "s"}
+                                                </div>
+                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
+                                                    {p.bedrooms} bedroom{p.bedrooms !== 1 && "s"}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
-                        )}
-                    </div>
-                ))}
+                        );
+                    })
+                }
             </div>
         </div>
     )

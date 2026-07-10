@@ -732,7 +732,7 @@ const Upload = () => {
                 bathrooms: form?.bathrooms,
                 bedrooms: form?.bedrooms,
                 toilets: form?.toilets,
-                ammenities: form?.amenities,
+                amenities: form?.amenities,
                 negotiable: form?.negotiable,
                 extras: form?.extras,
                 months: form?.months,

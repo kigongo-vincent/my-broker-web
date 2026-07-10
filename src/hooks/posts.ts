@@ -5,6 +5,10 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 import { PostI } from "../components/pages/tabs/Post";
+// import commercialIcon from "../../../assets/upload/commercial.png";
+// import residentialIcon from "../../../assets/upload/residential.png";
+// import hostelIcon from "../../../assets/upload/hostel.png";
+
 
 // types/api.ts
 
@@ -54,7 +58,8 @@ export const usePosts = ({
 // hooks/useAddPost.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import imageCompression from "browser-image-compression";
-import { Post } from "../../api";
+import { Get, Post } from "../../api";
+import { useParams } from "react-router";
 
 /* ---------------------------------------------------------------------- */
 /* Env                                                                     */
@@ -596,3 +601,21 @@ export const useInfinitePosts = ({ limit }: UseInfinitePostsParams) => {
     },
   });
 };
+
+export const useGeoData = () => {
+  return useQuery({
+    queryKey: ["geo"],
+    queryFn: async () => await Get<Partial<PostI>[]>("posts/feed/geo"),
+  });
+};
+
+export const usePostDetails = () => {
+  const { postId } = useParams();
+  console.log(postId);
+  return useQuery({
+    queryKey: ["details"],
+    queryFn: async () => await Get<PostI>("posts/post/" + postId),
+  });
+};
+
+

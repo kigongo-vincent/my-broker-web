@@ -6,10 +6,11 @@ import { useNavigate } from "react-router"
 export interface props {
     back?: boolean
     title?: string
+    caption?: string
     noblur?: boolean
 }
 
-const Header = ({ back, title, noblur }: props) => {
+const Header = ({ back, title, noblur, caption }: props) => {
 
     const { getUserPhoto } = useUserStore()
     const photo = getUserPhoto?.()
@@ -33,11 +34,26 @@ const Header = ({ back, title, noblur }: props) => {
                     ?
                     <p className='font-semibold black-ops-one-regular text-2xl'>My Broker</p>
                     :
-                    <p className='font-medium   text-primary'>{title}</p>
+                    !caption
+                        ?
+                        <p className='font-semibold text-center text-xl'>{title}</p>
+                        :
+                        <div className="flex flex-col items-center justify-center">
+                            <p className='font-semibold '>{title}</p>
+                            <p className=' text-sm text-text/60'>{caption}</p>
+                        </div>
             }
 
-            <img src={photo} className="h-14 w-14 rounded-full object-cover" alt="" />
+            {
+                title
+                    ?
+                    <>
+                        <Logo className="h-16" />
+                    </>
+                    :
+                    <img src={photo} className="h-14 w-14 rounded-full object-cover" alt="" />
 
+            }
         </div>
     )
 }

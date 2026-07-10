@@ -1,129 +1,52 @@
-import { Activity, useEffect, useState } from "react"
-import { useNavigate, useParams } from "react-router"
-import { PostI, User } from "../../../components/pages/tabs/Post"
+import { Activity, useState } from "react"
+import { useNavigate } from "react-router"
+import { User } from "../../../components/pages/tabs/Post"
 import Header from "../../../components/pages/tabs/Header"
 import GoogleLogo from "../../../assets/google-maps-logo.png"
 import MapComponent from "../../../components/pages/upload/Map"
 import Modal from "../../../components/base/Modal"
 import { ExclamationTriangleIcon, PhoneIcon } from "@heroicons/react/20/solid"
 import { CategoryI } from "./Upload"
-import electricityIcon from "../../../assets/upload/electricity.png"
-import waterIcon from "../../../assets/upload/water.png"
-import parkingIcon from "../../../assets/upload/parking.png"
-import trashIcon from "../../../assets/upload/trash.png"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { ChatBubble2Solid } from "@lineiconshq/free-icons"
 import { UserI } from "../../../store/auth"
 import useSystemTheme from "../../../hooks/theme"
 import { ColorScheme } from "@vis.gl/react-google-maps"
+import { usePostDetails } from "../../../hooks/posts"
+import electricityIcon from "../../../assets/upload/electricity.png";
+import waterIcon from "../../../assets/upload/water.png";
+import parkingIcon from "../../../assets/upload/parking.png";
+import trashIcon from "../../../assets/upload/trash.png";
+
+interface IconI {
+    url: string;
+    label: IconType;
+}
+
+export const icons = [
+    { url: parkingIcon, label: "parking" },
+    { url: waterIcon, label: "water" },
+    { url: electricityIcon, label: "electricity" },
+    { url: trashIcon, label: "trash" },
+] as IconI[];
+export type IconType = "parking" | "water" | "electricity" | "trash";
+
+export const IconFinder = (i: IconType | string): string => {
+    return icons.find((ii) => ii?.label == i)?.url || "";
+};
 
 const PostDetails = () => {
-
-    const { id } = useParams()
-
-    const [post, setPost] = useState<PostI | undefined>()
     const [showMaP, setShowMap] = useState(false)
     const [image, setImage] = useState("")
     const { theme } = useSystemTheme()
 
     const navigate = useNavigate()
 
-    const ammenities: CategoryI[] = [
-        {
-            icon: waterIcon,
-            label: "water",
-            selected: true
-        },
-        {
-            icon: electricityIcon,
-            label: "electricity"
-        },
-        {
-            icon: trashIcon,
-            label: "trash",
-            selected: true
-        },
-        {
-            icon: parkingIcon,
-            label: "parking"
-        },
-    ]
 
-    useEffect(() => {
-        setPost(
-            {
-                ID: 42,
-                CreatedAt: "2026-06-28T08:15:00Z",
-                UpdatedAt: "2026-07-01T09:00:00Z",
-
-                author: {
-                    ID: 100,
-                    CreatedAt: "2025-03-10T11:12:00Z",
-                    UpdatedAt: "2026-07-01T09:00:00Z",
-                    name: "Joan Namubiru",
-                    email: "joan.namubiru@example.com",
-                    phone: "+256701234567",
-                    photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
-                    verified: true,
-                    broker: true,
-                    lastSeen: "2 hours ago",
-                },
-
-                type: "rental",
-
-                assets: [
-                    {
-                        url: "https://images.pexels.com/photos/35213047/pexels-photo-35213047.jpeg",
-                        type: "image",
-                    },
-                    {
-                        url: "https://images.pexels.com/photos/34662920/pexels-photo-34662920.jpeg",
-                        type: "image",
-                    },
-                    {
-                        url: "https://www.pexels.com/download/video/32477075/",
-                        type: "video",
-                    },
-                ],
-
-                price: {
-                    amount: 5500000,
-                    currency: "UGX",
-                },
-
-                location: {
-                    cordinates: {
-                        lat: 0.3345,
-                        lon: 32.5892,
-                    },
-                    name: "Kololo, Kampala",
-                },
-
-                bathrooms: 3,
-                bedrooms: 3,
-                toilets: 3,
-                ammenities: [
-                    "24/7 security",
-                    "Backup generator",
-                    "Borehole water",
-                    "2 parking slots",
-                    "Gated compound",
-                ],
-                negotiable: true,
-                extras: [
-                    "Garbage collection included",
-                    "Fitted kitchen cabinets",
-                    "Ensuite master bedroom",
-                ],
-                months: 12,
-                units: 1,
-                approved: true,
-                liked: false,
-                available: true,
-            }
-        )
-    }, [id])
-
+    const { data } = usePostDetails()
+    const post = data?.data
+    const ammenities = post?.amenities?.map(a => ({ label: a, icon: IconFinder(a) } as CategoryI))
+    console.log(post)
     return (
         <div className="w-full">
             <Header back />
@@ -280,18 +203,18 @@ text-sm
                 </div>
 
                 <div className="fixed h-22 gap-3 bottom-0 p-4 flex w-full bg-paper/80 backdrop-blur-sm shadow-md border-t left-0 border-text/5">
-                    <button className="btn bg-paper flex-1">
+                    <button className="btn bg-paper flex-1 rounded-full border border-text/10">
                         <PhoneIcon className="h-6 w-6" />
                         <span>contact owner</span>
                     </button>
-                    <button onClick={() => navigate("/chat/" + post?.author?.ID)} className="btn flex-1 bg-primary text-white">
+                    <button onClick={() => navigate("/chat/" + post?.author?.ID)} className="btn rounded-full flex-1 bg-primary text-white">
                         <Lineicons icon={ChatBubble2Solid} />
                         <span>chat in app</span>
                     </button>
                 </div>
 
-                <Modal open={showMaP} onClose={() => setShowMap(false)}>
-                    <div className="h-[60vh] min-h-[60vh] rounded-xl overflow-hidden w-full min-w-full">
+                <Modal position="right" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>
+                    <div className="h-[90vh]   overflow-hidden w-full min-w-full">
                         <MapComponent theme={theme?.toUpperCase() as ColorScheme} />
                     </div>
                 </Modal>
