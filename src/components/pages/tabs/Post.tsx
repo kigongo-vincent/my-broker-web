@@ -210,7 +210,7 @@ const Post = (p: PostI) => {
 
                                 {/* first asset overlay only */}
                                 {index === 0 && (
-                                    <div className="absolute inset-0 p-8 flex flex-col justify-between bg-gradient-to-t from-black to-black/30 ">
+                                    <div className="absolute inset-0 p-8 flex flex-col justify-between bg-gradient-to-t from-black from-20% to-black/30 ">
                                         {/* actions */}
                                         <div className="flex justify-end ">
                                             <button
@@ -240,13 +240,20 @@ const Post = (p: PostI) => {
                                             </div>
 
                                             <div className="flex gap-2 flex-wrap">
-                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
+                                                <div className="bg-white/10 min-w-max gap-1 px-4 h-12 flex items-center rounded-full">
+                                                    <img src="https://png.pngtree.com/png-vector/20230903/ourmid/pngtree-open-white-toilet-png-image_9951695.png" alt="" className="h-8 w-8 object-contain" />
                                                     {p.toilets} toilet{p.toilets !== 1 && "s"}
                                                 </div>
-                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
+                                                {/* <div className="bg-white/20 px-4 flex items-center py-3 rounded-full"> */}
+                                                <div className="bg-white/10 min-w-max px-4 h-12 gap-1 flex items-center rounded-full">
+
+                                                    <img src="https://static.vecteezy.com/system/resources/thumbnails/046/853/951/small_2x/eco-friendly-shower-solutions-free-png.png" alt="" className="h-8 w-8 object-contain" />
                                                     {p.bathrooms} bathroom{p.bathrooms !== 1 && "s"}
                                                 </div>
-                                                <div className="bg-white/20 px-5 flex items-center py-3 rounded-full">
+                                                {/* <div className="bg-white/20 px-4 flex items-center py-3 rounded-full"> */}
+                                                <div className="bg-white/10 min-w-max px-4 h-12 gap-2 flex items-center rounded-full">
+
+                                                    <img src="https://www.transparentpng.com/download/bed/black-white-elegant-bed-png-hd--rgrF4o.png" alt="" className="h-8 w-8 object-contain" />
                                                     {p.bedrooms} bedroom{p.bedrooms !== 1 && "s"}
                                                 </div>
                                             </div>
