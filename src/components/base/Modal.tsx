@@ -124,16 +124,16 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                                     onClick={(e) => e.stopPropagation()}
                                     className={`bg-black/20 w-full max-w-full sm:max-w-lg md:max-w-xl max-h-[90vh] rounded-t-3xl  flex flex-col overflow-hidden ${className ?? ""}`}
                                 >
+
                                     {/* header - fixed at top, close button centered, not scrollable */}
-                                    <div className="flex items-center justify-center py-3 shrink-0">
+                                    <div className="flex items-center justify-center  shrink-0">
                                         <button onClick={onClose} className="btn m-3 bg-pale w-full rounded-full">
                                             <XMarkIcon className="h-6 w-6" />
                                             close
                                         </button>
                                     </div>
-
                                     {/* content - scrollable, no padding */}
-                                    <div className="flex-grow overflow-auto min-h-0">
+                                    <div className="flex-grow m-4 mt-0 rounded-4xl overflow-auto min-h-0">
                                         {children}
                                     </div>
 

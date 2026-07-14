@@ -34,7 +34,7 @@ export interface AuthStoreI {
 
 export const STORAGE_KEY = "_jdncjnsckchsbchkbcknsncknksjncchbfk";
 export const AVATAR_FALLBACK =
-  "https://img.magnific.com/free-vector/user-blue-gradient_78370-4692.jpg?semt=ais_hybrid&w=740&q=80";
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTgQIQ9gOvBDOqy7Toi6lIFPzWbdrum3VdsDwtze4kuSw&s=10";
 
 export const useUserStore = create<AuthStoreI>()(
   persist(

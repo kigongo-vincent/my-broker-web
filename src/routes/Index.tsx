@@ -1,7 +1,6 @@
-import { Route, Routes } from "react-router"
+import { Navigate, Route, Routes } from "react-router"
 import auth from "./auth"
 import tabs from "./tabs"
-import SplashScreen from "../pages/Index"
 import Upload from "../pages/tabs/user/Upload"
 import ChatRoom from "../pages/tabs/user/ChatRoom"
 import PostDetails from "../pages/tabs/user/PostDetails"
@@ -26,7 +25,7 @@ const Index = () => {
         <div onClick={click}>
 
             <Routes>
-                <Route path="/" Component={SplashScreen} />
+                <Route path="/" Component={() => <Navigate to="/tabs/user/" replace />} />
                 <Route path="/auth/*" Component={auth} />
                 <Route path="/upload" Component={Upload} />
                 <Route path="/tabs/*" Component={tabs} />

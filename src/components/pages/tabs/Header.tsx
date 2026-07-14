@@ -1,5 +1,5 @@
 
-import { useUserStore } from "../../../store/auth"
+import { UserI, useUserStore } from "../../../store/auth"
 import Logo from "../../base/Logo"
 import { useNavigate } from "react-router"
 
@@ -12,8 +12,8 @@ export interface props {
 
 const Header = ({ back, title, noblur, caption }: props) => {
 
-    const { getUserPhoto } = useUserStore()
-    const photo = getUserPhoto?.()
+    const { getUserPhoto, user } = useUserStore()
+    const photo = getUserPhoto?.((user as UserI)?.photo)
     const navigate = useNavigate()
 
     return (
@@ -51,7 +51,7 @@ const Header = ({ back, title, noblur, caption }: props) => {
                         <Logo className="h-16" />
                     </>
                     :
-                    <img src={photo} className="h-14 w-14 rounded-full object-cover" alt="" />
+                    <img src={photo} className="h-12 w-12 rounded-full object-cover" alt="" />
 
             }
         </div>

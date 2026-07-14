@@ -15,24 +15,23 @@ const Tab = (t: LinkI) => {
     const isActive = useMemo(() => pathname == t?.path, [pathname, t?.path])
     const uploadStyles = useMemo(() => t?.path?.includes("upload") ? "bg-primary text-white " : "", [pathname])
     const navigate = useNavigate()
-
-    console.log(`current: ${pathname}, path: ${t?.path}, active: ${isActive}`)
+    const hasBadge = typeof t.badge === "number" ? t.badge > 0 : Boolean(t.badge)
 
     return (
         <div className="flex flex-col items-center ">
             <div
                 onClick={() => navigate(t?.path)}
-                className={`h-16 cursor-pointer relative w-16 flex items-center justify-center rounded-2xl  ${isActive ? "text-text bg-paper " : "text-text/50"} ${uploadStyles}`}>
+                className={`h-16 cursor-pointer relative w-16 flex items-center justify-center rounded-2xl  ${isActive ? "  text-primary" : "text-text/50"} ${uploadStyles}`}>
                 <span>{t?.icon}</span>
 
 
 
                 {/* badge  */}
-                <Activity mode={t?.badge ? "visible" : "hidden"}>
+                <Activity mode={hasBadge ? "visible" : "hidden"}>
                     <span className="bg-danger top-0 flex items-center justify-center text-sm right-0 h-8 text-white w-8 rounded-full absolute">{t?.badge}</span>
                 </Activity>
             </div>
-            <span className="text-[2.9vw] font-medium">{t?.label}</span>
+            <span className={`${isActive && "text-primary"} text-[2.9vw] font-medium`}>{t?.label}</span>
         </div>
     )
 }

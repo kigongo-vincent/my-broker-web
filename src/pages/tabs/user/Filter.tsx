@@ -2,8 +2,10 @@ import { useState } from "react"
 import { MapMarker1Solid, MapMarker5Solid } from "@lineiconshq/free-icons"
 import Header from "../../../components/pages/tabs/Header"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { PriceI, Currency } from "../../../components/pages/tabs/Post"
+import { PriceI, Currency, PostType } from "../../../components/pages/tabs/Post"
 import { AnimatePresence, motion } from "framer-motion"
+import { useNavigate } from "react-router"
+import { useAppStore } from "../../../store/app"
 
 interface PriceRangeI {
     label: string
@@ -11,45 +13,209 @@ interface PriceRangeI {
     max: PriceI
 }
 
+interface ResolvedLocation {
+    lat: number
+    lon: number
+    label: string
+}
+
+type TriState = "any" | "yes" | "no"
+
 interface FilterState {
-    location: string
+    locationQuery: string
+    resolvedLocation: ResolvedLocation | null
+    radius: number // meters
     minPrice: string
     maxPrice: string
     currency: Currency
     bedroom: string
     bathroom: string
     toilets: string
+    type: PostType | ""
+    negotiable: TriState
+    available: TriState
+    amenities: string[]
+    extras: string[]
+    months: string
+    units: string
+}
+
+export interface FilterColumn {
+    label?: string
+    column: string
+    operator: string
+    value: unknown
 }
 
 const initialFilterState: FilterState = {
-    location: "",
+    locationQuery: "",
+    resolvedLocation: null,
+    radius: 200,
     minPrice: "",
     maxPrice: "",
     currency: "UGX",
     bedroom: "",
     bathroom: "",
     toilets: "",
+    type: "",
+    negotiable: "any",
+    available: "any",
+    amenities: [],
+    extras: [],
+    months: "",
+    units: "",
 }
 
 // common ranges for the Ugandan property market — adjust cutoffs as needed
 const PRICE_RANGES: PriceRangeI[] = [
-    { label: "Under 500K", min: { amount: 0, currency: "UGX" }, max: { amount: 500_000, currency: "UGX" } },
-    { label: "500K - 1M", min: { amount: 500_000, currency: "UGX" }, max: { amount: 1_000_000, currency: "UGX" } },
-    { label: "1M - 3M", min: { amount: 1_000_000, currency: "UGX" }, max: { amount: 3_000_000, currency: "UGX" } },
-    { label: "3M - 5M", min: { amount: 3_000_000, currency: "UGX" }, max: { amount: 5_000_000, currency: "UGX" } },
-    { label: "5M - 10M", min: { amount: 5_000_000, currency: "UGX" }, max: { amount: 10_000_000, currency: "UGX" } },
-    { label: "10M - 50M", min: { amount: 10_000_000, currency: "UGX" }, max: { amount: 50_000_000, currency: "UGX" } },
-    { label: "50M - 100M", min: { amount: 50_000_000, currency: "UGX" }, max: { amount: 100_000_000, currency: "UGX" } },
-    { label: "100M+", min: { amount: 100_000_000, currency: "UGX" }, max: { amount: Number.MAX_SAFE_INTEGER, currency: "UGX" } },
+    { label: "Under 50K", min: { amount: 0, currency: "UGX" }, max: { amount: 50_000, currency: "UGX" } },
+    { label: "50K - 200K", min: { amount: 50_000, currency: "UGX" }, max: { amount: 200_000, currency: "UGX" } },
+    { label: "200K - 300K", min: { amount: 200_000, currency: "UGX" }, max: { amount: 300_000, currency: "UGX" } },
+    { label: "300K - 450K", min: { amount: 300_000, currency: "UGX" }, max: { amount: 450_000, currency: "UGX" } },
+    { label: "450K - 1M", min: { amount: 450_000, currency: "UGX" }, max: { amount: 1_000_000, currency: "UGX" } },
+    { label: "1M - 1.5M", min: { amount: 1_000_000, currency: "UGX" }, max: { amount: 1_500_000, currency: "UGX" } },
+    { label: "1.5M - 2.5M", min: { amount: 1_500_000, currency: "UGX" }, max: { amount: 2_500_000, currency: "UGX" } },
+    { label: "2.5M - 4M", min: { amount: 2_500_000, currency: "UGX" }, max: { amount: 4_000_000, currency: "UGX" } },
+    { label: "4M - 7M", min: { amount: 4_000_000, currency: "UGX" }, max: { amount: 7_000_000, currency: "UGX" } },
+    { label: "7M - 12M", min: { amount: 7_000_000, currency: "UGX" }, max: { amount: 12_000_000, currency: "UGX" } },
+    { label: "12M+", min: { amount: 12_000_000, currency: "UGX" }, max: { amount: Number.MAX_SAFE_INTEGER, currency: "UGX" } },
 ]
 
+const RADIUS_OPTIONS: { label: string; meters: number }[] = [
+    { label: "100m", meters: 100 },
+    { label: "200m", meters: 200 },
+    { label: "400m", meters: 400 },
+    { label: "800m", meters: 800 },
+    { label: "1.6km", meters: 1600 },
+]
+
+const POST_TYPES: { label: string; value: PostType }[] = [
+    { label: "Rental", value: "rental" },
+    { label: "Short stay", value: "short-stay" },
+    { label: "Residential", value: "residential" },
+]
+
+// Starter tag lists — these aren't sourced from the backend, so treat as a
+// reasonable default set; swap for a canonical list if one exists server-side.
+const AMENITY_OPTIONS = [
+    "Water", "Electricity", "Security", "Parking", "Furnished",
+    "Backup Generator", "Borehole", "Swimming Pool", "Gym", "WiFi",
+]
+const EXTRA_OPTIONS = [
+    "Balcony", "Garden", "Servant's Quarter", "CCTV", "Perimeter Wall", "Store",
+]
+
+// Reverse of buildColumns(): turns whatever is currently persisted in the
+// zustand store back into the shape the form controls need. Column names /
+// operators here must stay in sync with buildColumns() below.
+const parseFiltersFromColumns = (columns: FilterColumn[]): FilterState => {
+    const state: FilterState = { ...initialFilterState, amenities: [], extras: [] }
+
+    for (const col of columns) {
+        switch (col.column) {
+            case "location": {
+                const v = col.value as { lat?: number; lon?: number; radius?: number } | undefined
+                if (v && typeof v.lat === "number" && typeof v.lon === "number") {
+                    const label = `${v.lat}, ${v.lon}`
+                    state.resolvedLocation = { lat: v.lat, lon: v.lon, label }
+                    state.locationQuery = label
+                    if (typeof v.radius === "number") state.radius = v.radius
+                }
+                break
+            }
+            case "(price->>'amount')::numeric": {
+                if (col.operator === "gte") {
+                    state.minPrice = String(col.value)
+                } else if (col.operator === "lte") {
+                    state.maxPrice = String(col.value)
+                }
+                break
+            }
+            case "bedrooms":
+                state.bedroom = String(col.value)
+                break
+            case "bathrooms":
+                state.bathroom = String(col.value)
+                break
+            case "toilets":
+                state.toilets = String(col.value)
+                break
+            case "type":
+                state.type = col.value as PostType
+                break
+            case "negotiable":
+                state.negotiable = col.value ? "yes" : "no"
+                break
+            case "available":
+                state.available = col.value ? "yes" : "no"
+                break
+            case "months":
+                state.months = String(col.value)
+                break
+            case "units":
+                state.units = String(col.value)
+                break
+            case "amenities":
+                state.amenities = Array.isArray(col.value) ? (col.value as string[]) : []
+                break
+            case "extras":
+                state.extras = Array.isArray(col.value) ? (col.value as string[]) : []
+                break
+            default:
+                break
+        }
+    }
+
+    return state
+}
+
+// Figures out whether the hydrated min/max price matches one of the presets,
+// so the preset button shows as active instead of looking unselected.
+const findMatchingRangeLabel = (state: FilterState): string | null => {
+    if (!state.minPrice && !state.maxPrice) return null
+
+    const match = PRICE_RANGES.find((range) => {
+        const minMatches = String(range.min.amount) === (state.minPrice || "0")
+        const maxMatches =
+            range.max.amount === Number.MAX_SAFE_INTEGER
+                ? state.maxPrice === ""
+                : String(range.max.amount) === state.maxPrice
+        return minMatches && maxMatches
+    })
+
+    return match?.label ?? null
+}
+
 const Filter = () => {
-    const [filters, setFilters] = useState<FilterState>(initialFilterState)
+    const { filters: storedColumns, updateFilters } = useAppStore()
+
+    const [filters, setFilters] = useState<FilterState>(() =>
+        storedColumns && storedColumns.length > 0
+            ? parseFiltersFromColumns(storedColumns)
+            : initialFilterState
+    )
+    const [activeRangeLabel, setActiveRangeLabel] = useState<string | null>(() =>
+        storedColumns && storedColumns.length > 0
+            ? findMatchingRangeLabel(parseFiltersFromColumns(storedColumns))
+            : null
+    )
     const [locating, setLocating] = useState(false)
-    const [activeRangeLabel, setActiveRangeLabel] = useState<string | null>(null)
+    const [geocoding, setGeocoding] = useState(false)
+    const [applying, setApplying] = useState(false)
+    const navigate = useNavigate()
 
     const updateField = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
         setFilters((prev) => ({ ...prev, [key]: value }))
+    }
+
+    const toggleTag = (key: "amenities" | "extras", tag: string) => {
+        setFilters((prev) => {
+            const current = prev[key]
+            const next = current.includes(tag)
+                ? current.filter((t) => t !== tag)
+                : [...current, tag]
+            return { ...prev, [key]: next }
+        })
     }
 
     const handleUseCurrentLocation = () => {
@@ -64,15 +230,54 @@ const Filter = () => {
                         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
                     )
                     const data = await res.json()
-                    updateField("location", data.display_name ?? `${latitude}, ${longitude}`)
+                    const label = data.display_name ?? `${latitude}, ${longitude}`
+                    setFilters((prev) => ({
+                        ...prev,
+                        locationQuery: label,
+                        resolvedLocation: { lat: latitude, lon: longitude, label },
+                    }))
                 } catch {
-                    updateField("location", `${latitude}, ${longitude}`)
+                    setFilters((prev) => ({
+                        ...prev,
+                        locationQuery: `${latitude}, ${longitude}`,
+                        resolvedLocation: { lat: latitude, lon: longitude, label: `${latitude}, ${longitude}` },
+                    }))
                 } finally {
                     setLocating(false)
                 }
             },
             () => setLocating(false)
         )
+    }
+
+    // Forward geocode typed text into coordinates. Radius search needs a lat/lon,
+    // so free-typed addresses have to be resolved before they're useful as a filter.
+    const handleGeocodeTypedLocation = async () => {
+        if (!filters.locationQuery.trim()) return
+
+        setGeocoding(true)
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(filters.locationQuery.trim())}`
+            )
+            const results = await res.json()
+            const first = results?.[0]
+            if (first) {
+                updateField("resolvedLocation", {
+                    lat: Number(first.lat),
+                    lon: Number(first.lon),
+                    label: first.display_name ?? filters.locationQuery.trim(),
+                })
+            }
+        } catch {
+            // leave resolvedLocation as-is; handleApplyFilters will just skip the radius filter
+        } finally {
+            setGeocoding(false)
+        }
+    }
+
+    const handleLocationTextChange = (value: string) => {
+        setFilters((prev) => ({ ...prev, locationQuery: value, resolvedLocation: null }))
     }
 
     const handleSelectRange = (range: PriceRangeI) => {
@@ -90,42 +295,99 @@ const Filter = () => {
         updateField(key, value)
     }
 
-    const buildPriceRange = (): { min?: PriceI; max?: PriceI } => {
-        const min = filters.minPrice
-            ? { amount: Number(filters.minPrice), currency: filters.currency }
-            : undefined
-        const max = filters.maxPrice
-            ? { amount: Number(filters.maxPrice), currency: filters.currency }
-            : undefined
-        return { min, max }
-    }
+    const buildColumns = (): FilterColumn[] => {
+        const columns: FilterColumn[] = []
 
-    const handleApplyFilters = () => {
-        const { min, max } = buildPriceRange()
-        const payload = {
-            location: filters.location || undefined,
-            price: { min, max },
-            bedroom: filters.bedroom ? Number(filters.bedroom) : undefined,
-            bathroom: filters.bathroom ? Number(filters.bathroom) : undefined,
-            toilets: filters.toilets ? Number(filters.toilets) : undefined,
+        if (filters.resolvedLocation) {
+            columns.push({
+                column: "location",
+                operator: "within_radius",
+                label: "location",
+                value: {
+                    lat: filters.resolvedLocation.lat,
+                    lon: filters.resolvedLocation.lon,
+                    radius: filters.radius,
+                },
+            })
         }
 
-        // TODO: wire this into your search/query state (Zustand store, router query params, etc.)
-        console.log("Applying filters:", payload)
+        if (filters.minPrice) {
+            columns.push({
+                column: "(price->>'amount')::numeric",
+                operator: "gte",
+                label: "minimum price",
+                value: Number(filters.minPrice),
+            })
+        }
+
+        if (filters.maxPrice) {
+            columns.push({
+                column: "(price->>'amount')::numeric",
+                operator: "lte",
+                label: "maximum price",
+                value: Number(filters.maxPrice),
+            })
+        }
+
+        if (filters.bedroom) {
+            columns.push({ column: "bedrooms", operator: "eq", value: Number(filters.bedroom), label: "bedrooms" })
+        }
+        if (filters.bathroom) {
+            columns.push({ column: "bathrooms", operator: "eq", value: Number(filters.bathroom), label: "bathrooms" })
+        }
+        if (filters.toilets) {
+            columns.push({ column: "toilets", operator: "eq", value: Number(filters.toilets), label: "toilets" })
+        }
+        if (filters.type) {
+            columns.push({ column: "type", operator: "eq", value: filters.type, label: "property type" })
+        }
+        if (filters.negotiable !== "any") {
+            columns.push({ column: "negotiable", operator: "eq", value: filters.negotiable === "yes", label: "barginable" })
+        }
+        if (filters.available !== "any") {
+            columns.push({ column: "available", operator: "eq", value: filters.available === "yes" })
+        }
+        if (filters.months) {
+            columns.push({ column: "months", operator: "eq", value: Number(filters.months), label: "allowed months" })
+        }
+        if (filters.units) {
+            columns.push({ column: "units", operator: "eq", value: Number(filters.units), label: "avialable units" })
+        }
+        if (filters.amenities.length > 0) {
+            columns.push({ column: "amenities", operator: "contains_all", value: filters.amenities, label: "amenities" })
+        }
+        if (filters.extras.length > 0) {
+            columns.push({ column: "extras", operator: "contains_all", value: filters.extras, label: "extras" })
+        }
+
+        return columns
+    }
+
+    const handleApplyFilters = async () => {
+        setApplying(true)
+        try {
+            updateFilters(buildColumns())
+            navigate("/tabs/user")
+
+        } catch (err) {
+            // Post() already shows a toast on failure; nothing else needed here
+            console.error("Failed to apply filters:", err)
+        } finally {
+            setApplying(false)
+        }
     }
 
     const handleReset = () => {
         setFilters(initialFilterState)
         setActiveRangeLabel(null)
+        // clear the persisted filters too, otherwise leaving and re-entering
+        // this screen would silently repopulate the "reset" form
+        updateFilters([])
     }
 
     return (
         <AnimatePresence mode="sync">
-
-            <motion.div
-
-
-            >
+            <motion.div>
                 <Header back />
                 <div className="pt-[8vh] p-4">
                     <div className="flex flex-col gap-4 mt-6 rounded-lg">
@@ -144,20 +406,56 @@ const Filter = () => {
                             <span>{locating ? "locating..." : "use current location"}</span>
                         </button>
 
-                        <div className="bg-pale  w-full dark:border border-text/10 rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
+                        <div className="bg-pale w-full dark:border border-text/10 rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
                             <Lineicons icon={MapMarker5Solid} className="text-text/50" />
                             <input
                                 type="text"
                                 placeholder="provide the location"
                                 className="flex-1 outline-0"
-                                value={filters.location}
-                                onChange={(e) => updateField("location", e.target.value)}
+                                value={filters.locationQuery}
+                                onChange={(e) => handleLocationTextChange(e.target.value)}
+                                onBlur={handleGeocodeTypedLocation}
                             />
+                            {filters.locationQuery.trim() && !filters.resolvedLocation && (
+                                <button
+                                    type="button"
+                                    className="btn bg-primary rounded-full text-white text-sm px-4 disabled:opacity-60"
+                                    onClick={handleGeocodeTypedLocation}
+                                    disabled={geocoding}
+                                >
+                                    {geocoding ? "..." : "find"}
+                                </button>
+                            )}
                         </div>
+
+                        {filters.resolvedLocation && (
+                            <div className="flex flex-col gap-2">
+                                <span className="text-sm">Search radius</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {RADIUS_OPTIONS.map((opt) => (
+                                        <button
+                                            key={opt.label}
+                                            type="button"
+                                            onClick={() => updateField("radius", opt.meters)}
+                                            className={`px-4 py-2 rounded-full text-sm transition-colors ${filters.radius === opt.meters
+                                                ? "bg-primary text-white border-primary"
+                                                : "bg-pale text-text border-text/10"
+                                                }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {!filters.resolvedLocation && filters.locationQuery.trim() && (
+                            <p className="text-xs text-text/50">
+                                tap "find" to resolve this address before radius search applies
+                            </p>
+                        )}
 
                         <div className="flex flex-col gap-2">
                             <span className="text-sm">Price</span>
-
                             <div className="flex flex-wrap gap-2">
                                 {PRICE_RANGES.map((range) => {
                                     const isActive = activeRangeLabel === range.label
@@ -166,7 +464,7 @@ const Filter = () => {
                                             key={range.label}
                                             type="button"
                                             onClick={() => handleSelectRange(range)}
-                                            className={`px-4 py-2 rounded-full text-sm  transition-colors ${isActive
+                                            className={`px-4 py-2 rounded-full text-sm transition-colors ${isActive
                                                 ? "bg-primary text-white border-primary"
                                                 : "bg-pale text-text border-text/10"
                                                 }`}
@@ -176,7 +474,6 @@ const Filter = () => {
                                     )
                                 })}
                             </div>
-
                             <div className="flex items-center gap-2 w-full mt-1">
                                 <input
                                     type="number"
@@ -192,6 +489,25 @@ const Filter = () => {
                                     value={filters.maxPrice}
                                     onChange={(e) => handleManualPriceChange("maxPrice", e.target.value)}
                                 />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <span className="text-sm">Property type</span>
+                            <div className="flex flex-wrap gap-2">
+                                {POST_TYPES.map((t) => (
+                                    <button
+                                        key={t.value}
+                                        type="button"
+                                        onClick={() => updateField("type", filters.type === t.value ? "" : t.value)}
+                                        className={`px-4 py-2 rounded-full text-sm transition-colors ${filters.type === t.value
+                                            ? "bg-primary text-white border-primary"
+                                            : "bg-pale text-text border-text/10"
+                                            }`}
+                                    >
+                                        {t.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
@@ -228,12 +544,116 @@ const Filter = () => {
                             />
                         </div>
 
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex flex-col gap-2">
+                            <span className="text-sm">months (lease length)</span>
+                            <input
+                                type="number"
+                                className="outline-0 bg-pale h-14 rounded-lg px-6"
+                                placeholder="e.g 12"
+                                value={filters.months}
+                                onChange={(e) => updateField("months", e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <span className="text-sm">units available</span>
+                            <input
+                                type="number"
+                                className="outline-0 bg-pale h-14 rounded-lg px-6"
+                                placeholder="e.g 1"
+                                value={filters.units}
+                                onChange={(e) => updateField("units", e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <span className="text-sm">negotiable</span>
+                            <div className="flex gap-2">
+                                {(["any", "yes", "no"] as TriState[]).map((v) => (
+                                    <button
+                                        key={v}
+                                        type="button"
+                                        onClick={() => updateField("negotiable", v)}
+                                        className={`px-4 py-2 rounded-full text-sm capitalize transition-colors ${filters.negotiable === v
+                                            ? "bg-primary text-white border-primary"
+                                            : "bg-pale text-text border-text/10"
+                                            }`}
+                                    >
+                                        {v}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <span className="text-sm">available</span>
+                            <div className="flex gap-2">
+                                {(["any", "yes", "no"] as TriState[]).map((v) => (
+                                    <button
+                                        key={v}
+                                        type="button"
+                                        onClick={() => updateField("available", v)}
+                                        className={`px-4 py-2 rounded-full text-sm capitalize transition-colors ${filters.available === v
+                                            ? "bg-primary text-white border-primary"
+                                            : "bg-pale text-text border-text/10"
+                                            }`}
+                                    >
+                                        {v}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <span className="text-sm">amenities</span>
+                            <div className="flex flex-wrap gap-2">
+                                {AMENITY_OPTIONS.map((tag) => (
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => toggleTag("amenities", tag)}
+                                        className={`px-4 py-2 rounded-full text-sm transition-colors ${filters.amenities.includes(tag)
+                                            ? "bg-primary text-white border-primary"
+                                            : "bg-pale text-text border-text/10"
+                                            }`}
+                                    >
+                                        {tag}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            <span className="text-sm">extras</span>
+                            <div className="flex flex-wrap gap-2">
+                                {EXTRA_OPTIONS.map((tag) => (
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => toggleTag("extras", tag)}
+                                        className={`px-4 py-2 rounded-full text-sm transition-colors ${filters.extras.includes(tag)
+                                            ? "bg-primary text-white border-primary"
+                                            : "bg-pale text-text border-text/10"
+                                            }`}
+                                    >
+                                        {tag}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="min-h-20"></div>
+
+                        <div className="flex gap-2 mt-2 fixed bottom-0 w-full left-0 p-4 backdrop-blur-md border-t border-text/10">
                             <button className="btn rounded-full bg-pale flex-1" onClick={handleReset}>
                                 reset
                             </button>
-                            <button className="btn bg-primary rounded-full text-white flex-1" onClick={handleApplyFilters}>
-                                apply filters
+                            <button
+                                className="btn bg-primary rounded-full text-white flex-1 disabled:opacity-60"
+                                onClick={handleApplyFilters}
+                                disabled={applying}
+                            >
+                                {applying ? "applying..." : "apply filters"}
                             </button>
                         </div>
 
@@ -241,7 +661,6 @@ const Filter = () => {
                 </div>
             </motion.div>
         </AnimatePresence>
-
     )
 }
 

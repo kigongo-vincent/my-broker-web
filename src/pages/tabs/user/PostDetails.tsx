@@ -2,21 +2,21 @@ import { Activity, useState } from "react"
 import { useNavigate } from "react-router"
 import { User } from "../../../components/pages/tabs/Post"
 import Header from "../../../components/pages/tabs/Header"
-import GoogleLogo from "../../../assets/google-maps-logo.png"
+import GoogleLogo from "../../../assets/google-maps-logo.webp"
 import MapComponent from "../../../components/pages/upload/Map"
 import Modal from "../../../components/base/Modal"
 import { ExclamationTriangleIcon, PhoneIcon } from "@heroicons/react/20/solid"
 import { CategoryI } from "./Upload"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { ChatBubble2Solid } from "@lineiconshq/free-icons"
-import { UserI } from "../../../store/auth"
+import { UserI, useUserStore } from "../../../store/auth"
 import useSystemTheme from "../../../hooks/theme"
 import { ColorScheme } from "@vis.gl/react-google-maps"
 import { usePostDetails } from "../../../hooks/posts"
-import electricityIcon from "../../../assets/upload/electricity.png";
-import waterIcon from "../../../assets/upload/water.png";
-import parkingIcon from "../../../assets/upload/parking.png";
-import trashIcon from "../../../assets/upload/trash.png";
+import electricityIcon from "../../../assets/upload/electricity.webp";
+import waterIcon from "../../../assets/upload/water.webp";
+import parkingIcon from "../../../assets/upload/parking.webp";
+import trashIcon from "../../../assets/upload/trash.webp";
 
 interface IconI {
     url: string;
@@ -38,15 +38,17 @@ export const IconFinder = (i: IconType | string): string => {
 const PostDetails = () => {
     const [showMaP, setShowMap] = useState(false)
     const [image, setImage] = useState("")
+    const [showAuthPrompt, setShowAuthPrompt] = useState(false)
     const { theme } = useSystemTheme()
+    const { user } = useUserStore()
 
     const navigate = useNavigate()
+    const isAuthenticated = Boolean((user as UserI)?.ID)
 
 
     const { data } = usePostDetails()
     const post = data?.data
     const ammenities = post?.amenities?.map(a => ({ label: a, icon: IconFinder(a) } as CategoryI))
-    console.log(post)
     return (
         <div className="w-full">
             <Header back />
@@ -203,11 +205,11 @@ text-sm
                 </div>
 
                 <div className="fixed h-22 gap-3 bottom-0 p-4 flex w-full bg-paper/80 backdrop-blur-sm shadow-md border-t left-0 border-text/5">
-                    <button className="btn bg-paper flex-1 rounded-full border border-text/10">
+                    <button onClick={() => isAuthenticated ? window.open(`tel:${post?.author?.phone || ""}`, "_self") : setShowAuthPrompt(true)} className="btn bg-paper flex-1 rounded-full border border-text/10">
                         <PhoneIcon className="h-6 w-6" />
                         <span>contact owner</span>
                     </button>
-                    <button onClick={() => navigate("/chat/" + post?.author?.ID)} className="btn rounded-full flex-1 bg-primary text-white">
+                    <button onClick={() => isAuthenticated ? navigate("/chat/" + post?.author?.ID) : setShowAuthPrompt(true)} className="btn rounded-full flex-1 bg-primary text-white">
                         <Lineicons icon={ChatBubble2Solid} />
                         <span>chat in app</span>
                     </button>
@@ -216,6 +218,17 @@ text-sm
                 <Modal position="bottom" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>
                     <div className="h-[90vh]   overflow-hidden w-full min-w-full">
                         <MapComponent theme={theme?.toUpperCase() as ColorScheme} />
+                    </div>
+                </Modal>
+
+                <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
+                    <div className="rounded-3xl bg-paper p-4">
+                        <p className="text-xl font-semibold">Sign in to continue</p>
+                        <p className="mt-2 text-sm text-text/60">Log in or create an account to contact owners and start chats.</p>
+                        <div className="mt-6 flex gap-3">
+                            <button onClick={() => { setShowAuthPrompt(false); navigate("/auth/phone") }} className="btn flex-1 rounded-full bg-primary text-white">Log in</button>
+                            <button onClick={() => setShowAuthPrompt(false)} className="btn flex-1 rounded-full bg-pale">Cancel</button>
+                        </div>
                     </div>
                 </Modal>
 

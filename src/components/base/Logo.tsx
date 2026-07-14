@@ -1,5 +1,5 @@
 import { HTMLAttributes } from "react"
-import LogoIcon from "../../assets/app-icon.png"
+import LogoIcon from "../../assets/app-icon.webp"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router"
 export interface Props extends HTMLAttributes<HTMLDivElement> { }

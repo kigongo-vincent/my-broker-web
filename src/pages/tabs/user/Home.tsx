@@ -3,10 +3,12 @@ import FlexRender from "../../../components/base/FlexRender"
 import Search from "../../../components/pages/tabs/home/Search"
 import Post, { PostI } from "../../../components/pages/tabs/Post"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { MapMarker1Solid } from "@lineiconshq/free-icons"
+import { MapMarker1Solid, XmarkSolid } from "@lineiconshq/free-icons"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router"
 import { useInfinitePosts } from "../../../hooks/posts"
+import { useAppStore } from "../../../store/app"
+import { ListStackSkeleton } from "../../../components/base/PageSkeleton"
 
 interface FABProps extends HTMLAttributes<HTMLButtonElement> { }
 
@@ -32,6 +34,7 @@ const Home = () => {
     const tabs = ["rentals", "short stays"]
     const [selectedTab, setSelectedTab] = useState(tabs[0])
     const [query, setQuery] = useState("")
+    const { filters, removeFilter } = useAppStore()
 
     const navigate = useNavigate()
 
@@ -52,7 +55,6 @@ const Home = () => {
         [data]
     )
 
-    console.log(posts)
 
     const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -90,6 +92,13 @@ const Home = () => {
                 onChange={(e) => setQuery(e?.currentTarget?.value || "")}
             />
 
+            {
+                filters?.length != 0 &&
+                <>
+                    <FlexRender className="mt-3 overflow-x-auto" row items={filters} render={(item, index) => <button onClick={() => removeFilter(item?.column)} key={index} className="btn min-w-max px-6 py-1 bg-primary/10 text-primary  rounded-full">{item?.label} <Lineicons icon={XmarkSolid} /></button>} />
+                </>
+            }
+
             <div className="mb-4 border border-primary/40 mt-5 h-[16vh] flex items-center gap-4 p-4 py-2 bg-primary/5 rounded-2xl">
                 <img src="https://static.vecteezy.com/system/resources/thumbnails/060/043/598/small/tranquil-picturesque-modern-apartment-building-facade-modular-design-no-background-with-transparent-background-sharp-free-png.png" className="  object-contain object-bottom rounded-xl h-full w-[35%]" alt="" />
                 <div className="flex flex-col items-start">
@@ -113,7 +122,9 @@ const Home = () => {
             />
 
             {isLoading ? (
-                <div className="p-4 text-center">Loading properties...</div>
+                <div className="py-4">
+                    <ListStackSkeleton rows={3} className="space-y-8" />
+                </div>
             ) : isError ? (
                 <div className="p-4 text-center text-red-500">
                     Failed to load properties: {(error as Error)?.message}

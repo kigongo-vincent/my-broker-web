@@ -1,6 +1,6 @@
 import { BadgeDecagramPercentSolid, PhoneSolid, PowerButtonSolid, TargetUserSolid, UserMultiple4Solid } from "@lineiconshq/free-icons"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { ReactNode, useState } from "react"
+import { ReactNode, useMemo, useState } from "react"
 import FlexRender from "../../../components/base/FlexRender"
 import { BaseI, } from "../../../store/auth"
 import Modal from "../../../components/base/Modal"
@@ -37,7 +37,7 @@ const Settings = () => {
 
     const [showLogoutModal, setShowlogoutModal] = useState(false)
 
-    const settings: SettingComponentI[] = [
+    const settings: SettingComponentI[] = useMemo(() => [
         // {
         //     icon: <Lineicons icon={ColourPalette3Solid} />,
         //     title: "Theme settings",
@@ -56,7 +56,7 @@ const Settings = () => {
             ID: 2,
             icon: <Lineicons icon={BadgeDecagramPercentSolid} />,
             title: "ID verification",
-            caption: "earn a verification badger on your account",
+            caption: true ? "your account is verified" : "earn a verification badge on your account",
             path: "/verification"
         },
         {
@@ -90,7 +90,7 @@ const Settings = () => {
 
         },
 
-    ]
+    ], [])
 
     // const { user } = useUserStore()
     // const filteredSettings = useMemo(() => {

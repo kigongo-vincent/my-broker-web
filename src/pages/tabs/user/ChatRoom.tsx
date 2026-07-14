@@ -1,211 +1,451 @@
-
 import { User } from "../../../components/pages/tabs/Post"
-import BGL from "../../../assets/light.png"
-import BGD from "../../../assets/dark.png"
+import BGL from "../../../assets/light.webp"
+import BGD from "../../../assets/dark.webp"
 import useSystemTheme from "../../../hooks/theme"
-import { useState } from "react"
+import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { ArrowLeftCircleSolid, Camera1Solid, HandTakingUserSolid, MenuMeatballs1Solid, Trash3Solid, User4Solid, User4Stroke } from "@lineiconshq/free-icons"
-import { BaseI, UserI } from "../../../store/auth"
+import { ArrowLeftCircleSolid, HandTakingUserSolid, MenuMeatballs1Solid, Trash3Solid, User4Solid, User4Stroke, XmarkSolid } from "@lineiconshq/free-icons"
+import { UserI, useUserStore } from "../../../store/auth"
 import Modal from "../../../components/base/Modal"
 import FlexRender from "../../../components/base/FlexRender"
 import { PaperAirplaneIcon } from "@heroicons/react/20/solid"
-import { useNavigate } from "react-router"
+import { useNavigate, useParams } from "react-router"
+import { ChatMessageI, ChatRoomI } from "../../../hooks/chats"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import PostComponent from "../../../components/pages/tabs/Post"
+import { Post } from "../../../../api"
+import { useAppStore } from "../../../store/app"
 
-interface MessageI extends BaseI {
-    sender?: UserI
-    attachment?: string
-    text: string
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export type MessageType = "chat" | "typing" | "delivered" | "read" | "presence" | "error"
+
+export interface IncomingMessage<T> {
+    type: MessageType
+    to: number
+    room_id: number
+    data: T
 }
 
-const Message = ({ sender, attachment, text, CreatedAt }: MessageI) => {
+export interface OutgoingMessage<T> {
+    id?: string
+    type: MessageType
+    from: number
+    to: number
+    room_id?: number
+    data: T
+    timestamp?: string // ISO 8601 date string
+}
+
+interface SocketPayload {
+    type?: string
+    message?: ChatMessageI
+}
+
+// ---------------------------------------------------------------------------
+// React Query keys — centralized so cache reads/writes stay in sync
+// ---------------------------------------------------------------------------
+
+const chatKeys = {
+    room: (roomId?: string) => ["chat_room", roomId] as const,
+}
+
+// ---------------------------------------------------------------------------
+// Query fn: fetch (or create) the room + its message history
+// ---------------------------------------------------------------------------
+
+const fetchChatRoom = (userId: number, partnerId: number) =>
+    Post<{ users: number[] }, ChatRoomI>(`chats/room`, {
+        users: [userId, partnerId],
+    })
+
+// ---------------------------------------------------------------------------
+// Mutation fn: send a message over HTTP
+// ---------------------------------------------------------------------------
+
+const sendChatMessage = (payload: OutgoingMessage<ChatMessageI>) =>
+    Post<OutgoingMessage<ChatMessageI>, unknown>("chats/send", payload)
+
+// ---------------------------------------------------------------------------
+// Hook: useChatSocket
+// Owns the websocket lifecycle; on incoming "message" events it writes
+// directly into the React Query cache for the room, so <ChatRoom /> never
+// needs its own useState for messages.
+// ---------------------------------------------------------------------------
+
+const useChatSocket = (roomId: string | undefined, currentUserId: number | undefined) => {
+    const queryClient = useQueryClient()
+    const socketRef = useRef<WebSocket | null>(null)
+
+    useEffect(() => {
+        if (!roomId) return
+
+        const numericRoomId = Number(roomId)
+        const apiBase = import.meta.env.VITE_API_URL || ""
+        const rawAuth = localStorage.getItem("_jdncjnsckchsbchkbcknsncknksjncchbfk")
+        const token = rawAuth ? JSON.parse(rawAuth || "{}").state?.token : ""
+        const socketUrl = `${apiBase.replace(/^http/, "ws")}/chats/ws?wsat=${token}`
+
+        const socket = new WebSocket(socketUrl)
+        socketRef.current = socket
+
+        socket.addEventListener("open", () => {
+            socket.send(JSON.stringify({ type: "join", roomId: numericRoomId }))
+        })
+
+        socket.addEventListener("message", (event) => {
+            try {
+                const payload: SocketPayload = JSON.parse(event.data)
+                if (payload?.type === "message" && payload?.message) {
+                    const incoming = payload.message
+
+                    const newMessage: ChatMessageI = {
+                        ID: incoming.ID,
+                        RoomID: incoming.RoomID,
+                        SenderID: incoming.SenderID,
+                        CreatedAt: incoming.CreatedAt,
+                        UpdatedAt: incoming.UpdatedAt,
+                        Text: incoming.Text || "",
+                        Attachment: incoming.Attachment,
+                        Sender:
+                            incoming.SenderID !== currentUserId && incoming.Sender
+                                ? ({ ...incoming.Sender } as UserI)
+                                : undefined,
+                    }
+
+                    queryClient.setQueryData<ChatRoomI | undefined>(
+                        chatKeys.room(roomId),
+                        (old) => {
+                            if (!old) return old
+                            return {
+                                ...old,
+                                Messages: [...(old.Messages || []), newMessage],
+                            }
+                        }
+                    )
+                }
+            } catch {
+                // ignore malformed socket payloads
+            }
+        })
+
+        return () => {
+            socket.close()
+            socketRef.current = null
+        }
+    }, [roomId, currentUserId, queryClient])
+
+    return socketRef
+}
+
+// ---------------------------------------------------------------------------
+// Hook: useChatRoomData
+// Wraps the room query + send mutation, and does the optimistic cache update
+// on send so the sender sees their message immediately.
+// ---------------------------------------------------------------------------
+
+const useChatRoomData = (partnerId: string | undefined, currentUser: UserI | undefined) => {
+    const queryClient = useQueryClient()
+
+    const roomQuery = useQuery({
+        queryKey: chatKeys.room(partnerId),
+        queryFn: () => fetchChatRoom(currentUser?.ID || 0, partnerId ? +partnerId : 0),
+        enabled: !!partnerId,
+    })
+
+    const sendMutation = useMutation({
+        mutationFn: sendChatMessage,
+        onMutate: async (payload) => {
+            await queryClient.cancelQueries({ queryKey: chatKeys.room(partnerId) })
+
+            const previous = queryClient.getQueryData<ChatRoomI>(chatKeys.room(partnerId))
+
+            const optimisticMessage: ChatMessageI = {
+                SenderID: payload.from,
+                Text: payload.data.text,
+                CreatedAt: new Date().toISOString(),
+            }
+
+            queryClient.setQueryData<ChatRoomI | undefined>(
+                chatKeys.room(partnerId),
+                (old) => {
+                    if (!old) return old
+                    return {
+                        ...old,
+                        Messages: [...(old.Messages || []), optimisticMessage],
+                    }
+                }
+            )
+
+            return { previous }
+        },
+        onError: (_err, _payload, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(chatKeys.room(partnerId), context.previous)
+            }
+        },
+    })
+
+    return { roomQuery, sendMutation }
+}
+
+// ---------------------------------------------------------------------------
+// Presentational: Message bubble
+// ---------------------------------------------------------------------------
+
+const Message = ({ senderId, Attachment, text, CreatedAt, post, postId }: Partial<ChatMessageI>) => {
+
+    const { user } = useUserStore()
+    const mine = Number((user as UserI)?.ID) == senderId
 
     return (
-        <div className={`bg-pale ${sender && "bg-primary self-end text-white"} p-6 rounded-3xl max-w-[90%]`}>
-            {text}
+        <>
+            <div className={`bg-pale ${mine && "bg-primary dark:bg-primary/10 flex flex-col gap-1.5 items-end self-end text-white"} p-6 py-4 rounded-xl ${!postId && "max-w-[80%] w-max"}  `}>
+                <span>{text}</span>
 
-            {/* attachment  */}
-            {
-                attachment && <div>
-                    <img src={attachment} className="rounded-3xl mt-4" alt="" />
+                {Attachment && (
+                    <div>
+                        <img src={Attachment} className="rounded-3xl mt-4" alt="" />
+                    </div>
+                )}
+                <div className="mt-3 text-sm opacity-50 ">
+                    {CreatedAt ? new Date(CreatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
                 </div>
-            }
-            <div className="mt-3">{new Date(CreatedAt || "")?.toTimeString()}</div>
-        </div>
+            </div>
+            {post?.ID != 0 && post && (
+                <PostComponent hideHeader  {...post} />
+            )}
+        </>
     )
-
 }
 
+// ---------------------------------------------------------------------------
+// Presentational: Header
+// ---------------------------------------------------------------------------
+
+interface ChatHeaderProps {
+    partnerName?: string
+    partnerPhoto?: string
+    partnerLastSeen?: string
+    onBack: () => void
+    onOpenMenu: () => void
+}
+
+const ChatHeader = ({ partnerName, partnerPhoto, partnerLastSeen, onBack, onOpenMenu }: ChatHeaderProps) => {
+    return (
+        <div className="w-full fixed z-200 top-0 ">
+            <div className="flex w-full bg-black/6 border-b  border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4  items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <button onClick={onBack} className="h-14 ">
+                        <Lineicons icon={ArrowLeftCircleSolid} />
+                    </button>
+                    <User
+                        name={partnerName || "Conversation"}
+                        photo={partnerPhoto}
+                        noActions
+                        lastSeen={partnerLastSeen ? `last seen ${partnerLastSeen}` : "online"}
+                    />
+                </div>
+
+                <button onClick={onOpenMenu} className="h-12 w-12 flex items-center justify-center">
+                    <Lineicons icon={MenuMeatballs1Solid} className="transform rotate-z-[90deg]" />
+                </button>
+            </div>
+        </div>
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Presentational: Message list
+// ---------------------------------------------------------------------------
+
+interface MessageListProps {
+    messages: ChatMessageI[]
+}
+
+const MessageList = ({ messages }: MessageListProps) => {
+
+
+    return (
+        <div className=" max-h-[80vh] overflow-y-auto flex flex-col gap-5 w-full p-4">
+            <FlexRender
+                emptyContainer={<></>}
+                items={messages || []}
+                render={(item, index) => <Message {...item} key={item.ID ?? index} />}
+            />
+        </div>
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Presentational: Composer (input + send button)
+// ---------------------------------------------------------------------------
+
+interface ChatComposerProps {
+    draft: string
+    onDraftChange: (value: string) => void
+    onSend: () => void
+    sending: boolean
+}
+
+const ChatComposer = ({ draft, onDraftChange, onSend, sending }: ChatComposerProps) => {
+    return (
+        <div className="shrink-0 flex  fixed bottom-0 bg-paper left-0 items-center px-4 pb-5 pt-2 gap-2 w-full">
+            <div className="rounded-full flex items-center px-6  border border-text/10 h-18 flex-1">
+                <input
+                    value={draft}
+                    onChange={(e) => onDraftChange(e.currentTarget.value)}
+                    onKeyDown={(e) => e.key === "Enter" && onSend()}
+                    type="text"
+                    placeholder="say something"
+                    className="flex-1 outline-0"
+                />
+                <button onClick={onSend} disabled={sending} className="h-14 w-16 text-text/60 flex items-center justify-center">
+                    <PaperAirplaneIcon className="h-8 w-8" />
+                </button>
+            </div>
+        </div>
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Presentational: User actions menu (report / block / clear / view profile)
+// ---------------------------------------------------------------------------
+
+interface UserActionsMenuProps {
+    open: boolean
+    onClose: () => void
+    onViewProfile: () => void
+}
+
+const UserActionsMenu = ({ open, onClose, onViewProfile }: UserActionsMenuProps) => {
+    return (
+        <Modal open={open} className="" onClose={onClose}>
+            <div className="flex flex-col gap-4 ">
+                <button onClick={onViewProfile} className="btn justify-start gap-5">
+                    <Lineicons icon={User4Solid} />
+                    View profile
+                </button>
+
+                <button className="btn justify-start gap-5">
+                    <Lineicons icon={HandTakingUserSolid} />
+                    Report user
+                </button>
+
+                <button className="btn justify-start gap-5">
+                    <Lineicons icon={User4Stroke} />
+                    Block user
+                </button>
+                <button className="btn justify-start gap-5">
+                    <Lineicons icon={Trash3Solid} />
+                    Clear chat
+                </button>
+            </div>
+        </Modal>
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Container: ChatRoom
+// ---------------------------------------------------------------------------
 
 const ChatRoom = () => {
-
     const { theme } = useSystemTheme()
-    const [loading,] = useState(false)
-
-    const [messages] = useState<MessageI[]>([
-        {
-            ID: 1,
-            CreatedAt: "2026-07-01T10:00:00Z",
-            UpdatedAt: "2026-07-01T10:00:00Z",
-            text: "Hello Joan! Is the 3-bedroom apartment in Kololo still available for viewing?"
-        },
-        {
-            ID: 3,
-            CreatedAt: "2026-07-01T10:07:00Z",
-            UpdatedAt: "2026-07-01T10:07:00Z",
-
-            text: "Great! Could you send me over the property layout map first so I can check the bedroom sizes?"
-        },
-        {
-            ID: 4,
-            CreatedAt: "2026-07-01T10:12:00Z",
-            UpdatedAt: "2026-07-01T10:12:00Z",
-            sender: {
-                ID: 100,
-                CreatedAt: "2025-03-10T11:12:00Z",
-                UpdatedAt: "2026-07-01T09:00:00Z",
-                name: "Joan Namubiru",
-
-            },
-            attachment: "https://images.unsplash.com/photo-1545464693-f1798a373343",
-            text: "Here is the exact blueprint layout of the Kololo unit. The master bedroom is ensuite."
-        },
-        {
-            ID: 5,
-            CreatedAt: "2026-07-01T10:15:00Z",
-            UpdatedAt: "2026-07-01T10:15:00Z",
-
-            text: "Looks perfect. Is the price of UGX 5,500,000 inclusive of the security and service charge?"
-        },
-        {
-            ID: 6,
-            CreatedAt: "2026-07-01T10:20:00Z",
-            UpdatedAt: "2026-07-01T10:20:00Z",
-            sender: {
-                ID: 100,
-                CreatedAt: "2025-03-10T11:12:00Z",
-                UpdatedAt: "2026-07-01T09:00:00Z",
-                name: "Joan Namubiru",
-
-            },
-            text: "It includes security, garbage collection, and 2 parking slots. Water and power are paid separately."
-        },
-        {
-            ID: 7,
-            CreatedAt: "2026-07-01T11:00:00Z",
-            UpdatedAt: "2026-07-01T11:00:00Z",
-            text: "Understood. Let's do 5:00 PM today. Can you send over the pin location?"
-        },
-        {
-            ID: 8,
-            CreatedAt: "2026-07-01T11:02:00Z",
-            UpdatedAt: "2026-07-01T11:02:00Z",
-            sender: {
-                ID: 100,
-                CreatedAt: "2025-03-10T11:12:00Z",
-                UpdatedAt: "2026-07-01T09:00:00Z",
-                name: "Joan Namubiru",
-
-            },
-            text: "Perfect timing. I'm attaching a photo of the front gate so you don't miss it when you turn off Acacia Avenue."
-        },
-        {
-            ID: 9,
-            CreatedAt: "2026-07-01T11:03:00Z",
-            UpdatedAt: "2026-07-01T11:03:00Z",
-            attachment: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6",
-            text: "I've also generated the route link on the live map tab for you. See you there!"
-        },
-        {
-            ID: 10,
-            CreatedAt: "2026-07-01T11:15:00Z",
-            UpdatedAt: "2026-07-01T11:15:00Z",
-            sender: {
-                ID: 99,
-                CreatedAt: "2026-01-15T08:30:00Z",
-                UpdatedAt: "2026-06-20T14:22:00Z",
-                name: "Brian Okello",
-
-            },
-            text: "Thanks, Joan. Just opened the route tracking, I'm heading out shortly."
-        }
-    ]);
-
-
+    const [loading] = useState(false)
+    const [draft, setDraft] = useState("")
     const [showUserMenu, setShowMenu] = useState<boolean>(false)
     const bg = theme == "dark" ? BGD : BGL
     const navigate = useNavigate()
+    const { user } = useUserStore()
+    const ParsedUser = user as UserI
+    const { id } = useParams<{ id: string }>()
+
+    const { roomQuery, sendMutation } = useChatRoomData(id, ParsedUser)
+    useChatSocket(id, ParsedUser?.ID)
+
+    const messages = roomQuery.data?.data?.Messages || []
+
+    const partner = useMemo(() => {
+        return roomQuery.data?.data?.users ? roomQuery.data?.data?.users[1] : null
+    }, [roomQuery.data?.data])
+
+    const handleSend = useCallback(() => {
+        const trimmed = draft.trim()
+        if (!trimmed || !id) return
+
+        sendMutation.mutate(
+            {
+                type: "chat",
+                from: ParsedUser?.ID ? ParsedUser?.ID : 0,
+                to: id ? +id : 0,
+                data: {
+                    SenderID: ParsedUser?.ID ? ParsedUser?.ID : 0,
+                    text: draft,
+                },
+            },
+            {
+                onSuccess: () => setDraft(""),
+            }
+        )
+    }, [draft, id, ParsedUser?.ID, sendMutation])
+
+    const { selectedPost, setSelectedPost } = useAppStore()
 
     return (
         <div className="relative  overflow-hidden flex-1 h-screen">
 
-            <img src={bg} className="absolute h-full dark:hidden w-full object-cover" alt="" />
+            <Activity mode={selectedPost ? "visible" : "hidden"}>
+                <div className="fixed w-full  z-300 top-[10vh] p-5">
+                    <div className="backdrop-blur-sm w-full bg-paper/80  border-text/10 border  flex items-center gap-3 rounded-xl p-4">
+                        <img src={selectedPost?.assets[0]?.url} alt="" className="h-16 w-16 object-cover rounded-xl" />
+                        <div className="flex flex-col justify-center flex-1">
+                            <div className="flex gap-2 items-center">
+                                <h2 className="text-xl font-medium">
+                                    {selectedPost?.price.currency} {selectedPost?.price.amount.toLocaleString("en-US")}
+                                </h2>
+                            </div>
+
+                            <div className="flex items-center gap-1 text-text/50 text-sm">
+                                <span>{selectedPost?.location.name}</span>
+                            </div>
+                        </div>
+                        <button onClick={() => setSelectedPost(undefined)} className="justify-self-end  h-16 flex items-center justify-center w-16">
+                            <Lineicons icon={XmarkSolid} />
+                        </button>
+                    </div>
+                </div>
+            </Activity>
+
+            <img src={bg} className="absolute h-full dark:hidden  object-cover" alt="" />
 
             <div className={`absolute inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
+                <ChatHeader
+                    partnerName={partner?.name}
+                    partnerPhoto={partner?.photo}
+                    partnerLastSeen={partner?.lastSeen}
+                    onBack={() => navigate(-1)}
+                    onOpenMenu={() => setShowMenu(true)}
+                />
 
-                {/* fixed header block */}
+                <div className="min-h-[9vh] "></div>
 
-                <div className="w-full fixed z-200 top-0 ">
-                    <div className="flex w-full bg-black/6 border-b  border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4  items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => navigate(-1)} className="h-14 ">
-                                <Lineicons icon={ArrowLeftCircleSolid} />
-                            </button>
-                            <User name="vincent" noActions lastSeen="23hrs ago" />
-                        </div>
+                <MessageList messages={messages} />
 
-                        <button onClick={() => setShowMenu(true)} className="h-12 w-12 flex items-center justify-center">
-                            <Lineicons icon={MenuMeatballs1Solid} className="transform rotate-z-[90deg]" />
-                        </button>
-                    </div>
-                </div>
-
-                <div className="min-h-[11vh] "></div>
-
-                {/* scrollable messages only */}
-                <div className=" min-h-0 max-h-[95vh] overflow-y-auto flex flex-col gap-5 w-full p-4">
-                    <FlexRender items={messages} render={(item, index) => <Message {...item} key={index} />} />
-                </div>
-
-                {/* fixed input bar */}
-                <div className="shrink-0 flex items-center px-4 pb-5 pt-2 gap-2 w-full">
-                    <div className="rounded-full flex items-center px-6  border border-text/10 h-18 flex-1">
-                        <input type="text" placeholder="say something" className="flex-1 outline-0" />
-                        <button className="h-14 w-16 text-text/60 flex items-center justify-center">
-                            <Lineicons icon={Camera1Solid} size={30} />
-                        </button>
-                        <button className="h-14 w-16 text-text/60 flex items-center justify-center">
-                            <PaperAirplaneIcon className="h-8 w-8" />
-                        </button>
-                    </div>
-                </div>
-
+                <ChatComposer
+                    draft={draft}
+                    onDraftChange={setDraft}
+                    onSend={handleSend}
+                    sending={sendMutation.isPending}
+                />
             </div>
 
-            {/* message sender actions  */}
-            <Modal open={showUserMenu} className="" onClose={() => setShowMenu(false)}>
-
-                <div className="flex flex-col gap-4 ">
-                    <button
-                        onClick={() => navigate(`/profile/${1}`)}
-                        className="btn justify-start gap-5">
-                        <Lineicons icon={User4Solid} />
-                        View profile</button>
-
-                    <button className="btn justify-start gap-5">
-                        <Lineicons icon={HandTakingUserSolid} />
-                        Report user</button>
-
-                    <button className="btn justify-start gap-5">
-                        <Lineicons icon={User4Stroke} />
-                        Block user</button>
-                    <button className="btn justify-start gap-5">
-                        <Lineicons icon={Trash3Solid} />
-                        Clear chat</button>
-                </div>
-
-            </Modal>
-
+            <UserActionsMenu
+                open={showUserMenu}
+                onClose={() => setShowMenu(false)}
+                onViewProfile={() => navigate(`/profile/${1}`)}
+            />
         </div>
     )
 }

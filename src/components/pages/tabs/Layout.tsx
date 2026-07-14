@@ -5,6 +5,7 @@ import { useLocation } from "react-router"
 import { LinkI } from "./Tab"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { Gear1Solid, HeartSolid, Home2Solid, Message2Solid, PlusSolid } from "@lineiconshq/free-icons"
+import { useUserStore, UserI } from "../../../store/auth"
 
 export interface Props {
     children: ReactNode
@@ -13,34 +14,33 @@ export interface Props {
 const Layout = ({ children }: Props) => {
 
     const { pathname } = useLocation()
+    const { user } = useUserStore()
+    const isAuthenticated = Boolean((user as UserI)?.ID)
 
-    // const isAdmin = pathname.includes("admin")
+
     const isUser = pathname?.includes("user")
 
     const BASE_URL = "/tabs/user"
 
-    // const AdminLinks: LinkI[] = []
     const UserLinks: LinkI[] = [{
         icon: <Lineicons icon={Home2Solid} />,
         path: `${BASE_URL}`,
         label: "home"
     },
-    {
+    ...(isAuthenticated ? [{
         icon: <Lineicons icon={Message2Solid} />,
         path: `${BASE_URL}/chat`,
-        badge: 3,
         label: "messages"
-    },
+    }] : []),
     {
         icon: <Lineicons icon={PlusSolid} />,
         path: `/upload`,
     },
-    {
+    ...(isAuthenticated ? [{
         icon: <Lineicons icon={HeartSolid} />,
-        path: `${BASE_URL}/favourites`
-        , badge: 1,
+        path: `${BASE_URL}/favourites`,
         label: "favourites"
-    },
+    }] : []),
     {
         icon: <Lineicons icon={Gear1Solid} />,
         path: `${BASE_URL}/settings`,

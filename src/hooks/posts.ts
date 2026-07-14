@@ -9,7 +9,6 @@ import { PostI } from "../components/pages/tabs/Post";
 // import residentialIcon from "../../../assets/upload/residential.png";
 // import hostelIcon from "../../../assets/upload/hostel.png";
 
-
 // types/api.ts
 
 interface PaginationControls {
@@ -23,7 +22,12 @@ interface APIRequest {
     limit: number;
     page: number;
   };
-  columns?: Record<string, unknown>[];
+  columns?: Array<{
+    column: string;
+    operator: string;
+    value: unknown;
+    label?: string;
+  }>;
 }
 
 export interface PaginatedResponse<T> {
@@ -60,6 +64,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import imageCompression from "browser-image-compression";
 import { Get, Post } from "../../api";
 import { useParams } from "react-router";
+import { useAppStore } from "../store/app";
 
 /* ---------------------------------------------------------------------- */
 /* Env                                                                     */
@@ -564,14 +569,17 @@ interface UseInfinitePostsParams {
   search?: string;
 }
 export const useInfinitePosts = ({ limit }: UseInfinitePostsParams) => {
+  const { filters = [] } = useAppStore();
+
   return useInfiniteQuery({
-    queryKey: ["posts", "infinite", limit],
+    queryKey: ["posts", "infinite", limit, filters.length],
     queryFn: async ({ pageParam }) => {
       const res = await Post<APIRequest, PostI[]>("posts/feed", {
         pagination: {
           limit,
           page: pageParam,
         },
+        ...(filters.length > 0 ? { columns: filters } : {}),
       });
 
       return {
@@ -611,11 +619,8 @@ export const useGeoData = () => {
 
 export const usePostDetails = () => {
   const { postId } = useParams();
-  console.log(postId);
   return useQuery({
     queryKey: ["details"],
     queryFn: async () => await Get<PostI>("posts/post/" + postId),
   });
 };
-
-

@@ -60,7 +60,7 @@ function handleUnauthorizedSession(apiPath: string) {
     const next = encodeURIComponent(
       window.location.pathname + window.location.search
     );
-    window.location.replace(`/auth/login?next=${next}`);
+    window.location.replace(`/auth?next=${next}`);
   }
 }
 

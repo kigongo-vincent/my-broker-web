@@ -3,7 +3,7 @@ import { useMemo, useState } from "react"
 import Logo from "../../components/base/Logo"
 import { StepI } from "../tabs/user/Upload"
 import { useNavigate } from "react-router"
-import { Post } from "../../../api/index"
+import { Post, Put } from "../../../api/index"
 import Modal from "../../components/base/Modal"
 import { UserI, useUserStore } from "../../store/auth"
 
@@ -22,6 +22,12 @@ const PhoneAuth = () => {
     const navigate = useNavigate()
     const [phone, setPhone] = useState("0782147143")
     const [showSignupModal, setShowSignupModal] = useState(false)
+    const [showSetupModal, setShowSetupModal] = useState(false)
+    const [setupStep, setSetupStep] = useState(1)
+    const [setupName, setSetupName] = useState("")
+    const [setupEmail, setSetupEmail] = useState("")
+    const [setupPhoto, setSetupPhoto] = useState("")
+    const [setupSaving, setSetupSaving] = useState(false)
     const [error, setError] = useState("")
     const [pin1, setpin1] = useState("")
     const [pin2, setpin2] = useState("")
@@ -41,6 +47,11 @@ const PhoneAuth = () => {
     }
 
 
+    const handleAuthSuccess = (data: { token: string, user: UserI }) => {
+        login(data)
+        setShowSetupModal(true)
+    }
+
     const step2 = async () => {
 
         if (pin1 != pin2 && (pin1 != "" && pin2 != "")) {
@@ -54,8 +65,7 @@ const PhoneAuth = () => {
                 setError(msg)
                 return
             }
-            login(data)
-            navigate("/tabs/user/")
+            handleAuthSuccess(data)
         }
     }
 
@@ -71,14 +81,31 @@ const PhoneAuth = () => {
         if (phone) {
             const { status, data, msg } = await Post<PhoneAuthRequest, { token: string, user: UserI }>("users/phone", { phone: phone, step: 3, pinCode: pin1 })
             if (status == 200) {
-                login(data)
-                navigate("/tabs/user/")
+                handleAuthSuccess(data)
                 return
             }
             setError(msg)
         }
     }
 
+
+    const handleSetupSave = async () => {
+        if (!setupName.trim()) {
+            setError("Please add your name so we can finish creating your account.")
+            return
+        }
+
+        setSetupSaving(true)
+        try {
+            await Put("me/", { name: setupName.trim(), email: setupEmail.trim(), photo: setupPhoto.trim() })
+            setShowSetupModal(false)
+            navigate("/tabs/user/")
+        } catch {
+            setError("We could not save your profile details yet. Please try again.")
+        } finally {
+            setSetupSaving(false)
+        }
+    }
 
     const steps: StepI[] = useMemo(() =>
         [{
@@ -164,6 +191,52 @@ const PhoneAuth = () => {
                     <p className="text-xl font-semibold">Sign up confirmation</p>
                     <p className="text-text/50 text-sm mt-1">The phone number <u>{phone}</u> is not yet registered on the platform, would you like to continue with creating a new account</p>
                     <br />
+                </Modal>
+
+                <Modal position="bottom" open={showSetupModal} onClose={() => { setShowSetupModal(false); navigate("/tabs/user/") }}>
+                    <div className="rounded-3xl bg-paper p-4">
+                        <p className="text-xl font-semibold">Finish your account setup</p>
+                        <p className="mt-2 text-sm text-text/60">We just need a few details so your account is ready for listings and conversations.</p>
+
+                        {setupStep === 1 && (
+                            <div className="mt-6 space-y-4">
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-sm">Full name</span>
+                                    <input value={setupName} onChange={(e) => setSetupName(e.currentTarget.value)} className="outline-0 bg-pale h-14 rounded-full px-6" placeholder="Enter your full name" />
+                                </div>
+                                <div className="mt-6 flex gap-3">
+                                    <button onClick={() => { setShowSetupModal(false); navigate("/tabs/user/") }} className="btn flex-1 rounded-full bg-pale">Later</button>
+                                    <button onClick={() => setSetupStep(2)} className="btn flex-1 rounded-full bg-primary text-white">Continue</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {setupStep === 2 && (
+                            <div className="mt-6 space-y-4">
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-sm">Email</span>
+                                    <input value={setupEmail} onChange={(e) => setSetupEmail(e.currentTarget.value)} className="outline-0 bg-pale h-14 rounded-full px-6" placeholder="you@example.com" />
+                                </div>
+                                <div className="mt-6 flex gap-3">
+                                    <button onClick={() => setSetupStep(1)} className="btn flex-1 rounded-full bg-pale">Back</button>
+                                    <button onClick={() => setSetupStep(3)} className="btn flex-1 rounded-full bg-primary text-white">Continue</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {setupStep === 3 && (
+                            <div className="mt-6 space-y-4">
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-sm">Profile photo URL</span>
+                                    <input value={setupPhoto} onChange={(e) => setSetupPhoto(e.currentTarget.value)} className="outline-0 bg-pale h-14 rounded-full px-6" placeholder="https://..." />
+                                </div>
+                                <div className="mt-6 flex gap-3">
+                                    <button onClick={() => setSetupStep(2)} className="btn flex-1 rounded-full bg-pale">Back</button>
+                                    <button onClick={handleSetupSave} disabled={setupSaving} className="btn flex-1 rounded-full bg-primary text-white disabled:opacity-60">{setupSaving ? "Saving..." : "Save profile"}</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </Modal>
 
                 {/* error modal  */}

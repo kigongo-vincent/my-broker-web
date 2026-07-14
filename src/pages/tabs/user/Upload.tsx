@@ -8,15 +8,17 @@ import Cropper from "react-easy-crop";
 import Modal from "../../../components/base/Modal";
 import { useUploadImages, PostAsset } from "../../../hooks/posts";
 
-import commercialIcon from "../../../assets/upload/commercial.png";
-import residentialIcon from "../../../assets/upload/residential.png";
-import hostelIcon from "../../../assets/upload/hostel.png";
-import electricityIcon from "../../../assets/upload/electricity.png";
-import waterIcon from "../../../assets/upload/water.png";
-import parkingIcon from "../../../assets/upload/parking.png";
-import trashIcon from "../../../assets/upload/trash.png";
+import commercialIcon from "../../../assets/upload/commercial.webp";
+import residentialIcon from "../../../assets/upload/residential.webp";
+import hostelIcon from "../../../assets/upload/hostel.webp";
+import electricityIcon from "../../../assets/upload/electricity.webp";
+import waterIcon from "../../../assets/upload/water.webp";
+import parkingIcon from "../../../assets/upload/parking.webp";
+import trashIcon from "../../../assets/upload/trash.webp";
 import { Currency, PostAssetI, PostI, PostType } from "../../../components/pages/tabs/Post";
 import { Post } from "../../../../api";
+import Header from "../../../components/pages/tabs/Header";
+import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 
 /* ---------------------------------------------------------------------- */
 /* Geocode cache — reverse/forward Nominatim lookups cached in localStorage */
@@ -203,38 +205,43 @@ export const Shell = ({
     showProgressBar,
 }: ShellProps) => {
     return (
-        <div className={`flex h-screen flex-col p-4 justify-between ${className}`}>
-            <div className="overflow-y-auto mb-24">{children}</div>
+        <>
+            <Header back title="Upload" caption="post your property now" />
+            <div className="h-min-[9vh] h-[9vh]"></div>
+            <div className={`flex h-screen flex-col p-4 justify-between ${className}`}>
+                <div className="overflow-y-auto mb-24">{children}</div>
 
-            <div className="flex fixed bottom-5 px-4 left-0 w-full flex-col items-center gap-2 z-50">
-                {showProgressBar && (
-                    <div className="w-full mb-1">
-                        <LinearProgress value={globalProgress ?? 0} />
-                        <p className="text-[11px] text-text/50 mt-1">
-                            {globalProgress && globalProgress > 0 ? `Uploading… ${globalProgress}%` : "Uploading…"}
-                        </p>
-                    </div>
-                )}
-
-                <div className="flex w-full items-center justify-between">
-                    {onBack ? (
-                        <button type="button" onClick={() => onBack?.()} className="btn bg-pale rounded-full w-max">
-                            back
-                        </button>
-                    ) : (
-                        <div />
+                <div className="flex fixed bottom-5 px-4 left-0 w-full flex-col items-center gap-2 z-50">
+                    {showProgressBar && (
+                        <div className="w-full mb-1">
+                            <LinearProgress value={globalProgress ?? 0} />
+                            <p className="text-[11px] text-text/50 mt-1">
+                                {globalProgress && globalProgress > 0 ? `Uploading… ${globalProgress}%` : "Uploading…"}
+                            </p>
+                        </div>
                     )}
-                    <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => onNext?.()}
-                        className="btn bg-primary rounded-full text-white w-max disabled:opacity-50"
-                    >
-                        {nextText || (!onBack ? "confirm" : "next")}
-                    </button>
+
+                    <div className="flex w-full items-center justify-between">
+                        {onBack ? (
+                            <button type="button" onClick={() => onBack?.()} className="btn bg-pale rounded-full w-max">
+                                back
+                            </button>
+                        ) : (
+                            <div />
+                        )}
+                        <button
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => onNext?.()}
+                            className="btn bg-primary rounded-full text-white w-max disabled:opacity-50"
+                        >
+                            {nextText || (!onBack ? "confirm" : "next")}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
+
     );
 };
 
@@ -339,7 +346,7 @@ const Upload = () => {
         useUploadImages();
     // Final step: create the post — called exactly once, on final submit.
 
-    const [currentStepID, setCurrentStepID] = useState<number>(1);
+    const [currentStepID, setCurrentStepID] = useState<number>(3);
     const [showNegotiationModal, setShowNegotiationModal] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
     const [uploadError, setUploadError] = useState<string | null>(null);
@@ -739,9 +746,7 @@ const Upload = () => {
                 units: form?.units,
                 available: true
             }
-            console.log(newPost)
             const { status, msg } = await Post<Partial<PostI>, PostI>("posts", newPost)
-            console.log(status)
             if (status != 201) {
                 setUploadError(msg)
                 return
@@ -1154,38 +1159,12 @@ const Upload = () => {
                     globalProgress={globalProgress}
                     showProgressBar={isUploadingImages || uploading}
                 >
-                    <div>
-                        <p className="text-xl font-semibold">Extra Features</p>
-                        <p className="text-text/50 text-sm mt-1">Add anything else that stands out</p>
-                        <div className="grid gap-4 grid-cols-2 mt-4">
-                            {[
-                                "Fenced Compound",
-                                "Wall Fence",
-                                "Water Tank Included",
-                                "CCTV",
-                                "Backup Generator",
-                                "Garden",
-                            ].map((label) => {
-                                const isSelected = form.extras.includes(label);
-                                return (
-                                    <div
-                                        key={label}
-                                        onClick={() =>
-                                            setForm((p) => ({
-                                                ...p,
-                                                extras: isSelected
-                                                    ? p.extras.filter((e) => e !== label)
-                                                    : [...p.extras, label],
-                                            }))
-                                        }
-                                        className={`flex px-4 py-6 rounded-xl bg-pale items-center justify-center cursor-pointer border-2 text-sm font-medium text-center ${isSelected ? "border-primary/40 bg-primary/5" : "border-transparent"
-                                            }`}
-                                    >
-                                        {label}
-                                    </div>
-                                );
-                            })}
+                    <div className="bg-orange-300/5 border border-orange-300/10 text-orange-300 rounded-2xl p-6">
+                        <div className="flex items-center  gap-2">
+                            <ExclamationTriangleIcon className="h-8 w-8" />
+                            <p className="text-lg font-medium">Property Submission</p>
                         </div>
+                        <p className="mt-4 leading-7 text-text/70">Once your propery is submitted, it still has to be approved by the QA team to ensure authenticity</p>
                     </div>
                 </Shell>
             )}

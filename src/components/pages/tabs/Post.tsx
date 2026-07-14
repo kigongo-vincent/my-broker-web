@@ -1,6 +1,7 @@
 import { Get as ApiGet } from "../../../../api/index"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { BaseI, UserI, useUserStore } from "../../../store/auth"
+import Modal from "../../base/Modal"
 import {
     HeartOutlined,
     HeartSolid,
@@ -11,6 +12,7 @@ import { Activity, ReactNode, useEffect, useState } from "react"
 import { CheckBadgeIcon } from "@heroicons/react/20/solid"
 import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
+import { useAppStore } from "../../../store/app"
 
 export type PostType = "rental" | "short-stay" | "residential"
 export type PostAssetType = "image" | "video" | "thumb"
@@ -43,6 +45,7 @@ export interface PostI extends BaseI {
     assets: PostAssetI[]
     price: PriceI
     location: LocationI
+    favourites?: UserI[]
     bathrooms: number
     bedrooms: number
     toilets: number
@@ -54,23 +57,40 @@ export interface PostI extends BaseI {
     approved: boolean
     liked?: boolean
     available: boolean
+    hideHeader?: boolean
 }
 
 export interface Props extends UserI {
     noActions?: boolean
     actions?: ReactNode
+    post?: PostI
 }
 
-export const User = ({ noActions, actions, ...u }: Props) => {
-    const { getUserPhoto } = useUserStore()
+export const User = ({ noActions, actions, post, ...u }: Props) => {
+
+
+    const { getUserPhoto, user } = useUserStore()
     const navigate = useNavigate()
+    const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+    const isAuthenticated = Boolean((user as UserI)?.ID)
+    const { setSelectedPost } = useAppStore()
 
     const handleCall = () => {
+        if (!isAuthenticated) {
+            setShowAuthPrompt(true)
+            return
+        }
         if (u?.phone) {
             window.open(`tel:${u.phone}`, "_self")
         } else {
             alert("Phone number is not available for this user.")
         }
+    }
+
+    const handleChat = async (e: React.MouseEvent) => {
+        e.preventDefault()
+        setSelectedPost(post)
+        navigate(`/chat/${u?.ID || u.ID}`)
     }
 
     return (
@@ -99,7 +119,7 @@ export const User = ({ noActions, actions, ...u }: Props) => {
             {actions ? (
                 actions
             ) : (
-                !noActions && (
+                !noActions && isAuthenticated && (
                     <div className="flex gap-3">
                         <button
                             onClick={handleCall}
@@ -109,7 +129,7 @@ export const User = ({ noActions, actions, ...u }: Props) => {
                         </button>
 
                         <button
-                            onClick={() => navigate(`/chat/${u?.ID || 1}`)}
+                            onClick={handleChat}
                             className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
                         >
                             <Lineicons icon={Message2Solid} />
@@ -117,6 +137,17 @@ export const User = ({ noActions, actions, ...u }: Props) => {
                     </div>
                 )
             )}
+
+            <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
+                <div className="rounded-3xl bg-paper p-4">
+                    <p className="text-xl font-semibold">Sign in to continue</p>
+                    <p className="mt-2 text-sm text-text/60">Create an account or log in to contact owners, start chats, and save listings.</p>
+                    <div className="mt-6 flex gap-3">
+                        <button onClick={() => { setShowAuthPrompt(false); navigate("/auth/phone") }} className="btn flex-1 rounded-full bg-primary text-white">Log in</button>
+                        <button onClick={() => setShowAuthPrompt(false)} className="btn flex-1 rounded-full bg-pale">Cancel</button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     )
 }
@@ -151,14 +182,23 @@ const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholde
 
 const Post = (p: PostI) => {
     const [liked, setLiked] = useState(false)
+    const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+    const { user } = useUserStore()
     const navigate = useNavigate()
+    const isAuthenticated = Boolean((user as UserI)?.ID)
+
 
     useEffect(() => {
-        setLiked(Boolean(p?.liked))
-    }, [p?.liked])
+        setLiked(Boolean(p?.favourites?.some(f => f?.ID == (user as UserI)?.ID)))
+    }, [p?.favourites])
 
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation()
+
+        if (!isAuthenticated) {
+            setShowAuthPrompt(true)
+            return
+        }
 
         const previousLikedState = liked
         setLiked(!previousLikedState)
@@ -172,16 +212,19 @@ const Post = (p: PostI) => {
     }
 
     const handleClick = () => {
+
         navigate(`/post/${p?.ID}`)
     }
 
     return (
-        <div className="flex flex-col gap-4" onClick={handleClick}>
+        <div className="flex flex-col gap-4" >
             {/* user */}
-            <User {...p.author} />
+            {
+                !p?.hideHeader && <User post={p} {...p.author} />
 
+            }
             {/* assets */}
-            <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+            <div onClick={handleClick} className="flex gap-4  overflow-x-auto snap-x min-h-[20vh] snap-mandatory scrollbar-hide">
                 {p.assets?.[0] && p.assets
                     .filter(item => item.type === "image" || item.type === "video")
                     .map((item, index) => {
@@ -210,7 +253,7 @@ const Post = (p: PostI) => {
 
                                 {/* first asset overlay only */}
                                 {index === 0 && (
-                                    <div className="absolute inset-0 p-8 flex flex-col justify-between bg-gradient-to-t from-black from-20% to-black/30 ">
+                                    <div className="absolute inset-0 p-4 flex flex-col justify-between bg-gradient-to-t from-black from-20% to-black/30 ">
                                         {/* actions */}
                                         <div className="flex justify-end ">
                                             <button
@@ -241,20 +284,23 @@ const Post = (p: PostI) => {
 
                                             <div className="flex gap-2 flex-wrap">
                                                 <div className="bg-white/10 min-w-max gap-1 px-4 h-12 flex items-center rounded-full">
-                                                    <img src="https://png.pngtree.com/png-vector/20230903/ourmid/pngtree-open-white-toilet-png-image_9951695.png" alt="" className="h-8 w-8 object-contain" />
-                                                    {p.toilets} toilet{p.toilets !== 1 && "s"}
+                                                    {/* <img src="https://png.pngtree.com/png-vector/20230903/ourmid/pngtree-open-white-toilet-png-image_9951695.png" alt="" className="h-8 w-8 object-contain" /> */}
+                                                    {p.toilets} {" "}
+                                                    toilet{p.toilets !== 1 && "s"}
                                                 </div>
                                                 {/* <div className="bg-white/20 px-4 flex items-center py-3 rounded-full"> */}
                                                 <div className="bg-white/10 min-w-max px-4 h-12 gap-1 flex items-center rounded-full">
 
-                                                    <img src="https://static.vecteezy.com/system/resources/thumbnails/046/853/951/small_2x/eco-friendly-shower-solutions-free-png.png" alt="" className="h-8 w-8 object-contain" />
-                                                    {p.bathrooms} bathroom{p.bathrooms !== 1 && "s"}
+                                                    {/* <img src="https://static.vecteezy.com/system/resources/thumbnails/046/853/951/small_2x/eco-friendly-shower-solutions-free-png.png" alt="" className="h-8 w-8 object-contain" /> */}
+                                                    {p.bathrooms} {" "}
+                                                    bathroom{p.bathrooms !== 1 && "s"}
                                                 </div>
                                                 {/* <div className="bg-white/20 px-4 flex items-center py-3 rounded-full"> */}
                                                 <div className="bg-white/10 min-w-max px-4 h-12 gap-2 flex items-center rounded-full">
 
-                                                    <img src="https://www.transparentpng.com/download/bed/black-white-elegant-bed-png-hd--rgrF4o.png" alt="" className="h-8 w-8 object-contain" />
-                                                    {p.bedrooms} bedroom{p.bedrooms !== 1 && "s"}
+                                                    {/* <img src="https://www.transparentpng.com/download/bed/black-white-elegant-bed-png-hd--rgrF4o.png" alt="" className="h-8 w-8 object-contain" /> */}
+                                                    {p.bedrooms} {" "}
+                                                    bedroom{p.bedrooms !== 1 && "s"}
                                                 </div>
                                             </div>
                                         </div>
@@ -265,6 +311,17 @@ const Post = (p: PostI) => {
                     })
                 }
             </div>
+
+            <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
+                <div className="rounded-3xl bg-paper p-4">
+                    <p className="text-xl font-semibold">Sign in to continue</p>
+                    <p className="mt-2 text-sm text-text/60">Create an account or log in to like posts and use the full experience.</p>
+                    <div className="mt-6 flex gap-3">
+                        <button onClick={() => { setShowAuthPrompt(false); navigate("/auth/phone") }} className="btn flex-1 rounded-full bg-primary text-white">Log in</button>
+                        <button onClick={() => setShowAuthPrompt(false)} className="btn flex-1 rounded-full bg-pale">Cancel</button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     )
 }

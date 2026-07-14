@@ -11,7 +11,6 @@ const Favourites = () => {
 
     const { data, isLoading, error } = useQuery({ queryKey: ["favs"], queryFn: () => Get<PostI[]>("me/favourites") })
     const posts = data?.data as PostI[]
-
     const [er, setEr] = useState("")
 
     useEffect(() => {
