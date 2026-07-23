@@ -9,7 +9,18 @@ html {
 }
 
 :root {
+  --rsbs-backdrop-bg: rgba(0, 0, 0, 0.6);
+  --rsbs-bg: var(--color-pale);
+  --rsbs-handle-bg: var(--color-text);
+  --rsbs-max-w: auto;
+  --rsbs-ml: env(safe-area-inset-left);
+  --rsbs-mr: env(safe-area-inset-right);
+  --rsbs-overlay-rounded: 16px;
+}
+
+:root {
   --color-dark: #0b0e12;
+  --color-success: #28d89a;
   --color-text: #0b0e12ea;
   --color-paper: #ffffff;
   --color-pale: #f8f8f8;
@@ -34,7 +45,7 @@ html {
 }
 
 * {
-  scroll-behavior: smooth;
+  /* scroll-behavior: smooth; */
 }
 
 @media (min-width: 768px) {
@@ -52,7 +63,7 @@ html {
 
 @layer components {
   .btn {
-    @apply h-14 min-w-14 w-max rounded px-6 flex items-center font-[400] justify-center gap-2;
+    @apply h-14 min-w-14 w-max rounded-lg px-6 flex items-center font-[400] justify-center gap-2;
   }
   * {
     /* @apply transform active:scale-[1.01]; */
@@ -69,6 +80,7 @@ button:active {
 
 @theme {
   --color-dark: var(--color-dark);
+  --color-success: var(--color-success);
   --color-text: var(--color-text);
   --color-paper: var(--color-paper);
   --color-pale: var(--color-pale);

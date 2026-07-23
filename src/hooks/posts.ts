@@ -22,6 +22,7 @@ interface APIRequest {
     limit: number;
     page: number;
   };
+  search?: string;
   columns?: Array<{
     column: string;
     operator: string;
@@ -204,7 +205,7 @@ async function compressWithFallback(
  *     phone, including older Android WebViews where WASM is flaky/slow.
  *  3. Original file, untouched — last resort so the post can still be created.
  */
-async function compressImage(
+export async function compressImage(
   file: File,
   target: CompressTarget
 ): Promise<Blob> {
@@ -223,7 +224,7 @@ async function compressImage(
 /* Cloudinary client-side upload (unsigned preset, no backend round trip)  */
 /* ---------------------------------------------------------------------- */
 
-function uploadToCloudinary(
+export function uploadToCloudinary(
   blob: Blob,
   folder: string,
   filename: string,
@@ -564,15 +565,14 @@ export function useCreatePost() {
 
 interface UseInfinitePostsParams {
   limit: number;
-  // search is accepted but intentionally not sent to the server yet —
-  // Columns-based filtering (search/filters) lands in a later pass.
   search?: string;
 }
-export const useInfinitePosts = ({ limit }: UseInfinitePostsParams) => {
+export const useInfinitePosts = ({ limit, search }: UseInfinitePostsParams) => {
   const { filters = [] } = useAppStore();
+  const trimmedSearch = search?.trim() || "";
 
   return useInfiniteQuery({
-    queryKey: ["posts", "infinite", limit, filters.length],
+    queryKey: ["posts", "infinite", limit, filters.length, trimmedSearch],
     queryFn: async ({ pageParam }) => {
       const res = await Post<APIRequest, PostI[]>("posts/feed", {
         pagination: {
@@ -580,6 +580,7 @@ export const useInfinitePosts = ({ limit }: UseInfinitePostsParams) => {
           page: pageParam,
         },
         ...(filters.length > 0 ? { columns: filters } : {}),
+        ...(trimmedSearch ? { search: trimmedSearch } : {}),
       });
 
       return {
@@ -596,9 +597,9 @@ export const useInfinitePosts = ({ limit }: UseInfinitePostsParams) => {
       }
 
       // 2. Safely read pagination with fallback values to prevent NaN crashes
-      const Page = lastPage.pagination.Page ?? lastPage.pagination?.Page;
-      const Limit = lastPage.pagination.Limit ?? lastPage.pagination?.Limit;
-      const Total = lastPage.pagination.Total ?? lastPage.pagination?.Total;
+      const Page = lastPage.pagination.Page;
+      const Limit = lastPage.pagination.Limit;
+      const Total = lastPage.pagination.Total;
 
       if (Page === undefined || Limit === undefined || Total === undefined) {
         return undefined;

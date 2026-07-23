@@ -8,7 +8,14 @@ export interface BaseI {
   DeletedAt?: string;
 }
 
-type UserRole = "user" | "admin";
+type UserRole = "user" | "admin" | "broker";
+
+export interface BrokerDetails {
+  Fee: string;
+  Bio: string;
+}
+
+type verification = "pending" | "approved" | "cancelled";
 
 export interface UserI extends Partial<BaseI> {
   name: string;
@@ -16,9 +23,12 @@ export interface UserI extends Partial<BaseI> {
   role?: UserRole;
   phone?: string;
   photo?: string;
+  hideContact?: boolean;
   verified?: boolean;
   broker?: boolean;
+  verification?: verification;
   lastSeen?: string;
+  BrokerDetails?: BrokerDetails;
 }
 
 const MockkUser: UserI | {} = {};
@@ -26,6 +36,7 @@ const MockkUser: UserI | {} = {};
 export interface AuthStoreI {
   user: UserI | {};
   token: string;
+  getUser: () => UserI;
   setUser?: (u: UserI) => void;
   logout: () => void;
   login: (o: { user: UserI; token: string }) => void;
@@ -38,10 +49,14 @@ export const AVATAR_FALLBACK =
 
 export const useUserStore = create<AuthStoreI>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: MockkUser,
       token: "",
       company: {},
+
+      getUser: () => {
+        return get()?.user as UserI;
+      },
 
       setUser: (u) => {
         set({ user: u });
@@ -61,6 +76,7 @@ export const useUserStore = create<AuthStoreI>()(
           user: {},
           token: undefined,
         });
+        window.location.href = "/";
         try {
           localStorage.removeItem(STORAGE_KEY);
         } catch {

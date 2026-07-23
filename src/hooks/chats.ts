@@ -24,6 +24,7 @@ export interface ChatMessageI {
   Attachment?: string;
   post?: PostI;
   postId?: number;
+  isRead?: boolean;
   Sender?: UserI;
   CreatedAt?: string;
   UpdatedAt?: string;

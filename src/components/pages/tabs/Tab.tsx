@@ -1,5 +1,7 @@
 import { Activity, ReactNode, useMemo } from "react"
 import { useLocation, useNavigate } from "react-router"
+import { useAppStore } from "../../../store/app"
+import { useUserStore } from "../../../store/auth"
 
 export interface LinkI {
     label?: string
@@ -16,11 +18,21 @@ const Tab = (t: LinkI) => {
     const uploadStyles = useMemo(() => t?.path?.includes("upload") ? "bg-primary text-white " : "", [pathname])
     const navigate = useNavigate()
     const hasBadge = typeof t.badge === "number" ? t.badge > 0 : Boolean(t.badge)
+    const { LoginPrompt } = useAppStore()
+    const { token } = useUserStore()
+
+    const action = () => {
+        if (token != "") {
+            navigate(t?.path)
+            return
+        }
+        t?.label != "home" && LoginPrompt(t?.label || "")
+    }
 
     return (
         <div className="flex flex-col items-center ">
             <div
-                onClick={() => navigate(t?.path)}
+                onClick={action}
                 className={`h-16 cursor-pointer relative w-16 flex items-center justify-center rounded-2xl  ${isActive ? "  text-primary" : "text-text/50"} ${uploadStyles}`}>
                 <span>{t?.icon}</span>
 

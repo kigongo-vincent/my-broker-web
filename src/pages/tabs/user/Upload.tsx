@@ -19,6 +19,8 @@ import { Currency, PostAssetI, PostI, PostType } from "../../../components/pages
 import { Post } from "../../../../api";
 import Header from "../../../components/pages/tabs/Header";
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
+import FlexRender from "../../../components/base/FlexRender";
+import Loader from "../../../components/base/Loader";
 
 /* ---------------------------------------------------------------------- */
 /* Geocode cache — reverse/forward Nominatim lookups cached in localStorage */
@@ -132,7 +134,7 @@ interface ShellProps extends HTMLAttributes<HTMLDivElement> {
     children: ReactNode;
     onBack?: () => void;
     onNext?: () => void;
-    nextText?: string;
+    nextText?: string | ReactNode;
     disabled?: boolean;
     globalProgress?: number;
     showProgressBar?: boolean;
@@ -207,7 +209,6 @@ export const Shell = ({
     return (
         <>
             <Header back title="Upload" caption="post your property now" />
-            <div className="h-min-[9vh] h-[9vh]"></div>
             <div className={`flex h-screen flex-col p-4 justify-between ${className}`}>
                 <div className="overflow-y-auto mb-24">{children}</div>
 
@@ -346,7 +347,8 @@ const Upload = () => {
         useUploadImages();
     // Final step: create the post — called exactly once, on final submit.
 
-    const [currentStepID, setCurrentStepID] = useState<number>(3);
+    const [currentStepID, setCurrentStepID] = useState<number>(2);
+    const [isSearching, setIsSearching] = useState(false);
     const [showNegotiationModal, setShowNegotiationModal] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
     const [uploadError, setUploadError] = useState<string | null>(null);
@@ -371,6 +373,23 @@ const Upload = () => {
     // Camera stream — single ref, no stale closures on step transitions
     const videoRef = useRef<HTMLVideoElement>(null);
     const [cameraStatus, setCameraStatus] = useState<"loading" | "ready" | "denied">("loading");
+
+    type RoomField = "bedrooms" | "bathrooms" | "toilets";
+    const roomPadOptions = ["0", "1", "2", "3", "other"] as const;
+
+    const [roomPad, setRoomPad] = useState<Record<RoomField, string>>({
+        bedrooms: "0",
+        bathrooms: "0",
+        toilets: "0",
+    });
+
+    // const formatAddress = (name: string, levels = 3) => {
+    //     return name
+    //         .split(",")
+    //         .map((s) => s.trim())
+    //         .slice(0, levels)
+    //         .join(", ");
+    // };
 
     // Custom months-upfront pad selection
     const [monthsPad, setMonthsPad] = useState<"2" | "3" | "4" | "other">("2");
@@ -619,12 +638,15 @@ const Upload = () => {
     /* normalized query string.                                       */
     /* -------------------------------------------------------------- */
     const fetchLocationSuggestions = async (query: string) => {
+        setIsSearching(true);
         try {
             const data = await searchAddress(query);
             setSuggestions(data);
             setShowSuggestions(true);
         } catch (e) {
             console.error(e);
+        } finally {
+            setIsSearching(false);
         }
     };
 
@@ -909,7 +931,7 @@ const Upload = () => {
                     globalProgress={globalProgress}
                     showProgressBar={isUploadingImages}
                 >
-                    <div className="flex gap-4 flex-col relative" ref={locationBoxRef}>
+                    <div className="flex gap-4 flex-col" ref={locationBoxRef}>
                         <div>
                             <p className="text-xl font-semibold">Property Location</p>
                             <p className="text-text/50 text-sm mt-1">Provide location data</p>
@@ -922,7 +944,9 @@ const Upload = () => {
                         )}
 
                         <div className="bg-pale w-full rounded-full h-15 flex gap-1 items-center px-6 relative">
-                            <Lineicons icon={MapMarker5Solid} className="text-text/50" />
+                            <Loader loading={isSearching}>
+                                <Lineicons icon={MapMarker5Solid} className="text-text/50" />
+                            </Loader>
                             <input
                                 type="text"
                                 value={form.location.Name}
@@ -931,21 +955,10 @@ const Upload = () => {
                                 placeholder="Type address..."
                                 className="flex-1 text-base outline-0 bg-transparent"
                             />
-                        </div>
 
-                        <button
-                            type="button"
-                            disabled={locationLoading}
-                            onClick={() => handleGetCurrentLocation(false)}
-                            className="btn bg-primary w-full rounded-full text-white"
-                        >
-                            <span>{locationLoading ? "Fetching..." : "Use current location"}</span>
-                        </button>
-
-                        {showSuggestions && suggestions.length > 0 && (
-                            <div className="bg-pale rounded flex flex-col divide-y divide-text/5 overflow-hidden absolute top-[calc(100%-1rem)] left-0 right-0 z-20 shadow-lg max-h-64 overflow-y-auto">
-                                {suggestions.map((item, i) => (
-                                    <div
+                            {showSuggestions && (
+                                <div className="bg-pale rounded flex flex-col   absolute top-[calc(100%+0.5rem)] left-0 right-0 z-20">
+                                    <FlexRender items={suggestions} render={(item, i) => <div
                                         key={i}
                                         onClick={() => {
                                             setForm((p) => ({
@@ -961,10 +974,19 @@ const Upload = () => {
                                         className="p-4 text-text/80 hover:bg-black/5 cursor-pointer text-sm"
                                     >
                                         {item.display_name}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    </div>} />
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            type="button"
+                            disabled={locationLoading}
+                            onClick={() => handleGetCurrentLocation(false)}
+                            className="btn bg-primary w-full rounded-full text-white"
+                        >
+                            <span>{locationLoading ? "Fetching..." : "Use current location"}</span>
+                        </button>
                     </div>
                 </Shell>
             )}
@@ -988,7 +1010,7 @@ const Upload = () => {
                 </Shell>
             )}
 
-            {currentStepID === 4 && (
+            {/* {currentStepID === 4 && (
                 <Shell
                     onBack={() => setCurrentStepID(3)}
                     onNext={() => setCurrentStepID(5)}
@@ -1016,6 +1038,72 @@ const Upload = () => {
                         </div>
                     </div>
                 </Shell>
+            )} */}
+
+            {currentStepID === 4 && (
+                <Shell
+                    onBack={() => setCurrentStepID(3)}
+                    onNext={() => setCurrentStepID(5)}
+                    disabled={(["bedrooms", "bathrooms", "toilets"] as const).some(
+                        (field) => roomPad[field] === "other" && (!form[field] || form[field] < 1)
+                    )}
+                    globalProgress={globalProgress}
+                    showProgressBar={isUploadingImages}
+                >
+                    <div>
+                        <p className="text-xl font-semibold">Bedrooms, Bathrooms & Toilets</p>
+
+                        <div className="flex flex-col gap-6 mt-6">
+                            {(["bedrooms", "bathrooms", "toilets"] as const).map((field) => (
+                                <div key={field}>
+                                    <span className="text-sm capitalize">{field}</span>
+
+                                    <div className="grid grid-cols-5 gap-3 mt-2">
+                                        {roomPadOptions.map((opt) => {
+                                            const isSelected = roomPad[field] === opt;
+                                            return (
+                                                <div
+                                                    key={opt}
+                                                    onClick={() => {
+                                                        setRoomPad((p) => ({ ...p, [field]: opt }));
+                                                        if (opt !== "other") {
+                                                            setForm((p) => ({ ...p, [field]: Number(opt) }));
+                                                        }
+                                                    }}
+                                                    className="relative h-16 bg-pale rounded-xl flex items-center justify-center cursor-pointer"
+                                                >
+                                                    {isSelected && (
+                                                        <motion.div
+                                                            layoutId={`${field}PadRing`}
+                                                            className="absolute inset-0 border border-primary bg-primary/5 rounded-xl z-0"
+                                                            transition={{ duration: 0.2 }}
+                                                        />
+                                                    )}
+                                                    <span className="relative z-10 font-medium capitalize text-sm">
+                                                        {opt === "other" ? "Other" : opt}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {roomPad[field] === "other" && (
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={form[field] || ""}
+                                            onChange={(e) =>
+                                                setForm((p) => ({ ...p, [field]: Number(e.target.value) }))
+                                            }
+                                            placeholder={`custom number of ${field}`}
+                                            className="outline-0 bg-pale h-14 rounded-lg px-6 mt-3 w-full"
+                                        />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </Shell>
             )}
 
             {currentStepID === 5 && (
@@ -1030,7 +1118,7 @@ const Upload = () => {
                         <div className="flex flex-col gap-2 mt-4">
                             <span className="text-sm">Price Amount (UGX)</span>
                             <div className="bg-pale h-14 rounded-lg px-6 flex items-center gap-2">
-                                <span className="text-text/50 text-sm font-medium">UGX</span>
+                                <span className="text-text/50 text-lg font-medium">UGX</span>
                                 <input
                                     inputMode="numeric"
                                     placeholder="how much is rent per month"
@@ -1153,7 +1241,10 @@ const Upload = () => {
                     onBack={() => setCurrentStepID(7)}
                     onNext={handleFinalSubmit}
                     nextText={
-                        uploading ? "Publishing..." : isUploadingImages ? "Finishing upload..." : "Publish Post"
+                        uploading ? <div className="flex items-center gap-4">
+                            <div className="border border-text animate-ping rounded-full h-4 w-4"></div>
+                            <span className="animate-pulse">almost done...</span>
+                        </div> : isUploadingImages ? "Finishing upload..." : "Publish Post"
                     }
                     disabled={uploading || isUploadingImages}
                     globalProgress={globalProgress}

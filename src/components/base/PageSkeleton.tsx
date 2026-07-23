@@ -16,7 +16,7 @@ export const ListStackSkeleton = ({ className, rows = 3 }: LProps) => {
                             <div className="h-3 w-3/4 animate-pulse rounded-full bg-text/10" />
                         </div>
                     </div>
-                    <div className="h-40 animate-pulse rounded-3xl bg-text/10" />
+                    <div className="h-40 animate-pulse rounded bg-text/10" />
                 </div>
             ))}
         </div>

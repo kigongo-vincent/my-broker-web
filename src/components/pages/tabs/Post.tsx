@@ -8,11 +8,12 @@ import {
     Message2Solid,
     Telephone1Solid
 } from "@lineiconshq/free-icons"
-import { Activity, ReactNode, useEffect, useState } from "react"
+import { Activity, ReactNode, useEffect, useMemo, useRef, useState } from "react"
 import { CheckBadgeIcon } from "@heroicons/react/20/solid"
 import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
 import { useAppStore } from "../../../store/app"
+import { motion } from "framer-motion"
 
 export type PostType = "rental" | "short-stay" | "residential"
 export type PostAssetType = "image" | "video" | "thumb"
@@ -66,18 +67,128 @@ export interface Props extends UserI {
     post?: PostI
 }
 
+// Gmail-like palette
+const AVATAR_COLORS = [
+    "#F44336", "#E91E63", "#9C27B0", "#673AB7",
+    "#3F51B5", "#2196F3", "#03A9F4", "#00BCD4",
+    "#009688", "#4CAF50", "#FF9800", "#FF5722",
+]
+
+const getInitials = (name?: string) => {
+    if (!name) return "?"
+    const parts = name.trim().split(/\s+/)
+    const initials = parts.length === 1
+        ? parts[0].slice(0, 2)
+        : parts[0][0] + parts[parts.length - 1][0]
+    return initials.toUpperCase()
+}
+
+const getColorFromString = (str?: string) => {
+    if (!str) return AVATAR_COLORS[0]
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+const FLIP_INTERVAL = 300 // flip every 30s while visible
+const FLIP_BACK_DELAY = 3000 // how long the back stays showing
+
+const FlipAvatar = ({
+    photo,
+    name,
+    onClick,
+}: {
+    photo: string
+    name?: string
+    onClick?: () => void
+}) => {
+    const [isFlipped, setIsFlipped] = useState(false)
+    const [isVisible, setIsVisible] = useState(false)
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const el = containerRef.current
+        if (!el) return
+
+        const observer = new IntersectionObserver(
+            ([entry]) => setIsVisible(entry.isIntersecting),
+            { threshold: 0.5 }
+        )
+        observer.observe(el)
+        return () => observer.disconnect()
+    }, [])
+
+    useEffect(() => {
+        if (!isVisible) return
+
+        const interval = setInterval(() => {
+            setIsFlipped(true)
+            const backTimeout = setTimeout(() => setIsFlipped(false), FLIP_BACK_DELAY)
+            return () => clearTimeout(backTimeout)
+        }, FLIP_INTERVAL)
+
+        return () => clearInterval(interval)
+    }, [isVisible])
+
+    const initials = useMemo(() => getInitials(name), [name])
+    const bgColor = useMemo(() => getColorFromString(name), [name])
+
+    return (
+        <div
+            ref={containerRef}
+            onClick={onClick}
+            className="h-14 w-14 shrink-0"
+            style={{ perspective: 1000 }}
+        >
+            <motion.div
+                className="relative h-full w-full"
+                style={{ transformStyle: "preserve-3d" }}
+                animate={{ rotateY: isFlipped ? 180 : 0 }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
+            >
+                {/* Front - photo */}
+                <div
+                    className="absolute inset-0"
+                    style={{ backfaceVisibility: "hidden" }}
+                >
+                    <img
+                        src={photo}
+                        className="h-14 w-14 rounded-full object-cover"
+                        alt=""
+                    />
+                </div>
+
+                {/* Back - colored initials */}
+                <div
+                    className="absolute inset-0 flex items-center justify-center rounded-full"
+                    style={{
+                        backfaceVisibility: "hidden",
+                        transform: "rotateY(180deg)",
+                        backgroundColor: bgColor,
+                    }}
+                >
+                    <span className="text-lg font-semibold text-white">
+                        {initials}
+                    </span>
+                </div>
+            </motion.div>
+        </div>
+    )
+}
+
 export const User = ({ noActions, actions, post, ...u }: Props) => {
 
-
-    const { getUserPhoto, user } = useUserStore()
+    const { getUserPhoto, user, getUser } = useUserStore()
     const navigate = useNavigate()
     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
     const isAuthenticated = Boolean((user as UserI)?.ID)
-    const { setSelectedPost } = useAppStore()
+    const { setSelectedPost, LoginPrompt } = useAppStore()
 
     const handleCall = () => {
         if (!isAuthenticated) {
-            setShowAuthPrompt(true)
+            LoginPrompt("direct messages")
             return
         }
         if (u?.phone) {
@@ -88,19 +199,23 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
     }
 
     const handleChat = async (e: React.MouseEvent) => {
-        e.preventDefault()
-        setSelectedPost(post)
-        navigate(`/chat/${u?.ID || u.ID}`)
+        if (isAuthenticated) {
+            e.preventDefault()
+            setSelectedPost(post)
+            navigate(`/chat/${u?.ID || u.ID}`, { state: { user: u } })
+        } else {
+            LoginPrompt("direct messages")
+        }
+
     }
 
     return (
-        <div className="flex cursor-pointer items-center justify-between">
+        <div className={`flex cursor-pointer ${post && "px-4"} items-center justify-between`}>
             <div className="flex items-center gap-2">
-                <img
+                <FlipAvatar
+                    photo={getUserPhoto?.(u.photo) || ""}
+                    name={u?.name}
                     onClick={() => navigate(`/profile/${u?.ID}`)}
-                    src={getUserPhoto?.(u.photo)}
-                    className="h-14 w-14 rounded-full object-cover"
-                    alt=""
                 />
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1">
@@ -119,22 +234,26 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
             {actions ? (
                 actions
             ) : (
-                !noActions && isAuthenticated && (
-                    <div className="flex gap-3">
-                        <button
-                            onClick={handleCall}
-                            className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
-                        >
-                            <Lineicons icon={Telephone1Solid} />
-                        </button>
+                (
+                    <Activity mode={noActions || getUser()?.ID == u?.ID ? "hidden" : "visible"}>
+                        <div className="flex gap-3">
+                            {
+                                !u?.hideContact && <button
+                                    onClick={handleCall}
+                                    className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
+                                >
+                                    <Lineicons icon={Telephone1Solid} />
+                                </button>
+                            }
 
-                        <button
-                            onClick={handleChat}
-                            className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
-                        >
-                            <Lineicons icon={Message2Solid} />
-                        </button>
-                    </div>
+                            <button
+                                onClick={handleChat}
+                                className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
+                            >
+                                <Lineicons icon={Message2Solid} />
+                            </button>
+                        </div>
+                    </Activity>
                 )
             )}
 
@@ -151,6 +270,101 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         </div>
     )
 }
+
+// export const User = ({ noActions, actions, post, ...u }: Props) => {
+
+
+//     const { getUserPhoto, user, getUser } = useUserStore()
+//     const navigate = useNavigate()
+//     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+//     const isAuthenticated = Boolean((user as UserI)?.ID)
+//     const { setSelectedPost, LoginPrompt } = useAppStore()
+
+//     const handleCall = () => {
+//         if (!isAuthenticated) {
+//             setShowAuthPrompt(true)
+//             return
+//         }
+//         if (u?.phone) {
+//             window.open(`tel:${u.phone}`, "_self")
+//         } else {
+//             alert("Phone number is not available for this user.")
+//         }
+//     }
+
+//     const handleChat = async (e: React.MouseEvent) => {
+//         if (isAuthenticated) {
+//             e.preventDefault()
+//             setSelectedPost(post)
+//             navigate(`/chat/${u?.ID || u.ID}`, { state: { user: u } })
+//         } else {
+//             LoginPrompt("direct messages")
+//         }
+
+//     }
+
+//     return (
+//         <div className={`flex cursor-pointer ${post && "px-4"} items-center justify-between`}>
+//             <div className="flex items-center gap-2">
+//                 <img
+//                     onClick={() => navigate(`/profile/${u?.ID}`)}
+//                     src={getUserPhoto?.(u.photo)}
+//                     className="h-14 w-14  rounded-full object-cover"
+//                     alt=""
+//                 />
+//                 <div className="flex flex-col">
+//                     <div className="flex items-center gap-1">
+//                         <p className="font-medium">
+//                             {TextCropper(u?.name, 23)}
+//                         </p>
+//                         {u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
+//                         {u?.broker && <div className="text-sm text-primary">broker</div>}
+//                     </div>
+//                     <span className="text-sm text-text/50">
+//                         last seen {u.lastSeen}
+//                     </span>
+//                 </div>
+//             </div>
+
+//             {actions ? (
+//                 actions
+//             ) : (
+//                 (
+//                     <Activity mode={noActions || getUser()?.ID == u?.ID ? "hidden" : "visible"}>
+//                         <div className="flex gap-3">
+//                             {
+//                                 !u?.hideContact && <button
+//                                     onClick={handleCall}
+//                                     className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
+//                                 >
+//                                     <Lineicons icon={Telephone1Solid} />
+//                                 </button>
+//                             }
+
+//                             <button
+//                                 onClick={handleChat}
+//                                 className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
+//                             >
+//                                 <Lineicons icon={Message2Solid} />
+//                             </button>
+//                         </div>
+//                     </Activity>
+//                 )
+//             )}
+
+//             <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
+//                 <div className="rounded-3xl bg-paper p-4">
+//                     <p className="text-xl font-semibold">Sign in to continue</p>
+//                     <p className="mt-2 text-sm text-text/60">Create an account or log in to contact owners, start chats, and save listings.</p>
+//                     <div className="mt-6 flex gap-3">
+//                         <button onClick={() => { setShowAuthPrompt(false); navigate("/auth/phone") }} className="btn flex-1 rounded-full bg-primary text-white">Log in</button>
+//                         <button onClick={() => setShowAuthPrompt(false)} className="btn flex-1 rounded-full bg-pale">Cancel</button>
+//                     </div>
+//                 </div>
+//             </Modal>
+//         </div>
+//     )
+// }
 
 // Reusable Native Image component to handle smooth transitions inside carousels safely
 const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholderSrc?: string; alt: string }) => {
@@ -186,6 +400,7 @@ const Post = (p: PostI) => {
     const { user } = useUserStore()
     const navigate = useNavigate()
     const isAuthenticated = Boolean((user as UserI)?.ID)
+    const { setFavouritesCount, favouritesCount, LoginPrompt } = useAppStore()
 
 
     useEffect(() => {
@@ -196,11 +411,16 @@ const Post = (p: PostI) => {
         e.stopPropagation()
 
         if (!isAuthenticated) {
-            setShowAuthPrompt(true)
+            LoginPrompt("direct messages")
             return
         }
 
         const previousLikedState = liked
+        if (previousLikedState) {
+            setFavouritesCount(favouritesCount - 1)
+        } else {
+            setFavouritesCount(favouritesCount + 1)
+        }
         setLiked(!previousLikedState)
 
         try {
@@ -216,6 +436,8 @@ const Post = (p: PostI) => {
         navigate(`/post/${p?.ID}`)
     }
 
+
+
     return (
         <div className="flex flex-col gap-4" >
             {/* user */}
@@ -224,7 +446,7 @@ const Post = (p: PostI) => {
 
             }
             {/* assets */}
-            <div onClick={handleClick} className="flex gap-4  overflow-x-auto snap-x min-h-[20vh] snap-mandatory scrollbar-hide">
+            <div onClick={handleClick} className={`flex gap-4  overflow-x-auto snap-x ${p?.hideHeader && "rounded-4xl"} snap-mandatory scrollbar-hide`}>
                 {p.assets?.[0] && p.assets
                     .filter(item => item.type === "image" || item.type === "video")
                     .map((item, index) => {
@@ -235,7 +457,7 @@ const Post = (p: PostI) => {
                         return (
                             <div
                                 key={index}
-                                className="relative shrink-0 snap-center w-[100%] h-[50vh] rounded-2xl overflow-hidden bg-pale"
+                                className="relative shrink-0 snap-center w-[100%] h-[50vh] min-h-max  overflow-hidden bg-pale"
                             >
                                 {item.type === "image" ? (
                                     <NativeLazyImage
@@ -255,7 +477,11 @@ const Post = (p: PostI) => {
                                 {index === 0 && (
                                     <div className="absolute inset-0 p-4 flex flex-col justify-between bg-gradient-to-t from-black from-20% to-black/30 ">
                                         {/* actions */}
-                                        <div className="flex justify-end ">
+                                        <div className="flex justify-between ">
+
+                                            <span className="bg-white text-dark font-medium text-sm flex items-center gap-2 h-max px-5 py-2 rounded-full">
+                                                {p?.type || "residential"}
+                                            </span>
                                             <button
                                                 onClick={handleLike}
                                                 className="bg-white/30 text-white p-4 rounded-2xl transition-transform active:scale-95"
@@ -279,7 +505,7 @@ const Post = (p: PostI) => {
                                             </div>
 
                                             <div className="flex items-center gap-1 text-sm">
-                                                <span>{p.location.name}</span>
+                                                <span>{TextCropper(p.location.name, 60)}</span>
                                             </div>
 
                                             <div className="flex gap-2 flex-wrap">
@@ -312,7 +538,7 @@ const Post = (p: PostI) => {
                 }
             </div>
 
-            <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
+            <Modal hideClose position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
                 <div className="rounded-3xl bg-paper p-4">
                     <p className="text-xl font-semibold">Sign in to continue</p>
                     <p className="mt-2 text-sm text-text/60">Create an account or log in to like posts and use the full experience.</p>

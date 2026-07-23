@@ -10,7 +10,7 @@ const Logo = ({ className }: Props) => {
 
     return (
         <motion.img
-            onClick={() => navigate("/")}
+            onClick={() => navigate("")}
             initial={{ scale: 0.9, opacity: 0.5 }}
             animate={{ scale: 1, opacity: 1 }}
             src={LogoIcon} alt="" className={className} />

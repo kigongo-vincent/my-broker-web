@@ -1,11 +1,10 @@
-import { BadgeDecagramPercentSolid, PhoneSolid, PowerButtonSolid, TargetUserSolid, UserMultiple4Solid } from "@lineiconshq/free-icons"
+import { BadgeDecagramPercentSolid, PhoneSolid, PowerButtonSolid, TargetUserSolid, } from "@lineiconshq/free-icons"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { ReactNode, useMemo, useState } from "react"
 import FlexRender from "../../../components/base/FlexRender"
-import { BaseI, } from "../../../store/auth"
+import { BaseI, useUserStore, } from "../../../store/auth"
 import Modal from "../../../components/base/Modal"
-import { ExclamationTriangleIcon } from "@heroicons/react/20/solid"
-import { Link, useNavigate } from "react-router"
+import { Link } from "react-router"
 
 
 export interface SettingComponentI extends BaseI {
@@ -73,13 +72,13 @@ const Settings = () => {
         //     caption: "Transfer account to another email",
         //     path: ""
         // },
-        {
-            ID: 5,
-            icon: <Lineicons icon={UserMultiple4Solid} />,
-            title: "Manage users",
-            caption: "Review & manage users",
-            path: "/users"
-        },
+        // {
+        //     ID: 5,
+        //     icon: <Lineicons icon={UserMultiple4Solid} />,
+        //     title: "Manage users",
+        //     caption: "Review & manage users",
+        //     path: "/users"
+        // },
         {
             ID: 6,
             icon: <Lineicons icon={PowerButtonSolid} />,
@@ -92,29 +91,18 @@ const Settings = () => {
 
     ], [])
 
-    // const { user } = useUserStore()
-    // const filteredSettings = useMemo(() => {
-    //     const res: SettingComponentI[] = []
-    //     return settings.forEach(s => {
-    //         if (s?.id)
-    //     })
-
-    // }, [user])
-
-    const navigate = useNavigate()
+    const { logout } = useUserStore()
 
     return (
         <div className="">
-            <p className="text-xl font-medium  ">Setting</p>
-            <p className="text-sm mb-5 mt-1  text-text/80">adjust the nobs of the app to match your preference</p>
+            <p className="text-2xl font-medium  ">Setting</p>
+            <p className="text-sm mb-5 mt-1 border-b pb-4 border-text/10  text-text/80">adjust the nobs of the app to match your preference</p>
             <FlexRender className="gap-6" items={settings} render={(item, index) => <SettingComponent {...item} key={index} />} />
 
             {/* logout  */}
-            <Modal actions={<><button onClick={() => setShowlogoutModal(false)} className="btn bg-pale">cancel</button><button onClick={() => navigate(`/`)} className="btn bg-primary text-white">confirm</button></>} open={showLogoutModal} onClose={() => setShowlogoutModal(false)}>
+            <Modal actions={<><button onClick={() => setShowlogoutModal(false)} className="btn bg-pale">cancel</button><button onClick={() => { logout() }} className="btn bg-primary text-white">confirm</button></>} open={showLogoutModal} onClose={() => setShowlogoutModal(false)}>
 
-                <p className="text-2xl flex items-center mb-4 gap-2 font-semibold">
-
-                    <ExclamationTriangleIcon className="h-8 w-8" />
+                <p className="text-xl flex items-center mb-1 gap-2 font-semibold">
                     Logout confirmation</p>
                 <p className="text-text/70">
                     Are you sure you want to logout</p>

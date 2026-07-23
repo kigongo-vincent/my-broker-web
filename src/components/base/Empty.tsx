@@ -63,7 +63,7 @@ const EmptyIllustration = () => (
 
 const Empty = ({ title = "No data found", caption = "nothing is found, consider refreshing the page" }: Props) => {
     return (
-        <div className="border border-text/10 rounded-xl flex items-center justify-center flex-col h-[30vh] w-full gap-1 px-6 py-8">
+        <div className=" rounded-xl flex items-center justify-center flex-col h-[30vh] min-h-[30vh] w-full gap-1 px-6 py-8">
             <EmptyIllustration />
             <h2 className="text-xl font-medium text-text mt-1">{title}</h2>
             <p className="text-sm text-text/50 text-center max-w-md">{caption}</p>

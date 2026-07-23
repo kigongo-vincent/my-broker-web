@@ -22,7 +22,7 @@ const MapP = () => {
                 <img src={MapIcon} className="h-20 animate-bounce object-contain w-20" alt="" />
             </div>
 
-            <Header back title="properties map" caption="browser properties by places" />
+            <Header back noMargin title="properties map" caption="browser properties by places" />
             {
                 <Activity mode={properties?.length != 0 ? "visible" : "hidden"}>
                     <AnimatePresence >

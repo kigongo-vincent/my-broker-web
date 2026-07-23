@@ -7,22 +7,17 @@ import PostDetails from "../pages/tabs/user/PostDetails"
 import Profile from "../pages/tabs/user/Profile"
 import Search from "../pages/tabs/user/Search"
 import Filter from "../pages/tabs/user/Filter"
-import Users from "../pages/tabs/admin/Users"
 import Account from "../pages/tabs/user/Account"
 import Verify from "../pages/tabs/user/Verify"
 import PhoneChange from "../pages/tabs/user/PhoneChange"
 import MapP from "../pages/tabs/user/MapP"
+import NotFound from "../pages/NotFound"
 
 
 const Index = () => {
 
-    const click = (e: { preventDefault?: () => void }) => {
-        e?.preventDefault?.()
-        // navigator.vibrate(50)
-    }
-
     return (
-        <div onClick={click}>
+        <div>
 
             <Routes>
                 <Route path="/" Component={() => <Navigate to="/tabs/user/" replace />} />
@@ -37,13 +32,12 @@ const Index = () => {
                 <Route path="/filters" Component={Filter} />
                 <>
                     <>
-                        <Route path="/users" Component={Users} />
                         <Route path="/account" Component={Account} />
                         <Route path="/verification" Component={Verify} />
                         <Route path="/phone" Component={PhoneChange} />
                     </>
                 </>
-
+                <Route path="/*" Component={NotFound} />
             </Routes>
         </div>
     )

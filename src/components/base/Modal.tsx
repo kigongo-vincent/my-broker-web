@@ -8,11 +8,12 @@ export interface ModalProps extends HTMLAttributes<HTMLDivElement> {
     open?: boolean
     position?: "center" | "right" | "bottom"
     actions?: ReactNode
+    hideClose?: boolean
     onClose: () => void
 
 }
 
-const Modal = ({ position = "center", onClose, children, className, open, actions }: ModalProps) => {
+const Modal = ({ position = "center", onClose, children, hideClose, className, open, actions, style }: ModalProps) => {
 
     const overlayRef = useRef(null)
 
@@ -67,7 +68,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                             >
 
                                 {/* header - fixed at top, not scrollable */}
-                                <div className="flex mb-6 items-center justify-end shrink-0">
+                                <div className="flex mb-4 items-center justify-end shrink-0">
                                     <button onClick={onClose} className="">
                                         <XMarkIcon className="h-8 w-8" />
                                     </button>
@@ -80,7 +81,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
 
                                 {/* actions - fixed at bottom, not scrollable */}
                                 {actions && (
-                                    <div className="shrink-0 min-w-max mt-4 gap-3 pt-4 flex justify-end ">
+                                    <div className="shrink-0 min-w-max mt-4 gap-3 pt-2 flex justify-end ">
                                         {actions}
                                     </div>
                                 )}
@@ -100,6 +101,7 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                                     transition={{ type: "tween", duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                                     onClick={(e) => e.stopPropagation()}
                                     className={`h-full max-h-dvh w-full max-w-full overflow-y-auto border-l border-text/10 bg-paper p-5 sm:p-6 md:max-w-xl md:p-8 sm:max-w-lg ${className ?? ""}`}
+                                    style={style}
                                 >
                                     {/* header - fixed at top, not scrollable */}
                                     <div className="flex mb-6 items-center justify-end shrink-0">
@@ -126,12 +128,14 @@ const Modal = ({ position = "center", onClose, children, className, open, action
                                 >
 
                                     {/* header - fixed at top, close button centered, not scrollable */}
-                                    <div className="flex items-center justify-center  shrink-0">
-                                        <button onClick={onClose} className="btn m-3 bg-pale w-full rounded-full">
-                                            <XMarkIcon className="h-6 w-6" />
-                                            close
-                                        </button>
-                                    </div>
+                                    {
+                                        !hideClose && <div className="flex items-center justify-center  shrink-0">
+                                            <button onClick={onClose} className="btn m-3 bg-pale w-full rounded-full">
+                                                <XMarkIcon className="h-6 w-6" />
+                                                close
+                                            </button>
+                                        </div>
+                                    }
                                     {/* content - scrollable, no padding */}
                                     <div className="flex-grow m-4 mt-0 rounded-4xl overflow-auto min-h-0">
                                         {children}

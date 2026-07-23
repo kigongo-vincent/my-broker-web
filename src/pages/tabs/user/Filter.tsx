@@ -388,9 +388,9 @@ const Filter = () => {
     return (
         <AnimatePresence mode="sync">
             <motion.div>
-                <Header back />
-                <div className="pt-[8vh] p-4">
-                    <div className="flex flex-col gap-4 mt-6 rounded-lg">
+                <Header back title="filters" caption="apply filters to properties" />
+                <div className=" px-4">
+                    <div className="flex flex-col gap-4  rounded-lg">
 
                         <div>
                             <p className="text-xl font-semibold">Property location</p>

@@ -4,6 +4,9 @@ import { User } from "../../../components/pages/tabs/Post"
 import Header from "../../../components/pages/tabs/Header"
 import GoogleLogo from "../../../assets/google-maps-logo.webp"
 import MapComponent from "../../../components/pages/upload/Map"
+import MapLight from "../../../assets/map-light.webp"
+import MapDark from "../../../assets/map-dark.webp"
+import MapIcon from "../../../assets/map.webp"
 import Modal from "../../../components/base/Modal"
 import { ExclamationTriangleIcon, PhoneIcon } from "@heroicons/react/20/solid"
 import { CategoryI } from "./Upload"
@@ -17,6 +20,7 @@ import electricityIcon from "../../../assets/upload/electricity.webp";
 import waterIcon from "../../../assets/upload/water.webp";
 import parkingIcon from "../../../assets/upload/parking.webp";
 import trashIcon from "../../../assets/upload/trash.webp";
+import { motion } from "framer-motion"
 
 interface IconI {
     url: string;
@@ -51,7 +55,7 @@ const PostDetails = () => {
     const ammenities = post?.amenities?.map(a => ({ label: a, icon: IconFinder(a) } as CategoryI))
     return (
         <div className="w-full">
-            <Header back />
+            <Header back noMargin />
 
             <button onClick={() => setShowMap(true)} className="fixed border border-text/10 z-100 btn max-w-max left-[50%] top-30 transform -translate-x-[50%] rounded-full bg-paper ">
                 <img src={GoogleLogo} className="h-8 w-8" alt="" />
@@ -175,18 +179,18 @@ text-sm
 
                 <div className="border-text/10 border my-4 rounded-xl p-4">
                     <div className="flex items-center gap-1">
-                        <p className="text-2xl font-semibold">4</p>
-                        <p className="text-lg">units available</p>
+                        <p className="text-2xl font-semibold">{post?.units}</p>
+                        <p className="text-lg">unit{post?.units != 1 && "s"} available</p>
                     </div>
                     <p className="flex items-center mt-2 gap-2 text-yellow-600 bg-yellow-600/5 px-6 py-4 rounded-full">
                         <ExclamationTriangleIcon className="h-8 w-8" />
-                        <span>4 months needed for the first month</span>
+                        <span>{post?.months} month{post?.months != 1 && "s"} needed for the first month</span>
                     </p>
                 </div>
 
                 <div>
-                    <p className="text-xl font-semibold">Ammenities</p>
-                    <p className="text-text/50 text-sm mt-1">please provide define whats inclusive on the monthly rent</p>
+                    <p className="text-xl font-semibold">Amenities</p>
+                    <p className="text-text/50 text-sm mt-1">Below are some of the things that come inclusive on your monthly rent</p>
 
                     <br />
                     <div className="grid gap-4 grid-cols-2">
@@ -216,7 +220,12 @@ text-sm
                 </div>
 
                 <Modal position="bottom" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>
-                    <div className="h-[90vh]   overflow-hidden w-full min-w-full">
+                    <div className="h-[70vh]  relative  w-full min-w-full">
+                        <motion.img initial={{ scale: "2%" }} animate={{ scale: 1 }} transition={{ duration: 10 }} src={theme == "light" ? MapLight : MapDark} className=" absolute   w-full" alt="" />
+                        <div className="absolute bg-black/10 backdrop-blur-sm h-full w-full flex items-center rounded-4xl justify-center">
+
+                            <img src={MapIcon} className="h-20  animate-bounce object-contain w-20 " alt="" />
+                        </div>
                         <MapComponent theme={theme?.toUpperCase() as ColorScheme} />
                     </div>
                 </Modal>
@@ -232,8 +241,8 @@ text-sm
                     </div>
                 </Modal>
 
-                <Modal open={image?.length != 0} onClose={() => setImage("")}>
-                    <img src={image} className="h-[60vh] rounded-2xl min-h-[60vh] w-full" />
+                <Modal position="right" className="relative" open={image?.length != 0} onClose={() => setImage("")}>
+                    <img onClick={() => setImage("")} src={image} className="absolute left-0 top-0 h-full object-cover object-center w-full " />
                 </Modal>
 
             </div>

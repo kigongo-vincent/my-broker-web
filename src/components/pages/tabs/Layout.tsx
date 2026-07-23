@@ -1,11 +1,11 @@
-import { ReactNode } from "react"
+import { ReactNode, useMemo } from "react"
 import Header from "./Header"
 import Tabs from "./Tabs"
 import { useLocation } from "react-router"
 import { LinkI } from "./Tab"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { Gear1Solid, HeartSolid, Home2Solid, Message2Solid, PlusSolid } from "@lineiconshq/free-icons"
-import { useUserStore, UserI } from "../../../store/auth"
+import { useAppStore } from "../../../store/app"
 
 export interface Props {
     children: ReactNode
@@ -14,47 +14,45 @@ export interface Props {
 const Layout = ({ children }: Props) => {
 
     const { pathname } = useLocation()
-    const { user } = useUserStore()
-    const isAuthenticated = Boolean((user as UserI)?.ID)
-
+    const { favouritesCount } = useAppStore()
 
     const isUser = pathname?.includes("user")
 
     const BASE_URL = "/tabs/user"
 
-    const UserLinks: LinkI[] = [{
+    const UserLinks: LinkI[] = useMemo(() => [{
         icon: <Lineicons icon={Home2Solid} />,
         path: `${BASE_URL}`,
         label: "home"
     },
-    ...(isAuthenticated ? [{
+    {
         icon: <Lineicons icon={Message2Solid} />,
         path: `${BASE_URL}/chat`,
-        label: "messages"
-    }] : []),
+        label: "messages",
+
+    },
     {
         icon: <Lineicons icon={PlusSolid} />,
         path: `/upload`,
     },
-    ...(isAuthenticated ? [{
+    {
         icon: <Lineicons icon={HeartSolid} />,
         path: `${BASE_URL}/favourites`,
-        label: "favourites"
-    }] : []),
+        label: "favourites",
+        badge: favouritesCount
+    },
     {
         icon: <Lineicons icon={Gear1Solid} />,
         path: `${BASE_URL}/settings`,
         label: "settings"
     },
-    ]
+    ], [favouritesCount])
 
     return (
         <div>
             <Header />
-            <main className=" h-screen px-4 overscroll-y-auto">
-                <div className="min-h-[11vh]"></div>
+            <main className={`h-screen  ${!["/tabs/user", "/tabs/user/", "/tabs/user/favourites"]?.includes(pathname) && "px-4"} overscroll-y-auto`}>
                 {children}
-
                 <div className="min-h-[14vh]"></div>
 
             </main>
