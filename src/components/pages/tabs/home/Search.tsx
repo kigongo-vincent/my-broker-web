@@ -35,7 +35,7 @@ const Search = ({ filter, className, value, handleSubmit, ...attr }: Props) => {
     return (
         <form
             onSubmit={onFormSubmit}
-            className="bg-pale w-full rounded-full h-17 flex gap-3 items-center pl-6 pr-4">
+            className="bg-pale w-full rounded-full h-17 flex gap-3 items-center px-6 ">
             <Lineicons icon={Search1Outlined} className="h-8 min-h-8 min-w-8 w-8" />
             <input type="text" value={value} placeholder="search for rentals" className={`flex-1 outline-0 ${className}`} {...attr} />
             {
