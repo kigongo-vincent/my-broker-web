@@ -49,16 +49,8 @@ html {
 }
 
 @media (min-width: 768px) {
-  html {
-    font-family: poppins, "Poppins", "sans-serif";
-    font-size: 1vw;
-    line-height: calc(1vw * 1.5);
-    color: var(--color-text);
-    font-weight: 400;
-  }
-  body {
-    max-width: 400px;
-    margin: auto;
+  * {
+    opacity: 0;
   }
 }
 
