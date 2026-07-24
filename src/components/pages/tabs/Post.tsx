@@ -42,6 +42,7 @@ export interface PriceI {
 
 export interface PostI extends BaseI {
     author: UserI
+    authorId?: UserI
     type: PostType
     assets: PostAssetI[]
     price: PriceI
@@ -271,102 +272,6 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
     )
 }
 
-// export const User = ({ noActions, actions, post, ...u }: Props) => {
-
-
-//     const { getUserPhoto, user, getUser } = useUserStore()
-//     const navigate = useNavigate()
-//     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
-//     const isAuthenticated = Boolean((user as UserI)?.ID)
-//     const { setSelectedPost, LoginPrompt } = useAppStore()
-
-//     const handleCall = () => {
-//         if (!isAuthenticated) {
-//             setShowAuthPrompt(true)
-//             return
-//         }
-//         if (u?.phone) {
-//             window.open(`tel:${u.phone}`, "_self")
-//         } else {
-//             alert("Phone number is not available for this user.")
-//         }
-//     }
-
-//     const handleChat = async (e: React.MouseEvent) => {
-//         if (isAuthenticated) {
-//             e.preventDefault()
-//             setSelectedPost(post)
-//             navigate(`/chat/${u?.ID || u.ID}`, { state: { user: u } })
-//         } else {
-//             LoginPrompt("direct messages")
-//         }
-
-//     }
-
-//     return (
-//         <div className={`flex cursor-pointer ${post && "px-4"} items-center justify-between`}>
-//             <div className="flex items-center gap-2">
-//                 <img
-//                     onClick={() => navigate(`/profile/${u?.ID}`)}
-//                     src={getUserPhoto?.(u.photo)}
-//                     className="h-14 w-14  rounded-full object-cover"
-//                     alt=""
-//                 />
-//                 <div className="flex flex-col">
-//                     <div className="flex items-center gap-1">
-//                         <p className="font-medium">
-//                             {TextCropper(u?.name, 23)}
-//                         </p>
-//                         {u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
-//                         {u?.broker && <div className="text-sm text-primary">broker</div>}
-//                     </div>
-//                     <span className="text-sm text-text/50">
-//                         last seen {u.lastSeen}
-//                     </span>
-//                 </div>
-//             </div>
-
-//             {actions ? (
-//                 actions
-//             ) : (
-//                 (
-//                     <Activity mode={noActions || getUser()?.ID == u?.ID ? "hidden" : "visible"}>
-//                         <div className="flex gap-3">
-//                             {
-//                                 !u?.hideContact && <button
-//                                     onClick={handleCall}
-//                                     className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
-//                                 >
-//                                     <Lineicons icon={Telephone1Solid} />
-//                                 </button>
-//                             }
-
-//                             <button
-//                                 onClick={handleChat}
-//                                 className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
-//                             >
-//                                 <Lineicons icon={Message2Solid} />
-//                             </button>
-//                         </div>
-//                     </Activity>
-//                 )
-//             )}
-
-//             <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
-//                 <div className="rounded-3xl bg-paper p-4">
-//                     <p className="text-xl font-semibold">Sign in to continue</p>
-//                     <p className="mt-2 text-sm text-text/60">Create an account or log in to contact owners, start chats, and save listings.</p>
-//                     <div className="mt-6 flex gap-3">
-//                         <button onClick={() => { setShowAuthPrompt(false); navigate("/auth/phone") }} className="btn flex-1 rounded-full bg-primary text-white">Log in</button>
-//                         <button onClick={() => setShowAuthPrompt(false)} className="btn flex-1 rounded-full bg-pale">Cancel</button>
-//                     </div>
-//                 </div>
-//             </Modal>
-//         </div>
-//     )
-// }
-
-// Reusable Native Image component to handle smooth transitions inside carousels safely
 const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholderSrc?: string; alt: string }) => {
     const [highResLoaded, setHighResLoaded] = useState(false);
 
@@ -397,11 +302,12 @@ const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholde
 const Post = (p: PostI) => {
     const [liked, setLiked] = useState(false)
     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
-    const { user } = useUserStore()
+    const { user, getUser } = useUserStore()
     const navigate = useNavigate()
     const isAuthenticated = Boolean((user as UserI)?.ID)
     const { setFavouritesCount, favouritesCount, LoginPrompt } = useAppStore()
-
+    const isOwner = getUser()?.ID == p?.authorId
+    const showAvailability = isOwner
 
     useEffect(() => {
         setLiked(Boolean(p?.favourites?.some(f => f?.ID == (user as UserI)?.ID)))
@@ -432,7 +338,6 @@ const Post = (p: PostI) => {
     }
 
     const handleClick = () => {
-
         navigate(`/post/${p?.ID}`)
     }
 
@@ -492,7 +397,14 @@ const Post = (p: PostI) => {
 
                                         {/* details */}
                                         <div onClick={handleClick} className="flex flex-col gap-3 text-white cursor-pointer">
+                                            {
+                                                showAvailability && <div className={`${p?.available ? "bg-success" : "bg-danger"} w-max px-4 rounded-full text-sm font-medium py-2 text-white`}>
+                                                    {p?.available == false && "un"}available
+                                                </div>
+                                            }
                                             <div className="flex gap-2 items-center">
+
+
                                                 <h2 className="text-2xl font-medium">
                                                     {p.price.currency} {p.price.amount.toLocaleString("en-US")}
                                                 </h2>

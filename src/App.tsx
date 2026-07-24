@@ -53,8 +53,8 @@ const App = () => {
 
 
   return (
-    <>
-      <SmoothScrollProvider>
+    <div >
+      <SmoothScrollProvider >
         <AppRouter />
       </SmoothScrollProvider>
       {/* root modal  */}
@@ -76,7 +76,7 @@ const App = () => {
 
         <p className="text-text/70 mt-2">{success?.body}</p>
       </Modal>
-    </>
+    </div>
   )
 }
 

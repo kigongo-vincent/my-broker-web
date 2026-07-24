@@ -20,7 +20,7 @@ html {
 
 :root {
   --color-dark: #0b0e12;
-  --color-success: #28d89a;
+  --color-success: #16a573;
   --color-text: #0b0e12ea;
   --color-paper: #ffffff;
   --color-pale: #f8f8f8;
@@ -49,8 +49,16 @@ html {
 }
 
 @media (min-width: 768px) {
-  * {
-    /* display: none; */
+  html {
+    font-family: poppins, "Poppins", "sans-serif";
+    font-size: 1vw;
+    line-height: calc(1vw * 1.5);
+    color: var(--color-text);
+    font-weight: 400;
+  }
+  body {
+    max-width: 400px;
+    margin: auto;
   }
 }
 

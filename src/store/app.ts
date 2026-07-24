@@ -19,6 +19,8 @@ export interface AppStoreI {
   showHomeBadge: boolean;
   setShowHomeBadge: () => void;
   error: AlertI;
+  postToUpdate?: PostI;
+  setPostToUpdate: (p?: PostI) => void;
   setError: (e: AlertI) => void;
   success: AlertI;
   setSuccess: (e: AlertI) => void;
@@ -36,6 +38,10 @@ const STORAGE_KEY = "app";
 export const useAppStore = create<AppStoreI>()(
   persist(
     (set, get) => ({
+      postToUpdate: undefined,
+      setPostToUpdate: (p) => {
+        set({ postToUpdate: p });
+      },
       filters: [],
       favouritesCount: 0,
       setFavouritesCount: (c) => {

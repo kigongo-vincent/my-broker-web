@@ -1,6 +1,8 @@
 // src/providers/SmoothScrollProvider.tsx
 import { createContext, useContext, useEffect, useRef, ReactNode } from "react"
 import Lenis from "lenis"
+import { Get } from "../../api"
+import { useUserStore } from "../store/auth"
 
 const LenisContext = createContext<Lenis | null>(null)
 
@@ -36,9 +38,17 @@ const SmoothScrollProvider = ({ children }: Props) => {
         }
     }, [])
 
+    const { token } = useUserStore()
+
+    const handleCatcherClick = () => {
+        token != "" && Get<unknown>("me/last-seen")
+    }
+
     return (
         <LenisContext.Provider value={lenisRef.current}>
-            {children}
+            <div onClick={handleCatcherClick}>
+                {children}
+            </div>
         </LenisContext.Provider>
     )
 }

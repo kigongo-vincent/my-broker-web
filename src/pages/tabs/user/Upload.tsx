@@ -16,11 +16,13 @@ import waterIcon from "../../../assets/upload/water.webp";
 import parkingIcon from "../../../assets/upload/parking.webp";
 import trashIcon from "../../../assets/upload/trash.webp";
 import { Currency, PostAssetI, PostI, PostType } from "../../../components/pages/tabs/Post";
-import { Post } from "../../../../api";
+import { Post, Put } from "../../../../api";
 import Header from "../../../components/pages/tabs/Header";
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import FlexRender from "../../../components/base/FlexRender";
 import Loader from "../../../components/base/Loader";
+import { useAppStore } from "../../../store/app";
+import { useUserStore } from "../../../store/auth";
 
 /* ---------------------------------------------------------------------- */
 /* Geocode cache — reverse/forward Nominatim lookups cached in localStorage */
@@ -138,6 +140,7 @@ interface ShellProps extends HTMLAttributes<HTMLDivElement> {
     disabled?: boolean;
     globalProgress?: number;
     showProgressBar?: boolean;
+    isEditing?: boolean;
 }
 
 interface FilePickerOptions {
@@ -205,10 +208,15 @@ export const Shell = ({
     disabled,
     globalProgress,
     showProgressBar,
+    isEditing,
 }: ShellProps) => {
     return (
         <>
-            <Header back title="Upload" caption="post your property now" />
+            <Header
+                back
+                title={isEditing ? "Edit Listing" : "Upload"}
+                caption={isEditing ? "update your property details" : "post your property now"}
+            />
             <div className={`flex h-screen flex-col p-4 justify-between ${className}`}>
                 <div className="overflow-y-auto mb-24">{children}</div>
 
@@ -345,9 +353,14 @@ const Upload = () => {
     // Step 1: upload images only — never creates a post record.
     const { mutate: uploadImages, mutateAsync: uploadImagesAsync, isPending: isUploadingImages } =
         useUploadImages();
-    // Final step: create the post — called exactly once, on final submit.
+    // Final step: create OR update the post — called exactly once, on final submit.
 
-    const [currentStepID, setCurrentStepID] = useState<number>(2);
+    const { postToUpdate, setPostToUpdate } = useAppStore();
+    const isEditing = Boolean(postToUpdate?.ID);
+
+    // Editing: skip straight to location step since assets/details already exist.
+    // Creating: start at the camera capture step.
+    const [currentStepID, setCurrentStepID] = useState<number>(1);
     const [isSearching, setIsSearching] = useState(false);
     const [showNegotiationModal, setShowNegotiationModal] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
@@ -365,6 +378,14 @@ const Upload = () => {
     const [uploadedAssets, setUploadedAssets] = useState<PostAsset[]>([]);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
+    // Edit mode only: the post's pre-existing assets. Shown as previews on the
+    // camera step, kept as-is unless removed, and merged with any newly
+    // captured images at final submit. Thumbs are derived/display-only server
+    // artifacts, not user-selectable assets, so they're excluded here.
+    const [existingAssets, setExistingAssets] = useState<PostAssetI[]>(
+        (postToUpdate?.assets || []).filter((a) => a.type !== "thumb")
+    );
+
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
@@ -377,10 +398,13 @@ const Upload = () => {
     type RoomField = "bedrooms" | "bathrooms" | "toilets";
     const roomPadOptions = ["0", "1", "2", "3", "other"] as const;
 
+    const toRoomPad = (n?: number) =>
+        n !== undefined && n !== null && ["0", "1", "2", "3"].includes(String(n)) ? String(n) : "other";
+
     const [roomPad, setRoomPad] = useState<Record<RoomField, string>>({
-        bedrooms: "0",
-        bathrooms: "0",
-        toilets: "0",
+        bedrooms: toRoomPad(postToUpdate?.bedrooms),
+        bathrooms: toRoomPad(postToUpdate?.bathrooms),
+        toilets: toRoomPad(postToUpdate?.toilets),
     });
 
     // const formatAddress = (name: string, levels = 3) => {
@@ -392,7 +416,11 @@ const Upload = () => {
     // };
 
     // Custom months-upfront pad selection
-    const [monthsPad, setMonthsPad] = useState<"2" | "3" | "4" | "other">("2");
+    const [monthsPad, setMonthsPad] = useState<"2" | "3" | "4" | "other">(
+        (["2", "3", "4"].includes(String(postToUpdate?.months))
+            ? (String(postToUpdate?.months) as "2" | "3" | "4")
+            : "other")
+    );
 
     const globalProgress = useMemo(() => {
         const values = Object.values(uploadProgress);
@@ -410,18 +438,44 @@ const Upload = () => {
         };
     }, [previewUrls]);
 
-    const [form, setForm] = useState({
-        type: "residential",
-        bathrooms: 0,
-        bedrooms: 0,
-        toilets: 0,
-        negotiable: false,
-        months: 2,
-        units: 1,
-        price: { Amount: 0, Currency: "UGX" },
-        location: { Name: "", Coordinates: { Lat: 0.3476, Lon: 32.5825 } },
-        amenities: [] as string[],
-        extras: [] as string[],
+    const [form, setForm] = useState(() => {
+        if (postToUpdate) {
+            return {
+                type: (postToUpdate.type as string) || "residential",
+                bathrooms: postToUpdate.bathrooms || 0,
+                bedrooms: postToUpdate.bedrooms || 0,
+                toilets: postToUpdate.toilets || 0,
+                negotiable: postToUpdate.negotiable || false,
+                months: postToUpdate.months || 2,
+                units: postToUpdate.units || 1,
+                price: {
+                    Amount: postToUpdate.price?.amount || 0,
+                    Currency: postToUpdate.price?.currency || "UGX",
+                },
+                location: {
+                    Name: postToUpdate.location?.name || "",
+                    Coordinates: {
+                        Lat: postToUpdate.location?.cordinates?.lat || 0.3476,
+                        Lon: postToUpdate.location?.cordinates?.lon || 32.5825,
+                    },
+                },
+                amenities: postToUpdate.amenities || [],
+                extras: postToUpdate.extras || [],
+            };
+        }
+        return {
+            type: "residential",
+            bathrooms: 0,
+            bedrooms: 0,
+            toilets: 0,
+            negotiable: false,
+            months: 2,
+            units: 1,
+            price: { Amount: 0, Currency: "UGX" },
+            location: { Name: "", Coordinates: { Lat: 0.3476, Lon: 32.5825 } },
+            amenities: [] as string[],
+            extras: [] as string[],
+        };
     });
 
     /* -------------------------------------------------------------- */
@@ -463,10 +517,11 @@ const Upload = () => {
         );
     }, []);
 
-    // Initial silent warm-up so location is pre-filled by the time the user hits step 2
+    // Initial silent warm-up so location is pre-filled by the time the user hits step 2.
+    // Skip this in edit mode — we don't want to quietly clobber the post's saved location.
     useEffect(() => {
-        handleGetCurrentLocation(true);
-    }, [handleGetCurrentLocation]);
+        if (!isEditing) handleGetCurrentLocation(true);
+    }, [handleGetCurrentLocation, isEditing]);
 
     /* -------------------------------------------------------------- */
     /* Camera lifecycle — video element always mounted (ref never     */
@@ -721,6 +776,8 @@ const Upload = () => {
         setCurrentStepID(1);
     }, []);
 
+    const { setError, setSuccess } = useAppStore()
+    const { getUser } = useUserStore()
     /* -------------------------------------------------------------- */
     /* Final submit: creates the post exactly once. If the background  */
     /* upload from step 1 hasn't finished (or failed / was skipped),   */
@@ -730,26 +787,26 @@ const Upload = () => {
     const handleFinalSubmit = async () => {
         setUploading(true)
         try {
-            let assets = uploadedAssets;
+            let newlyUploaded = uploadedAssets;
 
-            if (assets.length === 0 && selectedFiles.length > 0) {
-                assets = await uploadImagesAsync({
+            if (newlyUploaded.length === 0 && selectedFiles.length > 0) {
+                newlyUploaded = await uploadImagesAsync({
                     images: selectedFiles,
                     onProgress: (progress) => setUploadProgress(progress),
                 });
-                setUploadedAssets(assets);
+                setUploadedAssets(newlyUploaded);
             }
 
-            // createPost(
-            //     { ...form, assets },
-            //     {
-            //         onSuccess: () => navigate("/tabs/user"),
-            //         onError: (err: any) => alert(err?.message || "Post creation failed"),
-            //     }
-            // );
-            const newPost: Partial<PostI> = {
+            // Edit mode: keep whichever pre-existing assets weren't removed, and
+            // append anything newly captured/uploaded this session.
+            const assets: PostAssetI[] = [
+                ...existingAssets,
+                ...newlyUploaded.map(a => ({ url: a?.URL, type: a?.Type } as PostAssetI)),
+            ];
+
+            const postPayload: Partial<PostI> = {
                 type: form?.type as PostType,
-                assets: assets?.map(a => ({ url: a?.URL, type: a?.Type } as PostAssetI)),
+                assets,
                 price: {
                     amount: form.price.Amount,
                     currency: form.price.Currency as Currency
@@ -765,14 +822,20 @@ const Upload = () => {
                 negotiable: form?.negotiable,
                 extras: form?.extras,
                 months: form?.months,
-                units: form?.units,
-                available: true
+                units: form?.units
             }
-            const { status, msg } = await Post<Partial<PostI>, PostI>("posts", newPost)
-            if (status != 201) {
-                setUploadError(msg)
+
+            const { status, msg } = isEditing
+                ? await Put<Partial<PostI>, PostI>(`posts/post`, { ...postPayload, ID: postToUpdate?.ID, authorId: postToUpdate?.authorId, author: getUser() })
+                : await Post<Partial<PostI>, PostI>("posts", postPayload)
+
+            const expectedStatus = isEditing ? 200 : 201
+            if (status != expectedStatus) {
+                setError({ title: "Error", body: msg })
                 return
             }
+            setSuccess({ body: `Post ${isEditing ? "updated" : "uploaded"} successfully`, title: "Success" })
+            setPostToUpdate(undefined)
             navigate("/tabs/user")
         } catch (err: any) {
             setUploadError(err?.message || "Image upload failed");
@@ -811,9 +874,23 @@ const Upload = () => {
                 </div>
             )}
 
-            {previewUrls.length > 0 && (
+            {(previewUrls.length > 0 || existingAssets.length > 0) && (
                 <div className="fixed z-40 bottom-[22vh] left-4 right-4">
                     <div className="flex gap-3 overflow-x-auto pb-2">
+                        {existingAssets.map((asset, index) => (
+                            <div
+                                key={`existing-${index}`}
+                                className="h-20 w-20 relative flex-shrink-0 rounded-xl overflow-hidden border border-white/10 shadow-2xl"
+                            >
+                                <img src={asset.url} alt="" className="h-full w-full object-cover absolute" />
+                                <div
+                                    onClick={() => setExistingAssets((p) => p.filter((_, i) => i !== index))}
+                                    className="absolute inset-0 bg-black/50 text-white flex items-center justify-center cursor-pointer transition"
+                                >
+                                    <Lineicons icon={Trash3Solid} />
+                                </div>
+                            </div>
+                        ))}
                         {previewUrls.map((url, index) => (
                             <div
                                 key={index}
@@ -856,7 +933,7 @@ const Upload = () => {
 
                         <button
                             type="button"
-                            onClick={() => navigate("/tabs/user")}
+                            onClick={() => navigate(-1)}
                             className="bg-white/10 p-5 rounded-full hover:bg-white/20 active:scale-95 transition"
                             aria-label="Cancel"
                         >
@@ -864,7 +941,7 @@ const Upload = () => {
                         </button>
                     </div>
 
-                    {selectedFiles.length > 0 && (
+                    {(selectedFiles.length > 0 || existingAssets.length > 0) && (
                         <motion.button
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -872,7 +949,7 @@ const Upload = () => {
                             onClick={goToStep2}
                             className="w-full py-4 bg-primary rounded-full text-white text-center shadow-lg"
                         >
-                            Next Step ({selectedFiles.length} images)
+                            Next Step ({existingAssets.length + selectedFiles.length} images)
                         </motion.button>
                     )}
                 </div>
@@ -1243,8 +1320,8 @@ const Upload = () => {
                     nextText={
                         uploading ? <div className="flex items-center gap-4">
                             <div className="border border-text animate-ping rounded-full h-4 w-4"></div>
-                            <span className="animate-pulse">almost done...</span>
-                        </div> : isUploadingImages ? "Finishing upload..." : "Publish Post"
+                            <span className="animate-pulse">{isEditing ? "saving..." : "almost done..."}</span>
+                        </div> : isUploadingImages ? "Finishing upload..." : isEditing ? "Save Changes" : "Publish Post"
                     }
                     disabled={uploading || isUploadingImages}
                     globalProgress={globalProgress}
@@ -1255,13 +1332,17 @@ const Upload = () => {
                             <ExclamationTriangleIcon className="h-8 w-8" />
                             <p className="text-lg font-medium">Property Submission</p>
                         </div>
-                        <p className="mt-4 leading-7 text-text/70">Once your propery is submitted, it still has to be approved by the QA team to ensure authenticity</p>
+                        <p className="mt-4 leading-7 text-text/70">
+                            {isEditing
+                                ? "Updated details may need to be re-approved by the QA team before they go live."
+                                : "Once your propery is submitted, it still has to be approved by the QA team to ensure authenticity"}
+                        </p>
                     </div>
                 </Shell>
             )}
 
             <Modal
-                className="p-10"
+                className=""
                 actions={
                     <>
                         <button

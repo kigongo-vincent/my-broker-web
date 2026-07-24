@@ -1,6 +1,6 @@
-import { Activity, useState } from "react"
+import { Activity, useEffect, useState } from "react"
 import { useNavigate } from "react-router"
-import { User } from "../../../components/pages/tabs/Post"
+import { PostI, User } from "../../../components/pages/tabs/Post"
 import Header from "../../../components/pages/tabs/Header"
 import GoogleLogo from "../../../assets/google-maps-logo.webp"
 import MapComponent from "../../../components/pages/upload/Map"
@@ -11,7 +11,7 @@ import Modal from "../../../components/base/Modal"
 import { ExclamationTriangleIcon, PhoneIcon } from "@heroicons/react/20/solid"
 import { CategoryI } from "./Upload"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { ChatBubble2Solid } from "@lineiconshq/free-icons"
+import { ChatBubble2Solid, EyeSolid, Pencil1Solid, Trash3Solid, XmarkSolid } from "@lineiconshq/free-icons"
 import { UserI, useUserStore } from "../../../store/auth"
 import useSystemTheme from "../../../hooks/theme"
 import { ColorScheme } from "@vis.gl/react-google-maps"
@@ -21,6 +21,9 @@ import waterIcon from "../../../assets/upload/water.webp";
 import parkingIcon from "../../../assets/upload/parking.webp";
 import trashIcon from "../../../assets/upload/trash.webp";
 import { motion } from "framer-motion"
+import { useAppStore } from "../../../store/app"
+import Loader from "../../../components/base/Loader"
+import { DeleteReq, Put } from "../../../../api"
 
 interface IconI {
     url: string;
@@ -39,20 +42,89 @@ export const IconFinder = (i: IconType | string): string => {
     return icons.find((ii) => ii?.label == i)?.url || "";
 };
 
+const PostAuthorActions = ({ ...p }: Partial<PostI>) => {
+    const navigate = useNavigate()
+    const { setPostToUpdate, setError, setSuccess } = useAppStore()
+    const [showDelete, setShowDelete] = useState(false)
+    const [available, setAvailable] = useState(p?.available)
+    const [deleting, setDeleting] = useState(false)
+    const handleEdit = () => {
+        setPostToUpdate(p as PostI)
+        navigate(`/upload`)
+    }
+
+    const handleDelete = async () => {
+        try {
+            const { status, msg } = await DeleteReq<unknown>("posts/post/" + p?.ID)
+            if (status != 200) {
+                setError({ title: "Delete error", body: msg })
+                return
+            }
+            setSuccess({ title: "Success", body: "the property was removed successfully" })
+            navigate(-1)
+        } catch (error) {
+
+        } finally {
+            setDeleting(false)
+        }
+    }
+
+    const handleAvailability = () => {
+
+        try {
+            setAvailable(!available)
+            Put<Partial<PostI>, unknown>("posts/post/" + p?.ID, { ID: p?.ID, available: !p?.available })
+        } catch (error) {
+
+        }
+
+    }
+
+    return <div className="flex items-center gap-2  w-full">
+        <button onClick={handleAvailability} className={`btn ${available ? "bg-danger" : "bg-success"} text-white rounded-full flex-1`}>
+            <Lineicons icon={!available ? EyeSolid : XmarkSolid} />
+            mark {available == true ? "taken" : "available"}
+        </button>
+        <button className="btn" onClick={() => setShowDelete(true)}>
+            <Lineicons icon={Trash3Solid} />
+        </button>
+        <button onClick={handleEdit} className="btn">
+            <Lineicons icon={Pencil1Solid} />
+        </button>
+
+        {/* delete confirmation */}
+        <Modal open={showDelete} onClose={() => setShowDelete(false)} actions={<><button className="btn flex-1 bg-pale" onClick={() => setShowDelete(false)}>cancel</button><button className="btn bg-danger flex-1 text-white" onClick={handleDelete}><Loader loading={deleting}>delete</Loader></button></>}>
+            <h3 className=" text-xl font-semibold">Delete confirmation</h3>
+            <p className="text-text/50">Are you sure you want to proceed with deleting this property</p>
+        </Modal>
+    </div>
+}
+
 const PostDetails = () => {
     const [showMaP, setShowMap] = useState(false)
     const [image, setImage] = useState("")
     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
     const { theme } = useSystemTheme()
-    const { user } = useUserStore()
+    const { user, getUser } = useUserStore()
+
+
 
     const navigate = useNavigate()
     const isAuthenticated = Boolean((user as UserI)?.ID)
 
 
     const { data } = usePostDetails()
+    const { postToUpdate } = useAppStore()
     const post = data?.data
     const ammenities = post?.amenities?.map(a => ({ label: a, icon: IconFinder(a) } as CategoryI))
+    const UserID = getUser()?.ID
+    const PostAuthorID = post?.author.ID
+    const IsOwner = UserID == PostAuthorID
+
+    useEffect(() => {
+        console.log(postToUpdate)
+    }, [postToUpdate])
+
     return (
         <div className="w-full">
             <Header back noMargin />
@@ -148,16 +220,7 @@ const PostDetails = () => {
                         }
                     >
 
-                        <span
-                            className="
- bg-primary
-text-white
-px-4
-py-2
-rounded-full
-text-sm
-"
-                        >
+                        <span className="bg-primary text-white px-4 py-2 rounded-full text-sm">
                             negotiable
                         </span>
 
@@ -208,15 +271,23 @@ text-sm
 
                 </div>
 
-                <div className="fixed h-22 gap-3 bottom-0 p-4 flex w-full bg-paper/80 backdrop-blur-sm shadow-md border-t left-0 border-text/5">
-                    <button onClick={() => isAuthenticated ? window.open(`tel:${post?.author?.phone || ""}`, "_self") : setShowAuthPrompt(true)} className="btn bg-paper flex-1 rounded-full border border-text/10">
-                        <PhoneIcon className="h-6 w-6" />
-                        <span>contact owner</span>
-                    </button>
-                    <button onClick={() => isAuthenticated ? navigate("/chat/" + post?.author?.ID) : setShowAuthPrompt(true)} className="btn rounded-full flex-1 bg-primary text-white">
-                        <Lineicons icon={ChatBubble2Solid} />
-                        <span>chat in app</span>
-                    </button>
+                <div className="fixed h-22 gap-3 bottom-0 p-4 flex w-full bg-paper/80 backdrop-blur-sm shadow-md border-t left-0 border-text/10">
+                    {
+                        IsOwner
+                            ?
+                            <PostAuthorActions {...post} />
+                            :
+                            <>
+                                <button onClick={() => isAuthenticated ? window.open(`tel:${post?.author?.phone || ""}`, "_self") : setShowAuthPrompt(true)} className="btn bg-paper flex-1 rounded-full border border-text/10">
+                                    <PhoneIcon className="h-6 w-6" />
+                                    <span>contact owner</span>
+                                </button>
+                                <button onClick={() => isAuthenticated ? navigate("/chat/" + post?.author?.ID) : setShowAuthPrompt(true)} className="btn rounded-full flex-1 bg-primary text-white">
+                                    <Lineicons icon={ChatBubble2Solid} />
+                                    <span>chat in app</span>
+                                </button>
+                            </>
+                    }
                 </div>
 
                 <Modal position="bottom" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>

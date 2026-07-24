@@ -89,21 +89,25 @@ const RADIUS_OPTIONS: { label: string; meters: number }[] = [
     { label: "1.6km", meters: 1600 },
 ]
 
-const POST_TYPES: { label: string; value: PostType }[] = [
-    { label: "Rental", value: "rental" },
-    { label: "Short stay", value: "short-stay" },
-    { label: "Residential", value: "residential" },
-]
+// const POST_TYPES: { label: string; value: PostType }[] = [
+//     { label: "Rental", value: "rental" },
+//     { label: "Short stay", value: "short-stay" },
+//     { label: "Residential", value: "residential" },
+// ]
 
 // Starter tag lists — these aren't sourced from the backend, so treat as a
 // reasonable default set; swap for a canonical list if one exists server-side.
-const AMENITY_OPTIONS = [
-    "Water", "Electricity", "Security", "Parking", "Furnished",
-    "Backup Generator", "Borehole", "Swimming Pool", "Gym", "WiFi",
-]
-const EXTRA_OPTIONS = [
-    "Balcony", "Garden", "Servant's Quarter", "CCTV", "Perimeter Wall", "Store",
-]
+// const AMENITY_OPTIONS = [
+// "Water", "Electricity",
+// "Security",
+// "Parking",
+// "Trash"
+// "Furnished",
+// "Backup Generator", "Borehole", "Swimming Pool", "Gym", "WiFi",
+// ]
+// const EXTRA_OPTIONS = [
+//     "Balcony", "Garden", "Servant's Quarter", "CCTV", "Perimeter Wall", "Store",
+// ]
 
 // Reverse of buildColumns(): turns whatever is currently persisted in the
 // zustand store back into the shape the form controls need. Column names /
@@ -204,19 +208,56 @@ const Filter = () => {
     const [applying, setApplying] = useState(false)
     const navigate = useNavigate()
 
+    // Pad-style quick-select state for numeric filters. "any" means the filter
+    // field is left blank (no constraint applied); "other" reveals a custom
+    // number input. Hydrated from any already-persisted filter value so
+    // returning to this screen shows the right pad selected instead of
+    // silently defaulting to "any".
+    type PadValue = "any" | "0" | "1" | "2" | "3" | "other"
+    // "any" (blank filter value) and "0" (an explicit, valid filter value) must
+    // stay distinguishable — an empty string means "no constraint", not zero.
+    const toPad = (value: string, options: readonly string[]): PadValue => {
+        if (value === "") return "any"
+        return (options as string[]).includes(value) ? (value as PadValue) : "other"
+    }
+
+    const [bedroomPad, setBedroomPad] = useState<PadValue>(() => toPad(filters.bedroom, ["0", "1", "2", "3"]))
+    const [bathroomPad, setBathroomPad] = useState<PadValue>(() => toPad(filters.bathroom, ["0", "1", "2", "3"]))
+    const [toiletsPad, setToiletsPad] = useState<PadValue>(() => toPad(filters.toilets, ["0", "1", "2", "3"]))
+    // months/units of 0 isn't a meaningful real-world value, so their pads stay 1-3
+    const [monthsPad, setMonthsPad] = useState<PadValue>(() => toPad(filters.months, ["1", "2", "3"]))
+    const [unitsPad, setUnitsPad] = useState<PadValue>(() => toPad(filters.units, ["1", "2", "3"]))
+
+    const roomPadOptions: readonly PadValue[] = ["any", "0", "1", "2", "3", "other"]
+    const countPadOptions: readonly PadValue[] = ["any", "1", "2", "3", "other"]
+
+    const handlePadSelect = (
+        field: "bedroom" | "bathroom" | "toilets" | "months" | "units",
+        setPad: (v: PadValue) => void,
+        opt: PadValue
+    ) => {
+        setPad(opt)
+        if (opt === "any") {
+            updateField(field, "")
+        } else if (opt !== "other") {
+            updateField(field, opt)
+        }
+        // "other" leaves the current field value alone until the custom input changes
+    }
+
     const updateField = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
         setFilters((prev) => ({ ...prev, [key]: value }))
     }
 
-    const toggleTag = (key: "amenities" | "extras", tag: string) => {
-        setFilters((prev) => {
-            const current = prev[key]
-            const next = current.includes(tag)
-                ? current.filter((t) => t !== tag)
-                : [...current, tag]
-            return { ...prev, [key]: next }
-        })
-    }
+    // const toggleTag = (key: "amenities" | "extras", tag: string) => {
+    //     setFilters((prev) => {
+    //         const current = prev[key]
+    //         const next = current.includes(tag)
+    //             ? current.filter((t) => t !== tag)
+    //             : [...current, tag]
+    //         return { ...prev, [key]: next }
+    //     })
+    // }
 
     const handleUseCurrentLocation = () => {
         if (!navigator.geolocation) return
@@ -315,7 +356,7 @@ const Filter = () => {
             columns.push({
                 column: "(price->>'amount')::numeric",
                 operator: "gte",
-                label: "minimum price",
+                label: `> ${Number(filters.minPrice)?.toLocaleString("en-US")}`,
                 value: Number(filters.minPrice),
             })
         }
@@ -324,7 +365,7 @@ const Filter = () => {
             columns.push({
                 column: "(price->>'amount')::numeric",
                 operator: "lte",
-                label: "maximum price",
+                label: `< ${Number(filters.maxPrice)?.toLocaleString("en-US")}`,
                 value: Number(filters.maxPrice),
             })
         }
@@ -380,6 +421,11 @@ const Filter = () => {
     const handleReset = () => {
         setFilters(initialFilterState)
         setActiveRangeLabel(null)
+        setBedroomPad("any")
+        setBathroomPad("any")
+        setToiletsPad("any")
+        setMonthsPad("any")
+        setUnitsPad("any")
         // clear the persisted filters too, otherwise leaving and re-entering
         // this screen would silently repopulate the "reset" form
         updateFilters([])
@@ -492,7 +538,7 @@ const Filter = () => {
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-2">
+                        {/* <div className="flex flex-col gap-2">
                             <span className="text-sm">Property type</span>
                             <div className="flex flex-wrap gap-2">
                                 {POST_TYPES.map((t) => (
@@ -509,61 +555,125 @@ const Filter = () => {
                                     </button>
                                 ))}
                             </div>
-                        </div>
+                        </div> */}
 
-                        <div className="flex flex-col gap-2">
-                            <span className="text-sm">bedroom</span>
-                            <input
-                                type="number"
-                                className="outline-0 bg-pale h-14 rounded-lg px-6"
-                                placeholder="bedroom e.g 4"
-                                value={filters.bedroom}
-                                onChange={(e) => updateField("bedroom", e.target.value)}
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                            <span className="text-sm">bathroom</span>
-                            <input
-                                type="number"
-                                className="outline-0 bg-pale h-14 rounded-lg px-6"
-                                placeholder="bathroom e.g 4"
-                                value={filters.bathroom}
-                                onChange={(e) => updateField("bathroom", e.target.value)}
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                            <span className="text-sm">toilets</span>
-                            <input
-                                type="number"
-                                className="outline-0 bg-pale h-14 rounded-lg px-6"
-                                placeholder="toilets e.g 4"
-                                value={filters.toilets}
-                                onChange={(e) => updateField("toilets", e.target.value)}
-                            />
-                        </div>
+                        {(
+                            [
+                                { field: "bedroom" as const, label: "bedroom", pad: bedroomPad, setPad: setBedroomPad },
+                                { field: "bathroom" as const, label: "bathroom", pad: bathroomPad, setPad: setBathroomPad },
+                                { field: "toilets" as const, label: "toilets", pad: toiletsPad, setPad: setToiletsPad },
+                            ]
+                        ).map(({ field, label, pad, setPad }) => (
+                            <div key={field} className="flex flex-col gap-2">
+                                <span className="text-sm capitalize">{label}</span>
+                                <div className="grid grid-cols-6 gap-2">
+                                    {roomPadOptions.map((opt) => {
+                                        const isSelected = pad === opt
+                                        return (
+                                            <div
+                                                key={opt}
+                                                onClick={() => handlePadSelect(field, setPad, opt)}
+                                                className="relative h-14 bg-pale rounded-xl flex items-center justify-center cursor-pointer"
+                                            >
+                                                {isSelected && (
+                                                    <motion.div
+                                                        layoutId={`${field}PadRing`}
+                                                        className="absolute inset-0 border border-primary bg-primary/5 rounded-xl z-0"
+                                                        transition={{ duration: 0.2 }}
+                                                    />
+                                                )}
+                                                <span className="relative z-10 font-medium capitalize text-sm">
+                                                    {opt === "any" ? "any" : opt === "other" ? "other" : opt}
+                                                </span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                {pad === "other" && (
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        className="outline-0 bg-pale h-14 rounded-lg px-6 mt-1"
+                                        placeholder={`custom ${label} e.g 4`}
+                                        value={filters[field]}
+                                        onChange={(e) => updateField(field, e.target.value)}
+                                    />
+                                )}
+                            </div>
+                        ))}
 
                         <div className="flex flex-col gap-2">
                             <span className="text-sm">months (lease length)</span>
-                            <input
-                                type="number"
-                                className="outline-0 bg-pale h-14 rounded-lg px-6"
-                                placeholder="e.g 12"
-                                value={filters.months}
-                                onChange={(e) => updateField("months", e.target.value)}
-                            />
+                            <div className="grid grid-cols-5 gap-2">
+                                {countPadOptions.map((opt) => {
+                                    const isSelected = monthsPad === opt
+                                    return (
+                                        <div
+                                            key={opt}
+                                            onClick={() => handlePadSelect("months", setMonthsPad, opt)}
+                                            className="relative h-14 bg-pale rounded-xl flex items-center justify-center cursor-pointer"
+                                        >
+                                            {isSelected && (
+                                                <motion.div
+                                                    layoutId="monthsPadRing"
+                                                    className="absolute inset-0 border border-primary bg-primary/5 rounded-xl z-0"
+                                                    transition={{ duration: 0.2 }}
+                                                />
+                                            )}
+                                            <span className="relative z-10 font-medium capitalize text-sm">
+                                                {opt}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            {monthsPad === "other" && (
+                                <input
+                                    type="number"
+                                    min={1}
+                                    className="outline-0 bg-pale h-14 rounded-lg px-6 mt-1"
+                                    placeholder="custom months e.g 12"
+                                    value={filters.months}
+                                    onChange={(e) => updateField("months", e.target.value)}
+                                />
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
                             <span className="text-sm">units available</span>
-                            <input
-                                type="number"
-                                className="outline-0 bg-pale h-14 rounded-lg px-6"
-                                placeholder="e.g 1"
-                                value={filters.units}
-                                onChange={(e) => updateField("units", e.target.value)}
-                            />
+                            <div className="grid grid-cols-5 gap-2">
+                                {countPadOptions.map((opt) => {
+                                    const isSelected = unitsPad === opt
+                                    return (
+                                        <div
+                                            key={opt}
+                                            onClick={() => handlePadSelect("units", setUnitsPad, opt)}
+                                            className="relative h-14 bg-pale rounded-xl flex items-center justify-center cursor-pointer"
+                                        >
+                                            {isSelected && (
+                                                <motion.div
+                                                    layoutId="unitsPadRing"
+                                                    className="absolute inset-0 border border-primary bg-primary/5 rounded-xl z-0"
+                                                    transition={{ duration: 0.2 }}
+                                                />
+                                            )}
+                                            <span className="relative z-10 font-medium capitalize text-sm">
+                                                {opt}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            {unitsPad === "other" && (
+                                <input
+                                    type="number"
+                                    min={1}
+                                    className="outline-0 bg-pale h-14 rounded-lg px-6 mt-1"
+                                    placeholder="custom units e.g 1"
+                                    value={filters.units}
+                                    onChange={(e) => updateField("units", e.target.value)}
+                                />
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -585,7 +695,7 @@ const Filter = () => {
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-2">
+                        {/* <div className="flex flex-col gap-2">
                             <span className="text-sm">available</span>
                             <div className="flex gap-2">
                                 {(["any", "yes", "no"] as TriState[]).map((v) => (
@@ -602,9 +712,9 @@ const Filter = () => {
                                     </button>
                                 ))}
                             </div>
-                        </div>
+                        </div> */}
 
-                        <div className="flex flex-col gap-2">
+                        {/* <div className="flex flex-col gap-2">
                             <span className="text-sm">amenities</span>
                             <div className="flex flex-wrap gap-2">
                                 {AMENITY_OPTIONS.map((tag) => (
@@ -621,9 +731,9 @@ const Filter = () => {
                                     </button>
                                 ))}
                             </div>
-                        </div>
+                        </div> */}
 
-                        <div className="flex flex-col gap-2">
+                        {/* <div className="flex flex-col gap-2">
                             <span className="text-sm">extras</span>
                             <div className="flex flex-wrap gap-2">
                                 {EXTRA_OPTIONS.map((tag) => (
@@ -640,7 +750,7 @@ const Filter = () => {
                                     </button>
                                 ))}
                             </div>
-                        </div>
+                        </div> */}
 
                         <div className="min-h-20"></div>
 

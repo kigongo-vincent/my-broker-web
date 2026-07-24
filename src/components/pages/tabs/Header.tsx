@@ -15,7 +15,7 @@ export interface props {
 
 const Header = ({ back, title, noMargin, noblur, caption }: props) => {
 
-    const { token, getUserPhoto, user } = useUserStore()
+    const { token, getUserPhoto, user, getUser } = useUserStore()
     const photo = getUserPhoto?.((user as UserI)?.photo)
     const { LoginPrompt } = useAppStore()
     const navigate = useNavigate()
@@ -23,7 +23,7 @@ const Header = ({ back, title, noMargin, noblur, caption }: props) => {
     function handleProfileClick(): void {
 
         if (token != "") {
-            navigate(`/profile/0`)
+            navigate(`/profile/${getUser()?.ID}`)
         } else {
             LoginPrompt("profile")
         }
@@ -32,7 +32,7 @@ const Header = ({ back, title, noMargin, noblur, caption }: props) => {
 
     return (
         <>
-            <div className={`fixed max-h-[9vh] min-h-[9vh] border-b border-text/10 z-50 bg-paper  ${!noblur && "dark:backdrop-blur-sm dark:bg-paper/80"} top-0 w-full h-[8vh] flex items-center justify-between px-4`}>
+            <div className={`fixed max-h-[9vh] min-h-[9vh] sm:w-[400px] border-b border-text/10 z-50 bg-paper  ${!noblur && "dark:backdrop-blur-sm dark:bg-paper/80"} top-0 w-full h-[8vh] flex items-center justify-between px-4`}>
 
                 {
                     !back

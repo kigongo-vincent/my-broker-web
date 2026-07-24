@@ -60,7 +60,7 @@ const Profile = () => {
             <Header
                 back
                 title={account?.user?.name || (user as UserI | undefined)?.name || 'Profile'}
-                caption='last seen 2hrs ago'
+                caption={"last seen " + account?.user?.lastSeen || ""}
             />
 
             <div className="mt-30">
