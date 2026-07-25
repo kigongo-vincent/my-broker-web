@@ -37,7 +37,7 @@ const Index = () => {
 
 
             <footer className="text-sm text-text/50">
-                all rights reserved &copy; mybroker.net
+                all rights reserved &copy; {window?.location.host}
             </footer>
 
         </div>

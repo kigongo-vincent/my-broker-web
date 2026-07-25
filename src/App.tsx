@@ -21,7 +21,7 @@ export const RModal = () => {
       <div className="py-10 px-4 min-h-[26vh] flex justify-around  flex-col gap-4">
         <h3 className="text-xl font-semibold">{RootBottomContent?.title}</h3>
         <p className="text-text/60 leading-7">{RootBottomContent?.body}</p>
-        <button onClick={() => { setRootBottomContent(undefined); navigate("/auth") }} className="btn bg-primary w-full rounded-full">{RootBottomContent?.action?.title}</button>
+        <button onClick={() => { setRootBottomContent(undefined); navigate("/auth") }} className="btn outline-0 bg-primary text-white w-full rounded-full">{RootBottomContent?.action?.title}</button>
       </div>
     </BottomSheet>
   )

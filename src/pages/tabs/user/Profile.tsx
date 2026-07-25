@@ -6,7 +6,12 @@ import Header from '../../../components/pages/tabs/Header'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { APIResponse } from '../../../../api'
 import { Post as P } from "../../../../api/index"
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
+import Empty from '../../../components/base/Empty'
+import { Telephone1Solid, Message2Solid, WhatsappOutlined } from '@lineiconshq/free-icons'
+import Lineicons from '@lineiconshq/react-lineicons'
+import { useAppStore } from '../../../store/app'
+import { ProfileSkeleton } from '../../../components/base/PageSkeleton'
 
 export interface AccountI {
     user: Partial<UserI>
@@ -55,6 +60,51 @@ const Profile = () => {
         return { user: lastPage.data.user, posts }
     }, [data])
 
+    const navigate = useNavigate()
+    const isAuthenticated = Boolean((user as UserI)?.ID)
+    const { LoginPrompt } = useAppStore()
+    const u = account?.user as UserI
+
+    const handleCall = () => {
+        if (!isAuthenticated) {
+            LoginPrompt("direct messages")
+            return
+        }
+        if (u?.phone) {
+            window.open(`tel:${u.phone}`, "_self")
+        } else {
+            alert("Phone number is not available for this user.")
+        }
+    }
+
+    const handleChat = async (e: React.MouseEvent) => {
+        if (isAuthenticated) {
+            e.preventDefault()
+            navigate(`/chat/${u?.ID || u.ID}`, { state: { user: u } })
+        } else {
+            LoginPrompt("direct messages")
+        }
+
+    }
+
+    function handleWhatsApp(): void {
+        if (!isAuthenticated) {
+            LoginPrompt("direct messages")
+            return
+        }
+
+        if (u?.phone) {
+            // Strips out spaces, dashes, and special characters from the phone number
+            const cleanPhone = u.phone.replace(/\D/g, "")
+            window.open(`https://wa.me/${cleanPhone}`, "_blank")
+        } else {
+            alert("Phone number is not available for this user.")
+        }
+    }
+
+
+
+
     return (
         <div>
             <Header
@@ -63,43 +113,78 @@ const Profile = () => {
                 caption={"last seen " + account?.user?.lastSeen || ""}
             />
 
-            <div className="mt-30">
-                <img
-                    src={getUserPhoto?.(account?.user?.photo)}
-                    className='h-30 w-30 left-[50%] transform -translate-x-[50%] top-25 border-4 border-paper absolute rounded-full object-cover'
-                    alt=""
-                />
+            {
+                isLoading
+                    ?
+                    <ProfileSkeleton />
+                    :
+                    <div className="mt-30">
+                        <img
+                            src={getUserPhoto?.(account?.user?.photo)}
+                            className='h-30 w-30 left-[50%] transform -translate-x-[50%] top-25 border-4 border-paper absolute rounded-full object-cover'
+                            alt=""
+                        />
 
-                <div className=" p-6 flex flex-col items-center gap-1.5 rounded-xl">
-                    <h3 className="text-2xl font-bold">{account?.user?.name}</h3>
-                    <p className='text-text/50'>{account?.user?.email}</p>
+                        <div className=" p-6 flex flex-col border-b items-center gap-1.5 border-text/10">
+                            <h3 className="text-2xl font-bold">{account?.user?.name}</h3>
+                            <p className='text-text/50'>{account?.user?.email}</p>
 
-                    {/* bio  */}
-                    <Activity mode={account?.user?.role == "broker" ? "visible" : "hidden"}>
-                        <p className='text-text/50'>{account?.user?.BrokerDetails?.Bio}</p>
-                        <p className='text-text/50'>{account?.user?.BrokerDetails?.Fee}</p>
-                    </Activity>
-                </div>
-                <br />
+                            {/* bio  */}
+                            <Activity mode={account?.user?.role == "broker" ? "visible" : "hidden"}>
+                                <p className='text-text/50'>{account?.user?.BrokerDetails?.Bio}</p>
+                                <p className='text-text/50'>{account?.user?.BrokerDetails?.Fee}</p>
+                            </Activity>
+                        </div>
+                        <br />
 
-                {isLoading ? (
-                    <div className="py-4 text-sm text-text/50">Loading listings...</div>
-                ) : account?.posts.length === 0 ? (
-                    <div className="py-4 text-sm text-text/50">No listings yet.</div>
-                ) : (
-                    <FlexRender
-                        className="gap-10"
-                        items={account?.posts || []}
-                        render={(item, index) => <Post {...(item as PostI)} key={index} />}
-                    />
-                )}
+                        {isLoading ? (
+                            <div className="py-4 text-sm text-text/50"></div>
+                        ) : account?.posts.length === 0 ? (
+                            <Empty type='posts' />
+                        ) : (
+                            <FlexRender
+                                className="gap-10"
+                                items={account?.posts || []}
+                                render={(item, index) => <Post {...(item as PostI)} key={index} />}
+                            />
+                        )}
 
-                {hasNextPage && (
-                    <button onClick={() => fetchNextPage()} className="mt-4 text-sm text-text/70">
-                        Load more
+                        {hasNextPage && (
+                            <button onClick={() => fetchNextPage()} className="mt-4 text-sm text-text/70">
+                                Load more
+                            </button>
+                        )}
+                    </div>
+            }
+
+            <div className="h-30"></div>
+
+            {/* fixed nav  */}
+            <div className='fixed px-4 gap-2 flex items-center border-t border-text/10 h-20 bottom-0 left-0 w-full bg-paper'>
+
+                <button onClick={handleWhatsApp} disabled={u?.hideContact} className={`btn flex-1 font-medium rounded-full bg-[#128C7E] text-white ${u?.hideContact && "opacity-10"}`}>
+                    <Lineicons icon={WhatsappOutlined} />
+                    chat via whatsapp
+                </button>
+
+                {
+                    !u?.hideContact && <button
+                        onClick={handleCall}
+                        className=" h-16 w-16 flex items-center bg-pale justify-center rounded-full"
+                    >
+                        <Lineicons icon={Telephone1Solid} />
                     </button>
-                )}
+                }
+
+                <button
+                    onClick={handleChat}
+                    className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
+                >
+                    <Lineicons icon={Message2Solid} />
+                </button>
+
             </div>
+
         </div>
     )
 }

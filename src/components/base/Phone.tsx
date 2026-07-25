@@ -238,19 +238,42 @@ function PhoneInputInner<TCountry extends Country = Country>(
 
     const handleNumberChange = (raw: string) => {
         const cleaned = raw.replace(/[^\d\s-]/g, "");
+        // strip a leading trunk "0" (e.g. "0701..." -> "701...") since the
+        // country's dial code already implies it — common across many
+        // countries' domestic dialing conventions, not just Uganda.
+        const withoutTrunkZero = cleaned.replace(/^0+/, "");
         const capped = country.maxLength
-            ? cleaned.slice(0, country.maxLength + Math.ceil(country.maxLength / 3))
-            : cleaned;
+            ? withoutTrunkZero.slice(0, country.maxLength + Math.ceil(country.maxLength / 3))
+            : withoutTrunkZero;
         setInternalNational(capped);
         emit(country, capped);
     };
+
+    const handleKeypadPress = (key: string) => {
+        if (disabled) return;
+
+        if (key === "⌫") {
+            handleNumberChange(nationalNumber.slice(0, -1));
+        } else if (key === "Clear") {
+            handleNumberChange("");
+        } else {
+            handleNumberChange(nationalNumber + key);
+        }
+    };
+
+    const formatNational = (digits: string) => {
+        const groups = digits.match(/.{1,3}/g) ?? [];
+        return groups.join(" ");
+    };
+
+    const keypadKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "Clear", "0", "⌫"];
 
     return (
         <div className={`w-full ${className}`}>
             <div
                 ref={containerRef}
                 className={[
-                    "relative flex items-stretch rounded border border-text/10 transition-colors",
+                    "relative flex  items-stretch rounded-lg border border-text/10 transition-colors",
                     error ? "border-red-400 " : "",
                     disabled ? "cursor-not-allowed opacity-70" : "",
                 ].join(" ")}
@@ -262,7 +285,7 @@ function PhoneInputInner<TCountry extends Country = Country>(
                     aria-haspopup="listbox"
                     aria-expanded={open}
                     className={[
-                        "flex shrink-0 items-center gap-1.5 rounded-l-xl px-3 py-2.5 h-14",
+                        "flex shrink-0 items-center gap-1.5 rounded-l-xl px-3 py-2.5 h-16",
                         "disabled:hover:bg-transparent",
                         "border-r border-text/10 outline-none",
                     ].join(" ")}
@@ -271,8 +294,8 @@ function PhoneInputInner<TCountry extends Country = Country>(
                         renderTrigger(country)
                     ) : (
                         <>
-                            <span className="text-lg leading-none">{country.flag}</span>
-                            <span className="text-sm font-medium">+{country.dialCode}</span>
+                            <span className="text-xl leading-none">{country.flag}</span>
+                            <span className="text-base font-medium">+{country.dialCode}</span>
                         </>
                     )}
                     <Lineicons
@@ -282,28 +305,32 @@ function PhoneInputInner<TCountry extends Country = Country>(
                     />
                 </button>
 
+                <div
+                    className={[
+                        "flex w-full min-w-0 items-center px-3 py-3  tracking-wide",
+                        nationalNumber ? "" : "text-text/30 text-sm",
+                        disabled ? "cursor-not-allowed" : "",
+                        inputClassName,
+                    ].join(" ")}
+                >
+                    {nationalNumber ? formatNational(nationalNumber) : placeholder}
+                </div>
+
+                {/* hidden field keeps this a real form control for name/id/autoFocus/refs */}
                 <input
                     ref={forwardedRef}
                     id={id}
                     name={name}
-                    type="tel"
-                    inputMode="tel"
+                    type="hidden"
                     autoFocus={autoFocus}
-                    disabled={disabled}
-                    placeholder={placeholder}
-                    value={nationalNumber}
-                    onChange={(e) => handleNumberChange(e.target.value)}
-                    className={[
-                        "w-full min-w-0 bg-transparent px-3 py-2.5 text-sm",
-                        "placeholder: outline-none disabled:cursor-not-allowed",
-                        inputClassName,
-                    ].join(" ")}
+                    value={buildPhoneString(country, nationalNumber)}
+                    readOnly
                 />
 
                 {open && (
                     <div
                         role="listbox"
-                        className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-72 w-72 overflow-hidden border border-text/10 bg-pale shadow-lg"
+                        className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-72 w-72 overflow-hidden border border-text/10 bg-pale"
                     >
                         <div className="flex items-center gap-2 border-b border-text/10 px-3 py-2">
                             <Lineicons icon={Search1Solid} size={14} />
@@ -353,6 +380,24 @@ function PhoneInputInner<TCountry extends Country = Country>(
                         </ul>
                     </div>
                 )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 w-full mt-3">
+                {keypadKeys.map((key) => (
+                    <button
+                        key={key}
+                        type="button"
+                        onClick={() => handleKeypadPress(key)}
+                        disabled={disabled}
+                        className={[
+                            "h-14 rounded-lg active:border-primary text-lg font-medium transition-all",
+                            "border border-text/10 active:scale-95",
+                            "disabled:opacity-50 disabled:cursor-not-allowed",
+                        ].join(" ")}
+                    >
+                        {key}
+                    </button>
+                ))}
             </div>
 
             {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}

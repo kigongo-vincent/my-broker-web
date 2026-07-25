@@ -16,8 +16,8 @@ const Search = ({ filter, className, value, handleSubmit, ...attr }: Props) => {
     const navigate = useNavigate()
     const { token } = useUserStore()
     const { LoginPrompt } = useAppStore()
-    const filterAction = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        event.preventDefault()
+    const filterAction = () => {
+        // event.preventDefault()
         if (token == "") {
             LoginPrompt("filters")
             return
@@ -39,9 +39,9 @@ const Search = ({ filter, className, value, handleSubmit, ...attr }: Props) => {
             <Lineicons icon={Search1Outlined} className="h-8 min-h-8 min-w-8 w-8" />
             <input type="text" value={value} placeholder="search for rentals" className={`flex-1 outline-0 ${className}`} {...attr} />
             {
-                filter && <button type="button" onClick={filterAction}>
-                    <AdjustmentsHorizontalIcon className="h-13 w-13 p-2.5 " />
-                </button>
+                filter &&
+                <AdjustmentsHorizontalIcon type="button" onClick={filterAction} className="h-13 w-13  " />
+
             }
         </form>
     )

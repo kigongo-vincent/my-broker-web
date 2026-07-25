@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react"
 import Modal from "../../../components/base/Modal"
 import { useUserStore } from "../../../store/auth"
 import { useAppStore } from "../../../store/app"
+import { ListStackSkeleton } from "../../../components/base/PageSkeleton"
 
 const Favourites = () => {
 
@@ -28,7 +29,7 @@ const Favourites = () => {
 
     return (
         <div>
-            {isLoading ? <div className="p-4 text-center">Loading favourites...</div> :
+            {isLoading ? <ListStackSkeleton rows={2} /> :
                 <FlexRender className={`gap-10 ${posts?.length == 0 || posts == null && "px-4"}`} items={posts || []} render={(item, index) => <Post {...(item as PostI)} key={index} />} />
             }
             <Modal open={er != ""} onClose={() => setEr("")}>

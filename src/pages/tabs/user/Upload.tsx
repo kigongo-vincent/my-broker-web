@@ -538,6 +538,9 @@ const Upload = () => {
                 videoRef.current.srcObject = null;
             }
 
+            // Set loading status when attempting access so the UI reflects the prompt check
+            setCameraStatus("loading");
+
             try {
                 const constraints = {
                     video: {
@@ -584,8 +587,15 @@ const Upload = () => {
                         if (attempts > 10) clearInterval(pollInterval);
                     }, 100);
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Camera resolution critical fallback pipeline caught exception:", err);
+
+                // If permissions were explicitly denied or blocked, don't fallback and flag status as denied
+                if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                    if (!isCancelled) setCameraStatus("denied");
+                    return;
+                }
+
                 try {
                     const fallbackStream = await navigator.mediaDevices.getUserMedia({
                         video: true,
@@ -597,8 +607,14 @@ const Upload = () => {
                         setCameraStatus("ready");
                         videoRef.current.play().catch(() => { });
                     }
-                } catch (fallbackErr) {
-                    if (!isCancelled) setCameraStatus("denied");
+                } catch (fallbackErr: any) {
+                    if (!isCancelled) {
+                        setCameraStatus(
+                            fallbackErr.name === "NotAllowedError" || fallbackErr.name === "PermissionDeniedError"
+                                ? "denied"
+                                : "denied"
+                        );
+                    }
                 }
             }
         };
@@ -611,7 +627,6 @@ const Upload = () => {
         const cleanUpStream = () => {
             isCancelled = true;
             clearTimeout(macroTimer);
-            setCameraStatus("loading");
             if (activeStream) {
                 activeStream.getTracks().forEach((track) => track.stop());
                 activeStream = null;
@@ -636,7 +651,8 @@ const Upload = () => {
             cleanUpStream();
             document.removeEventListener("visibilitychange", handleVisibility);
         };
-    }, [currentStepID]);
+    }, [currentStepID, cameraStatus]);
+
 
     const capturePhotoFromCamera = () => {
         if (videoRef.current && cameraStatus === "ready") {

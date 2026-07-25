@@ -94,7 +94,7 @@ const getColorFromString = (str?: string) => {
 }
 
 const FLIP_INTERVAL = 300 // flip every 30s while visible
-const FLIP_BACK_DELAY = 3000 // how long the back stays showing
+const FLIP_BACK_DELAY = 600 // how long the back stays showing
 
 const FlipAvatar = ({
     photo,

@@ -7,10 +7,15 @@ const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 // Note: Advanced Markers require a Map ID. You can generate one in your Google Cloud Console.
 const MAP_ID = 'YOUR_GOOGLE_MAP_ID';
 
+export interface defaultCenterI {
+    lat: number
+    lng: number
+}
+
 export interface Props {
     theme?: ColorScheme;
     properties?: Partial<PostI>[];
-
+    defaultCenter?: defaultCenterI
 }
 
 // Simple helper to format currency (adjust currency/locale as needed)
@@ -23,9 +28,7 @@ const formatPrice = (price?: number) => {
     }).format(price);
 };
 
-const MapComponent = ({ theme, properties }: Props) => {
-    // Default center coordinates
-    const defaultCenter = { lat: 0.3476, lng: 32.5825 };
+const MapComponent = ({ theme, properties, defaultCenter = { lat: 0.3476, lng: 32.5825 } }: Props) => {
 
     return (
         <APIProvider

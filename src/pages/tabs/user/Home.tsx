@@ -55,7 +55,6 @@ const Home = () => {
         isLoading,
         isFetchingNextPage,
         isError,
-        error,
         fetchNextPage,
         hasNextPage,
         refetch,
@@ -155,14 +154,14 @@ const Home = () => {
                 </div>
             ) : isError ? (
                 <div className="p-4 text-center text-red-500">
-                    Failed to load properties: {(error as Error)?.message}
-                    <button className="block mx-auto mt-2 underline" onClick={() => refetch()}>
+                    Failed to load properties
+                    <button className="btn bg-pale w-full text-text rounded-full mt-2" onClick={() => refetch()}>
                         Retry
                     </button>
                 </div>
             ) : posts.length === 0 ? (
                 // <div className="p-4 text-center">No properties found.</div>
-                <Empty title="No properties found" />
+                <Empty type="posts" title="No properties found" />
             ) : (
                 <>
                     <div className="flex flex-col gap-10">

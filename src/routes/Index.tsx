@@ -12,6 +12,7 @@ import Verify from "../pages/tabs/user/Verify"
 import PhoneChange from "../pages/tabs/user/PhoneChange"
 import MapP from "../pages/tabs/user/MapP"
 import NotFound from "../pages/NotFound"
+import Terms from "../pages/auth/Terms"
 
 
 const Index = () => {
@@ -24,6 +25,8 @@ const Index = () => {
                 <Route path="/auth/*" Component={auth} />
                 <Route path="/upload" Component={Upload} />
                 <Route path="/tabs/*" Component={tabs} />
+                <Route path="/terms" Component={Terms} />
+
                 <Route path="/chat/:id" Component={ChatRoom} />
                 <Route path="/post/:postId" Component={PostDetails} />
                 <Route path="/profile/:id" Component={Profile} />

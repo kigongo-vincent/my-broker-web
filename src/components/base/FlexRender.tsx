@@ -28,7 +28,7 @@ const FlexRender = <T,>({ items, render, row, emptyContainer, emptyTitle, emptyC
                     :
                     items?.length == 0
                         ?
-                        emptyContainer ? emptyContainer : <Empty title={emptyTitle} caption={emptyCaption} />
+                        emptyContainer ? emptyContainer : <Empty type="posts" title={emptyTitle} caption={emptyCaption} />
                         :
                         items?.map((render))
             }

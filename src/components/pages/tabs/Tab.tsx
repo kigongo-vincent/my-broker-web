@@ -14,7 +14,7 @@ export interface LinkI {
 const Tab = (t: LinkI) => {
 
     const { pathname } = useLocation()
-    const isActive = useMemo(() => pathname == t?.path, [pathname, t?.path])
+    const isActive = useMemo(() => pathname == t?.path || pathname == t?.path + "/", [pathname, t?.path])
     const uploadStyles = useMemo(() => t?.path?.includes("upload") ? "bg-primary text-white " : "", [pathname])
     const navigate = useNavigate()
     const hasBadge = typeof t.badge === "number" ? t.badge > 0 : Boolean(t.badge)

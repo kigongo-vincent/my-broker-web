@@ -1,12 +1,9 @@
-import { Activity, useEffect, useState } from "react"
+import { Activity, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router"
 import { PostI, User } from "../../../components/pages/tabs/Post"
 import Header from "../../../components/pages/tabs/Header"
 import GoogleLogo from "../../../assets/google-maps-logo.webp"
 import MapComponent from "../../../components/pages/upload/Map"
-import MapLight from "../../../assets/map-light.webp"
-import MapDark from "../../../assets/map-dark.webp"
-import MapIcon from "../../../assets/map.webp"
 import Modal from "../../../components/base/Modal"
 import { ExclamationTriangleIcon, PhoneIcon } from "@heroicons/react/20/solid"
 import { CategoryI } from "./Upload"
@@ -20,10 +17,11 @@ import electricityIcon from "../../../assets/upload/electricity.webp";
 import waterIcon from "../../../assets/upload/water.webp";
 import parkingIcon from "../../../assets/upload/parking.webp";
 import trashIcon from "../../../assets/upload/trash.webp";
-import { motion } from "framer-motion"
 import { useAppStore } from "../../../store/app"
 import Loader from "../../../components/base/Loader"
 import { DeleteReq, Put } from "../../../../api"
+import { BottomSheet } from "react-spring-bottom-sheet"
+import { PostSkeleton } from "../../../components/base/PageSkeleton"
 
 interface IconI {
     url: string;
@@ -46,12 +44,16 @@ const PostAuthorActions = ({ ...p }: Partial<PostI>) => {
     const navigate = useNavigate()
     const { setPostToUpdate, setError, setSuccess } = useAppStore()
     const [showDelete, setShowDelete] = useState(false)
-    const [available, setAvailable] = useState(p?.available)
+    const [available, setAvailable] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const handleEdit = () => {
         setPostToUpdate(p as PostI)
         navigate(`/upload`)
     }
+
+    useEffect(() => {
+        setAvailable(Boolean(p?.available))
+    }, [p?.available])
 
     const handleDelete = async () => {
         try {
@@ -113,26 +115,34 @@ const PostDetails = () => {
     const isAuthenticated = Boolean((user as UserI)?.ID)
 
 
-    const { data } = usePostDetails()
-    const { postToUpdate } = useAppStore()
+    const { data, isLoading } = usePostDetails()
     const post = data?.data
     const ammenities = post?.amenities?.map(a => ({ label: a, icon: IconFinder(a) } as CategoryI))
     const UserID = getUser()?.ID
     const PostAuthorID = post?.author.ID
     const IsOwner = UserID == PostAuthorID
+    const sheetRef = useRef(null)
 
-    useEffect(() => {
-        console.log(postToUpdate)
-    }, [postToUpdate])
+    if (isLoading) {
+        return (
+            <>
+                <Header back noMargin />
+                <PostSkeleton />
+            </>
+        )
+    }
+
 
     return (
         <div className="w-full">
             <Header back noMargin />
 
-            <button onClick={() => setShowMap(true)} className="fixed border border-text/10 z-100 btn max-w-max left-[50%] top-30 transform -translate-x-[50%] rounded-full bg-paper ">
-                <img src={GoogleLogo} className="h-8 w-8" alt="" />
-                <span>open map</span>
-            </button>
+            <Activity mode={showMaP ? "hidden" : "visible"}>
+                <button onClick={() => setShowMap(true)} className="fixed border border-text/10 z-100 btn max-w-max left-[50%] top-30 transform -translate-x-[50%] rounded-full bg-paper ">
+                    <img src={GoogleLogo} className="h-8 w-8" alt="" />
+                    <span>open map</span>
+                </button>
+            </Activity>
 
             {/* assets */}
             <div
@@ -290,16 +300,21 @@ const PostDetails = () => {
                     }
                 </div>
 
-                <Modal position="bottom" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>
+                {/* <Modal position="bottom" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>
                     <div className="h-[70vh]  relative  w-full min-w-full">
                         <motion.img initial={{ scale: "2%" }} animate={{ scale: 1 }} transition={{ duration: 10 }} src={theme == "light" ? MapLight : MapDark} className=" absolute   w-full" alt="" />
                         <div className="absolute bg-black/10 backdrop-blur-sm h-full w-full flex items-center rounded-4xl justify-center">
 
                             <img src={MapIcon} className="h-20  animate-bounce object-contain w-20 " alt="" />
                         </div>
-                        <MapComponent theme={theme?.toUpperCase() as ColorScheme} />
                     </div>
-                </Modal>
+                </Modal> */}
+
+                <BottomSheet open={showMaP} onDismiss={() => setShowMap(false)} ref={sheetRef} className="z-000">
+                    <div className="h-[70vh]">
+                        <MapComponent defaultCenter={{ lat: post?.location?.cordinates?.lat || 0.3476, lng: post?.location?.cordinates?.lon || 32.5825 }} theme={theme?.toUpperCase() as ColorScheme} />
+                    </div>
+                </BottomSheet>
 
                 <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
                     <div className="rounded-3xl bg-paper p-4">

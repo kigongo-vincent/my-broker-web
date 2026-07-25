@@ -46,3 +46,42 @@ export const BadgeSkeleton = () => {
 
     </div>
 }
+
+
+export const ProfileSkeleton = () => {
+    return <div className="flex flex-col gap-4">
+
+        {/* header  */}
+        <div className="flex w-full flex-col items-center gap-3">
+            <div className="h-30 rounded-full w-30 bg-text/10 animate-pulse"></div>
+            <div className="h-5 rounded-3xl w-[70%] animate-pulse bg-text/10"></div>
+            <div className="h-5 rounded-3xl w-[40%] animate-pulse bg-text/10"></div>
+        </div>
+
+        {/* list  */}
+        <ListStackSkeleton rows={2} />
+
+    </div>
+}
+
+export const PostSkeleton = () => {
+    return (
+        <div>
+
+            <div className="bg-text/10 h-[70vh] animate-pulse"></div>
+
+            <div className="p-4">
+                <div className="flex items-center   gap-3">
+                    <div className="h-14 w-14 animate-pulse rounded-full bg-text/10" />
+                    <div className="flex-1 space-y-2">
+                        <div className="h-4 w-2/5 animate-pulse rounded-full bg-text/10" />
+                        <div className="h-3 w-3/4 animate-pulse rounded-full bg-text/10" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="h-20 animate-pulse bg-text/10 mx-4 rounded-xl"></div>
+
+        </div>
+    )
+}

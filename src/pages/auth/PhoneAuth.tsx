@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import Logo from "../../components/base/Logo"
 import { StepI } from "../tabs/user/Upload"
 import { useNavigate } from "react-router"
@@ -10,6 +10,7 @@ import Loader from "../../components/base/Loader"
 import PhotoUpload from "../../components/base/PhotoUpload"
 import PhoneInput from "../../components/base/Phone"
 import { PinInput } from "../../components/base/PinCode"
+import { BottomSheet } from "react-spring-bottom-sheet"
 
 interface PhoneAuthRequest {
     phone: string
@@ -17,6 +18,8 @@ interface PhoneAuthRequest {
     pinCode?: string
     step: number
 }
+
+interface AuthSuccessI { token: string, user: UserI }
 
 
 const PhoneAuth = () => {
@@ -32,7 +35,9 @@ const PhoneAuth = () => {
     const [setupEmail, setSetupEmail] = useState("")
     const [setupPhoto, setSetupPhoto] = useState("")
     const [setupSaving, setSetupSaving] = useState(false)
-
+    const [showTerms, setShowTerms] = useState(false)
+    const [signupData, setSignupData] = useState<AuthSuccessI | null>(null)
+    const sheetRef = useRef(null)
     const [fees, setFees] = useState(0)
     const [bio, setBio] = useState("")
 
@@ -40,6 +45,8 @@ const PhoneAuth = () => {
     const [error, setError] = useState("")
     const [isBroker, setIsBroker] = useState(false)
     const [pin1, setpin1] = useState("")
+    const [pin2, setpin2] = useState("")
+    const [pinStage, setPinStage] = useState<1 | 2>(1) // 1 = create, 2 = confirm
     const [loading, setLoading] = useState(false)
     const { login, setUser } = useUserStore()
 
@@ -69,27 +76,60 @@ const PhoneAuth = () => {
         setShowSetupModal(true)
     }
 
-    const step2 = async () => {
-
-        try {
-            setLoading(true)
-            // if (pin1 != pin2 && (pin1 != "" && pin2 != "")) {
-            //     setError("password mismatch, ensure you use the same value for the password fields")
-            //     return
-            // }
-
+    // called by the pin-step button: advances create -> confirm, or submits once confirmed
+    const handlePinContinue = () => {
+        if (pinStage == 1) {
             if (pin1?.length < 4) {
                 setError("please complete the pin")
                 return
             }
+            setPinStage(2)
+            return
+        }
+
+        // pinStage == 2
+        if (pin2?.length < 4) {
+            setError("please confirm your pin")
+            return
+        }
+
+        if (pin1 !== pin2) {
+            setError("pins don't match, please try again")
+            setpin2("")
+            setPinStage(1)
+            setpin1("")
+            return
+        }
+
+        // signup already succeeded (e.g. user hit "Not now" on terms and came
+        // back to "continue") — don't re-POST, just re-open the terms sheet
+        if (signupData) {
+            setShowTerms(true)
+            return
+        }
+
+        step2()
+    }
+
+    const step2 = async () => {
+
+        try {
+            setLoading(true)
+
+            if (pin1?.length < 4 || pin2?.length < 4 || pin1 !== pin2) {
+                setError("please make sure both pins match")
+                return
+            }
 
             if (phone) {
-                const { status, msg, data } = await Post<PhoneAuthRequest, { token: string, user: UserI }>("users/phone", { phone: phone, step: 2, pinCode: pin1 })
+                const { status, msg, data } = await Post<PhoneAuthRequest, AuthSuccessI>("users/phone", { phone: phone, step: 2, pinCode: pin1 })
                 if (status != 200) {
                     setError(msg)
                     return
                 }
-                handleAuthSuccess(data)
+                setSignupData(data)
+                setShowTerms(true)
+                // handleAuthSuccess(data)
             }
         } catch (error) {
 
@@ -133,7 +173,7 @@ const PhoneAuth = () => {
             id: 1,
             content: <>
                 <Logo className="h-26 w-26" />
-                <h3 className="text-2xl  font-semibold  -mb-5">My Broker</h3>
+                <h3 className="text-2xl  font-bold  -mb-5">My Broker</h3>
                 <p className=" text-center text-text/50  text-sm leading-6 mt-2 max-w-[80%]">Continue with your phone, its that easy</p>
 
 
@@ -161,18 +201,40 @@ const PhoneAuth = () => {
             content: <>
                 <Logo className="h-26 w-26" />
 
-                <h3 className="text-2xl  font-semibold  -mb-5">Create pin</h3>
-                <p className="  text-center text-text/50  text-sm leading-6 mt-2 max-w-[80%]">please create a new pin you will use when accessing the platform</p>
+                <h3 className="text-2xl  font-semibold  -mb-5">{pinStage == 1 ? "Create pin" : "Confirm pin"}</h3>
+                <p className="  text-center text-text/50  text-sm leading-6 mt-2 max-w-[80%]">
+                    {pinStage == 1
+                        ? "please create a new pin you will use when accessing the platform"
+                        : "please re-enter the same pin to confirm"}
+                </p>
                 <p className="text-text/50 text-sm mt-1"></p>
                 <br />
-                <PinInput value={pin1} onChange={setpin1} />
-                <button onClick={step2} className="btn rounded-full bg-primary text-white w-full">
+                {pinStage == 1
+                    ? <PinInput key="pin-create" value={pin1} onChange={setpin1} />
+                    : <PinInput key="pin-confirm" value={pin2} onChange={setpin2} />}
+                <button onClick={handlePinContinue} className="btn rounded-full bg-primary text-white w-full">
                     <Loader loading={loading}>
-                        continue
+                        {pinStage == 1 ? "continue" : "confirm"}
                     </Loader>
                 </button>
                 <div className="flex items-center gap-1 justify-center">
-                    not sure about the phone number, <span onClick={() => setStep(1)} className="underline text-primary" >go back</span>
+                    not sure about the phone number,{" "}
+                    <span
+                        onClick={() => {
+                            if (pinStage == 2) {
+                                setPinStage(1)
+                                setpin2("")
+                            } else {
+                                setpin1("")
+                                setpin2("")
+                                setSignupData(null)
+                                setStep(1)
+                            }
+                        }}
+                        className="underline text-primary"
+                    >
+                        go back
+                    </span>
                 </div>
             </>
         }, {
@@ -200,7 +262,7 @@ const PhoneAuth = () => {
             </>
         }
         ]
-        , [step, phone, pin1, loading])
+        , [step, phone, pin1, pin2, pinStage, loading])
 
     const currentStep = steps.find(s => s?.id == step)
     const [hidePhone, setHidePhone] = useState(false)
@@ -374,7 +436,47 @@ const PhoneAuth = () => {
                     <p className="text-text/50 text-sm mt-1">{error}</p>
                     <br />
                 </Modal>
+
             </div>
+
+            {/* terms modal  */}
+            <BottomSheet open={showTerms} onDismiss={() => setShowTerms(false)} ref={sheetRef} className="z-000">
+                <div className="py-10 px-4 min-h-[26vh] flex justify-start flex-col gap-4">
+                    <h3 className="text-xl font-semibold">Terms & conditions</h3>
+
+                    <div className="text-text/60 leading-7  space-y-3">
+                        <p>
+                            By continuing, you agree to let us collect your profile details
+                            (name, email, phone, photo) and, if you list a property, its images,
+                            location, and price — used only to run your account, show your
+                            listings, and connect you with interested renters.
+                        </p>
+                        <p>
+                            You can view, correct, or delete your data at any time from
+                            Settings, or by contacting our support team, in line with Uganda's
+                            Data Protection and Privacy Act, 2019.
+                        </p>
+                        <button
+                            onClick={() => navigate("/terms")}
+                            className="underline text-primary mb-5 outline-0"
+                        >
+                            Read full Terms & Data Policy
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {/* <button onClick={() => setShowTerms(false)} className="btn border border-primary/50 text-primary w-full rounded-full">
+                            Not now
+                        </button> */}
+                        <button
+                            onClick={() => { setShowTerms(false); handleAuthSuccess(signupData as AuthSuccessI) }}
+                            className="btn bg-primary text-white w-full rounded-full"
+                        >
+                            Agree & continue
+                        </button>
+                    </div>
+                </div>
+            </BottomSheet>
         </div>
     )
 }

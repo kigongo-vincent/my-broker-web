@@ -20,33 +20,33 @@
     <!-- 1. Explicitly targets the updated JSON file layout boundary -->
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- 2. Apple engine configuration variables for full-screen framework handling -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!-- <meta name="theme-color" content="#d5a97d" /> -->
-    <!-- Forces dark text/icons (black clock/battery) on iOS -->
-    <!-- <meta name="apple-mobile-web-app-status-bar-style" content="light" /> -->
+    <!-- 2. Declare document color scheme support for mobile browsers -->
+    <meta name="color-scheme" content="light dark" />
 
+    <!-- 3. Apple engine configuration variables for full-screen framework handling -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-title" content="My Broker" />
 
-    <!-- Color for Light Mode -->
+    <!-- 4. Universal Fallback Theme Color -->
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- 5. Conditional Media Query Overrides for Mobile Chrome -->
     <meta
       name="theme-color"
       content="#ffffff"
       media="(prefers-color-scheme: light)"
     />
-
-    <!-- Color for Dark Mode -->
     <meta
       name="theme-color"
       content="#0d121b"
       media="(prefers-color-scheme: dark)"
     />
 
-    <!-- 3. Absolute pointer mapping directly to your public folder icon assets -->
+    <!-- 6. Absolute pointer mapping directly to your public folder icon assets -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
   </head>
   <body class="bg-paper">
