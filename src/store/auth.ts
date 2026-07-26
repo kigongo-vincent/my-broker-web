@@ -20,6 +20,7 @@ type verification = "pending" | "approved" | "cancelled";
 export interface UserI extends Partial<BaseI> {
   name: string;
   email?: string;
+  completeSetup?: boolean;
   role?: UserRole;
   phone?: string;
   photo?: string;

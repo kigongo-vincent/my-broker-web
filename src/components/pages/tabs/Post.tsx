@@ -62,6 +62,69 @@ export interface PostI extends BaseI {
     hideHeader?: boolean
 }
 
+export const ValidatePost = (post: Partial<PostI>): string => {
+    if (!post.type) {
+        return "Post type is required"
+    }
+
+    if (!post.assets || post.assets.length === 0) {
+        return "At least one asset is required"
+    }
+
+    if (!post.price) {
+        return "Price is required"
+    }
+
+    if (!post.price.amount || post.price.amount <= 0) {
+        return "Price amount must be greater than zero"
+    }
+
+    if (!post.price.currency) {
+        return "Price currency is required"
+    }
+
+    if (!post.location) {
+        return "Location is required"
+    }
+
+    if (!post.location.name) {
+        return "Location name is required"
+    }
+
+    if (!post.location.cordinates) {
+        return "Location coordinates are required"
+    }
+
+    if (
+        post.location.cordinates.lat === undefined ||
+        post.location.cordinates.lon === undefined
+    ) {
+        return "Invalid location coordinates"
+    }
+
+    if (post.bedrooms === undefined || post.bedrooms < 0) {
+        return "Invalid number of bedrooms"
+    }
+
+    if (post.bathrooms === undefined) {
+        return "Invalid number of bathrooms"
+    }
+
+    if (post.toilets === undefined) {
+        return "Invalid number of toilets"
+    }
+
+    if (post.months === undefined || post.months < 0) {
+        return "Invalid months value"
+    }
+
+    if (post.units === undefined || post.units < 1) {
+        return "Units must be at least 1"
+    }
+
+    return ""
+}
+
 export interface Props extends UserI {
     noActions?: boolean
     actions?: ReactNode
@@ -224,7 +287,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             {TextCropper(u?.name, 23)}
                         </p>
                         {u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
-                        {u?.broker && <div className="text-sm text-primary">broker</div>}
+                        {u?.role == "broker" && <div className="text-sm text-primary">broker</div>}
                     </div>
                     <span className="text-sm text-text/50">
                         last seen {u.lastSeen}
@@ -351,7 +414,7 @@ const Post = (p: PostI) => {
 
             }
             {/* assets */}
-            <div onClick={handleClick} className={`flex gap-4  overflow-x-auto snap-x ${p?.hideHeader && "rounded-4xl"} snap-mandatory scrollbar-hide`}>
+            <div onClick={handleClick} className={`flex gap-4  overflow-x-auto snap-x ${p?.hideHeader && "rounded-lg"} snap-mandatory scrollbar-hide`}>
                 {p.assets?.[0] && p.assets
                     .filter(item => item.type === "image" || item.type === "video")
                     .map((item, index) => {

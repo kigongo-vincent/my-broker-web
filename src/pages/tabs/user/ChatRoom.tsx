@@ -1,6 +1,6 @@
 import { User } from "../../../components/pages/tabs/Post"
-import BGL from "../../../assets/light.webp"
-import BGD from "../../../assets/dark.webp"
+import BGL from "../../../assets/light.png"
+import BGD from "../../../assets/dark.png"
 import useSystemTheme from "../../../hooks/theme"
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Lineicons from "@lineiconshq/react-lineicons"
@@ -203,14 +203,14 @@ const useChatRoomData = (partnerId: string | undefined, currentUser: UserI | und
 // Presentational: Message bubble
 // ---------------------------------------------------------------------------
 
-const Message = ({ senderId, Attachment, text, CreatedAt, post, postId }: Partial<ChatMessageI>) => {
+const Message = ({ senderId, Attachment, text, CreatedAt, post }: Partial<ChatMessageI>) => {
 
     const { user } = useUserStore()
     const mine = Number((user as UserI)?.ID) == senderId
 
     return (
         <>
-            <div className={`bg-pale ${mine && "bg-primary  flex flex-col gap-1.5 items-end self-end text-white"} p-6 py-4 rounded-xl ${!postId && "max-w-[80%] w-max"}  `}>
+            <div className={`bg-pale ${mine && "bg-primary  flex flex-col gap-1.5 items-end self-end text-white"} p-6 py-4 rounded-xl ${"max-w-[80%] w-max"}  `}>
                 <span>{text}</span>
 
                 {Attachment && (
@@ -237,26 +237,28 @@ interface ChatHeaderProps {
     partnerName?: string
     partnerPhoto?: string
     partnerLastSeen?: string
+    partnerId: number
     onBack: () => void
     onOpenMenu: () => void
 }
 
-const ChatHeader = ({ partnerName, partnerPhoto, partnerLastSeen, onBack, onOpenMenu }: ChatHeaderProps) => {
+const ChatHeader = ({ partnerName, partnerPhoto, partnerLastSeen, onBack, onOpenMenu, partnerId }: ChatHeaderProps) => {
 
 
 
     return (
         <div className="w-full fixed z-200 top-0 ">
-            <div className="flex w-full bg-black/6 border-b  border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4  items-center justify-between">
+            <div className="flex w-full bg-paper border-b  border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4  items-center justify-between">
                 <div className="flex items-center gap-2">
                     <button onClick={onBack} className="h-14 ">
                         <Lineicons icon={ArrowLeftCircleSolid} />
                     </button>
                     <User
+                        ID={partnerId}
                         name={partnerName || "Conversation"}
                         photo={partnerPhoto}
                         noActions
-                        lastSeen={partnerLastSeen ? `last seen ${partnerLastSeen}` : "online"}
+                        lastSeen={partnerLastSeen ? ` ${partnerLastSeen}` : "online"}
                     />
                 </div>
 
@@ -280,6 +282,7 @@ interface MessageListProps {
 const MessageList = ({ messages }: MessageListProps) => {
     const { getUser } = useUserStore()
     const scrollRef = useRef<HTMLDivElement>(null)
+    const messageCount = messages?.length || 0
 
     const MarkMessagesRead = async () => {
         const msgs = messages?.filter(m => !m?.isRead && m?.senderId != getUser()?.ID)
@@ -292,10 +295,11 @@ const MessageList = ({ messages }: MessageListProps) => {
         MarkMessagesRead()
     }, [messages])
 
-    // Scroll to bottom whenever messages update
+    // Scroll to bottom only when the number of messages actually changes,
+    // not on every re-render (e.g. while the user is typing a draft).
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages])
+    }, [messageCount])
 
     return (
         <div className="max-h-[90vh] pt-[11vh] overflow-y-auto flex flex-col gap-5 w-full p-4">
@@ -322,13 +326,27 @@ interface ChatComposerProps {
 }
 
 const ChatComposer = ({ draft, onDraftChange, onSend, sending }: ChatComposerProps) => {
+    const inputRef = useRef<HTMLInputElement>(null)
+
+    // Some mobile browsers (esp. iOS Safari / WebViews) auto-scroll the
+    // nearest scrollable ancestor to bring a focused input "into view",
+    // which yanks our fixed-layout chat screen back to the top.
+    // Re-assert scroll position after focus so it snaps back down.
+    const handleFocus = () => {
+        requestAnimationFrame(() => {
+            window.scrollTo(0, 0)
+        })
+    }
+
     return (
         <div className="shrink-0 flex  fixed bottom-0  left-0 items-center px-4 pb-5 pt-2 gap-2 w-full">
             <div className="rounded-full flex bg-pale items-center px-6  border border-text/10 h-18 flex-1">
                 <input
+                    ref={inputRef}
                     value={draft}
                     onChange={(e) => onDraftChange(e.currentTarget.value)}
                     onKeyDown={(e) => e.key === "Enter" && onSend()}
+                    onFocus={handleFocus}
                     type="text"
                     placeholder="say something"
                     className="flex-1 outline-0"
@@ -512,10 +530,11 @@ const ChatRoom = () => {
                 </div>
             </Activity>
 
-            <img src={bg} className="absolute h-full w-full mix-blend-luminosity object-cover" alt="" />
+            <img src={bg} className="absolute h-full w-full dark:mix-blend-luminosity object-cover" alt="" />
 
             <div className={`absolute inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
                 <ChatHeader
+                    partnerId={Number(partner?.ID)}
                     partnerName={partner?.name}
                     partnerPhoto={partner?.photo}
                     partnerLastSeen={partner?.lastSeen}
@@ -538,7 +557,7 @@ const ChatRoom = () => {
                 open={showUserMenu}
                 RoomID={roomQuery?.data?.data?.ID || 0}
                 onClose={() => setShowMenu(false)}
-                onViewProfile={() => navigate(`/profile/${1}`)}
+                onViewProfile={() => navigate(`/profile/${partner?.ID}`)}
             />
         </div>
     )

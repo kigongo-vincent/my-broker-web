@@ -754,7 +754,7 @@ const Filter = () => {
 
                         <div className="min-h-20"></div>
 
-                        <div className="flex gap-2 mt-2 fixed bottom-0 w-full left-0 p-4 backdrop-blur-md border-t border-text/10">
+                        <div className="flex gap-2 mt-2 fixed z-50 bottom-0 w-full left-0 p-4 backdrop-blur-md border-t border-text/10">
                             <button className="btn rounded-full bg-pale flex-1" onClick={handleReset}>
                                 reset
                             </button>

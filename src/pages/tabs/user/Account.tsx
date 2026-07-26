@@ -6,6 +6,7 @@ import Modal from "../../../components/base/Modal"
 import Loader from "../../../components/base/Loader"
 import { Put } from "../../../../api"
 import { useNavigate } from "react-router"
+import { useAppStore } from "../../../store/app"
 
 const Account = () => {
 
@@ -22,6 +23,7 @@ const Account = () => {
     const [fee, setFee] = useState(u?.BrokerDetails?.Fee ?? "")
     const [bio, setBio] = useState(u?.BrokerDetails?.Bio ?? "")
     const navigate = useNavigate()
+    const { setSuccess } = useAppStore()
 
     // keep local fields in sync with the store whenever we're not mid-edit
     useEffect(() => {
@@ -61,7 +63,9 @@ const Account = () => {
             }
             const { data } = await Put<unknown, UserI>("me/", body)
             setUser?.(data)
-            navigate("/tabs/user")
+            setSuccess({ title: "success", body: "your account profile has been updated successfully" })
+            navigate(-1)
+
         } catch {
             setError("We could not save your profile details yet. Please try again.")
         } finally {

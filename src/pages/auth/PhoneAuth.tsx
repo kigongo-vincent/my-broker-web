@@ -73,7 +73,17 @@ const PhoneAuth = () => {
 
     const handleAuthSuccess = (data: { token: string, user: UserI }) => {
         login(data)
-        setShowSetupModal(true)
+        // Only funnel the user into "finish your account setup" if their
+        // profile actually looks incomplete. Step 3 (returning user, pin
+        // login) returns a fully-populated user for anyone who already
+        // finished setup, so re-showing the modal there was the bug.
+        const needsSetup = !data.user?.completeSetup
+        if (needsSetup) {
+            setShowSetupModal(true)
+            return
+        } else {
+            navigate("/tabs/user/")
+        }
     }
 
     // called by the pin-step button: advances create -> confirm, or submits once confirmed
@@ -370,7 +380,7 @@ const PhoneAuth = () => {
 
                                     <button onClick={() => setSetupStep(prev => prev - 1)} className="btn  bg-pale">Back</button>
 
-                                    <div className="flex items-center justify-end">
+                                    <div className="flex items-center gap-3 justify-end">
                                         <button onClick={() => handleAccountTypeSelect(false)} className="btn bg-pale">NO</button>
                                         <button onClick={() => handleAccountTypeSelect(true)} className="btn bg-primary text-white">YES</button>
                                     </div>
@@ -406,7 +416,7 @@ const PhoneAuth = () => {
 
                                     <button onClick={() => setSetupStep(prev => prev - 1)} className="btn  bg-pale">Back</button>
 
-                                    <div className="flex items-center justify-end">
+                                    <div className="flex gap-3 items-center justify-end">
                                         <button onClick={() => handlePhoneVisibility(false)} className="btn bg-pale">NO</button>
                                         <button onClick={() => handlePhoneVisibility(true)} className="btn bg-primary text-white">YES</button>
                                     </div>

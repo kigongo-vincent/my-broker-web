@@ -12,6 +12,8 @@ import { Telephone1Solid, Message2Solid, WhatsappOutlined } from '@lineiconshq/f
 import Lineicons from '@lineiconshq/react-lineicons'
 import { useAppStore } from '../../../store/app'
 import { ProfileSkeleton } from '../../../components/base/PageSkeleton'
+import { CheckBadgeIcon } from '@heroicons/react/24/solid'
+import { TextCropper } from '../../../utils/text'
 
 export interface AccountI {
     user: Partial<UserI>
@@ -48,7 +50,7 @@ export interface AccountI {
 }
 
 const Profile = () => {
-    const { user, getUserPhoto } = useUserStore()
+    const { user, getUserPhoto, getUser } = useUserStore()
     const { id } = useParams()
     const { data, isLoading, fetchNextPage, hasNextPage } = useInfiniteUserProfile({ limit: 5, userId: id })
 
@@ -103,7 +105,7 @@ const Profile = () => {
     }
 
 
-
+    const isOwner = getUser()?.ID == Number(id)
 
     return (
         <div>
@@ -126,13 +128,23 @@ const Profile = () => {
                         />
 
                         <div className=" p-6 flex flex-col border-b items-center gap-1.5 border-text/10">
-                            <h3 className="text-2xl font-bold">{account?.user?.name}</h3>
+                            <h3 className="text-2xl font-bold">
+                                <div className="flex items-center gap-1">
+                                    <p className="font-medium">
+                                        {TextCropper(u?.name, 23)}
+                                    </p>
+                                    {u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
+                                    {u?.role == "broker" && <div className="text-sm text-white font-medium bg-primary px-4 py-1 rounded-full">broker</div>}
+                                </div>
+
+                            </h3>
                             <p className='text-text/50'>{account?.user?.email}</p>
 
                             {/* bio  */}
                             <Activity mode={account?.user?.role == "broker" ? "visible" : "hidden"}>
+
                                 <p className='text-text/50'>{account?.user?.BrokerDetails?.Bio}</p>
-                                <p className='text-text/50'>{account?.user?.BrokerDetails?.Fee}</p>
+                                <p className='text-text/50 bg-pale px-4 py-2 rounded-full'>charges {account?.user?.BrokerDetails?.Fee}</p>
                             </Activity>
                         </div>
                         <br />
@@ -160,30 +172,32 @@ const Profile = () => {
             <div className="h-30"></div>
 
             {/* fixed nav  */}
-            <div className='fixed px-4 gap-2 flex items-center border-t border-text/10 h-20 bottom-0 left-0 w-full bg-paper'>
+            <Activity mode={isOwner ? "hidden" : "visible"}>
+                <div className='fixed z-50 px-4 gap-2 flex items-center border-t border-text/10 h-20 bottom-0 left-0 w-full bg-paper'>
 
-                <button onClick={handleWhatsApp} disabled={u?.hideContact} className={`btn flex-1 font-medium rounded-full bg-[#128C7E] text-white ${u?.hideContact && "opacity-10"}`}>
-                    <Lineicons icon={WhatsappOutlined} />
-                    chat via whatsapp
-                </button>
-
-                {
-                    !u?.hideContact && <button
-                        onClick={handleCall}
-                        className=" h-16 w-16 flex items-center bg-pale justify-center rounded-full"
-                    >
-                        <Lineicons icon={Telephone1Solid} />
+                    <button onClick={handleWhatsApp} disabled={u?.hideContact} className={`btn flex-1 font-medium rounded-full bg-[#128C7E] text-white ${u?.hideContact && "opacity-10"}`}>
+                        <Lineicons icon={WhatsappOutlined} />
+                        chat via whatsapp
                     </button>
-                }
 
-                <button
-                    onClick={handleChat}
-                    className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
-                >
-                    <Lineicons icon={Message2Solid} />
-                </button>
+                    {
+                        !u?.hideContact && <button
+                            onClick={handleCall}
+                            className=" h-16 w-16 flex items-center bg-pale justify-center rounded-full"
+                        >
+                            <Lineicons icon={Telephone1Solid} />
+                        </button>
+                    }
 
-            </div>
+                    <button
+                        onClick={handleChat}
+                        className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
+                    >
+                        <Lineicons icon={Message2Solid} />
+                    </button>
+
+                </div>
+            </Activity>
 
         </div>
     )

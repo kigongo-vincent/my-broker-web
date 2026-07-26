@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useRef, ReactNode } from "react"
 import Lenis from "lenis"
 import { Get } from "../../api"
 import { useUserStore } from "../store/auth"
+import { useAppStore } from "../store/app"
 
 const LenisContext = createContext<Lenis | null>(null)
 
@@ -40,9 +41,26 @@ const SmoothScrollProvider = ({ children }: Props) => {
 
     const { token } = useUserStore()
 
-    const handleCatcherClick = () => {
-        token != "" && Get<unknown>("me/last-seen")
+    const handleCatcherClick = async () => {
+        if (token != "") {
+            await Get<unknown>("me/last-seen")
+            // if (status != 200) {
+            //     logout()
+            // }
+            handleGetNewMessages()
+        }
     }
+
+    const { setUnread } = useAppStore()
+
+    const handleGetNewMessages = async () => {
+        const { data } = await Get<{ count: number }>("chats/unread")
+        setUnread(data?.count)
+    }
+
+    useEffect(() => {
+        handleCatcherClick()
+    }, [])
 
     return (
         <LenisContext.Provider value={lenisRef.current}>

@@ -5,6 +5,9 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev
 export default defineConfig({
+  worker: {
+    format: "es",
+  },
   plugins: [
     react(),
     tailwindcss(),

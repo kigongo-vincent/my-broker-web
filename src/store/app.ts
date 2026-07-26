@@ -18,6 +18,8 @@ export interface AppStoreI {
   filters: FilterColumn[];
   showHomeBadge: boolean;
   setShowHomeBadge: () => void;
+  unread: number;
+  setUnread: (v: number) => void;
   error: AlertI;
   postToUpdate?: PostI;
   setPostToUpdate: (p?: PostI) => void;
@@ -41,6 +43,10 @@ export const useAppStore = create<AppStoreI>()(
       postToUpdate: undefined,
       setPostToUpdate: (p) => {
         set({ postToUpdate: p });
+      },
+      unread: 0,
+      setUnread: (v) => {
+        set({ unread: v });
       },
       filters: [],
       favouritesCount: 0,

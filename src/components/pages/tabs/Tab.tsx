@@ -17,9 +17,13 @@ const Tab = (t: LinkI) => {
     const isActive = useMemo(() => pathname == t?.path || pathname == t?.path + "/", [pathname, t?.path])
     const uploadStyles = useMemo(() => t?.path?.includes("upload") ? "bg-primary text-white " : "", [pathname])
     const navigate = useNavigate()
-    const hasBadge = typeof t.badge === "number" ? t.badge > 0 : Boolean(t.badge)
-    const { LoginPrompt } = useAppStore()
+    const { LoginPrompt, unread } = useAppStore()
+    // if (t?.label == "messages") {
+    //     t.badge = unread
+    // }
+    const hasBadge = t?.label == "messages" && unread != 0 ? true : typeof t.badge === "number" ? t.badge > 0 : Boolean(t.badge)
     const { token } = useUserStore()
+
 
     const action = () => {
         if (token != "") {
@@ -40,7 +44,7 @@ const Tab = (t: LinkI) => {
 
                 {/* badge  */}
                 <Activity mode={hasBadge ? "visible" : "hidden"}>
-                    <span className="bg-danger top-0 flex items-center justify-center text-sm right-0 h-8 text-white w-8 rounded-full absolute">{t?.badge}</span>
+                    <span className="bg-danger top-0 flex items-center justify-center text-sm right-0 h-8 text-white w-8 rounded-full absolute">{t?.label == "messages" ? unread : t?.badge}</span>
                 </Activity>
             </div>
             <span className={`${isActive && "text-primary"} text-sm font-medium`}>{t?.label}</span>

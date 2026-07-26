@@ -47,36 +47,46 @@ const App = () => {
   })
 
   useEffect(() => {
-    setFavouritesCount(data?.data?.count || 0)
-  }, [])
+    setFavouritesCount(Number(data?.data?.count))
+  }, [data])
 
 
 
   return (
-    <div >
-      <SmoothScrollProvider >
-        <AppRouter />
-      </SmoothScrollProvider>
-      {/* root modal  */}
-      <RModal />
+    <>
+      <div className="sm:hidden">
+        <SmoothScrollProvider >
+          <AppRouter />
+        </SmoothScrollProvider>
+        {/* root modal  */}
+        <RModal />
 
-      {/* error modal  */}
-      <Modal actions={<button onClick={() => setError({ body: "" })} className="btn bg-pale">ok</button>} open={Boolean(error?.body)} onClose={() => setError({ body: "" })}>
-        <h3 className="text-xl font-semibold text-danger">{error?.title || "Error"}</h3>
-        <p className="text-text/70">{error?.body}</p>
-      </Modal>
+        {/* error modal  */}
+        <Modal actions={<button onClick={() => setError({ body: "" })} className="btn bg-pale">ok</button>} open={Boolean(error?.body)} onClose={() => setError({ body: "" })}>
+          <h3 className="text-xl font-semibold text-danger">{error?.title || "Error"}</h3>
+          <p className="text-text/70">{error?.body}</p>
+        </Modal>
 
-      {/* success modal  */}
-      <Modal actions={<button onClick={() => setSuccess({ body: "" })} className="btn bg-primary">ok</button>} open={Boolean(success?.body)} onClose={() => setSuccess({ body: "" })}>
+        {/* success modal  */}
+        <Modal actions={<button onClick={() => setSuccess({ body: "" })} className="btn bg-primary">ok</button>} open={Boolean(success?.body)} onClose={() => setSuccess({ body: "" })}>
 
-        <div className="flex items-center gap-1 text-success">
-          <Lineicons icon={CloudCheckCircleSolid} />
-          <h3 className="text-xl font-semibold text-success">{success?.title || "success"}</h3>
-        </div>
+          <div className="flex items-center gap-1 text-success">
+            <Lineicons icon={CloudCheckCircleSolid} />
+            <h3 className="text-xl font-semibold text-success">{success?.title || "success"}</h3>
+          </div>
 
-        <p className="text-text/70 mt-2">{success?.body}</p>
-      </Modal>
-    </div>
+          <p className="text-text/70 mt-2">{success?.body}</p>
+        </Modal>
+      </div>
+
+      {/* desktop disclaimer  */}
+      <div className="hidden sm:flex  flex-col items-center justify-center h-screen">
+        <h3 className="text-[24px] mt-2">Desktop detected</h3>
+        <p className="text-[14px] text-text/40 -mt-3">Please use a mobile phone</p>
+      </div>
+
+    </>
+
   )
 }
 

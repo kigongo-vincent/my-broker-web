@@ -27,7 +27,7 @@ const MapP = () => {
                 <Activity mode={properties?.length != 0 ? "visible" : "hidden"}>
                     <AnimatePresence >
                         <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}>
-                            <Map properties={properties || []} />
+                            <Map showDirections properties={properties || []} />
                         </motion.div>
                     </AnimatePresence>
                 </Activity>

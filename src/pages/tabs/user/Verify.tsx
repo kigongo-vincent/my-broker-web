@@ -8,6 +8,7 @@ import Loader from "../../../components/base/Loader"
 import { compressImage, uploadToCloudinary } from "../../../hooks/posts"
 import { Post } from "../../../../api"
 import { useNavigate } from "react-router"
+import { useAppStore } from "../../../store/app"
 
 export interface VerificationRequest {
     ID: number
@@ -168,6 +169,7 @@ const Verify = () => {
     const [loading, setLoading] = useState(false)
 
     const { getUser } = useUserStore()
+    const { setSuccess } = useAppStore()
     console.log(getUser()?.verification)
     const user = getUser()
     const verification = user?.verification
@@ -359,6 +361,7 @@ const Verify = () => {
                 setError(msg)
                 return
             }
+            setSuccess({ title: "success", body: "your verification request has been sent successfully, the QA team will review it and grant you a verification badger if they deem you fit", })
             navigate(-1)
 
             // upload back 

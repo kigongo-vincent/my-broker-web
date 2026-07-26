@@ -15,7 +15,7 @@ import electricityIcon from "../../../assets/upload/electricity.webp";
 import waterIcon from "../../../assets/upload/water.webp";
 import parkingIcon from "../../../assets/upload/parking.webp";
 import trashIcon from "../../../assets/upload/trash.webp";
-import { Currency, PostAssetI, PostI, PostType } from "../../../components/pages/tabs/Post";
+import { Currency, PostAssetI, PostI, PostType, ValidatePost } from "../../../components/pages/tabs/Post";
 import { Post, Put } from "../../../../api";
 import Header from "../../../components/pages/tabs/Header";
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
@@ -446,7 +446,7 @@ const Upload = () => {
                 bedrooms: postToUpdate.bedrooms || 0,
                 toilets: postToUpdate.toilets || 0,
                 negotiable: postToUpdate.negotiable || false,
-                months: postToUpdate.months || 2,
+                months: postToUpdate.months || 0,
                 units: postToUpdate.units || 1,
                 price: {
                     Amount: postToUpdate.price?.amount || 0,
@@ -530,6 +530,7 @@ const Upload = () => {
     useEffect(() => {
         let activeStream: MediaStream | null = null;
         let isCancelled = false;
+        let activePoll: ReturnType<typeof setInterval> | null = null;
 
         const syncStartStream = async () => {
             if (currentStepID !== 1 || document.hidden) return;
@@ -584,8 +585,9 @@ const Upload = () => {
                             nestedVideoEl.play().catch(() => { });
                             clearInterval(pollInterval);
                         }
-                        if (attempts > 10) clearInterval(pollInterval);
+                        if (attempts > 10 || isCancelled) clearInterval(pollInterval);
                     }, 100);
+                    activePoll = pollInterval;
                 }
             } catch (err: any) {
                 console.error("Camera resolution critical fallback pipeline caught exception:", err);
@@ -627,6 +629,10 @@ const Upload = () => {
         const cleanUpStream = () => {
             isCancelled = true;
             clearTimeout(macroTimer);
+            if (activePoll) {
+                clearInterval(activePoll);
+                activePoll = null;
+            }
             if (activeStream) {
                 activeStream.getTracks().forEach((track) => track.stop());
                 activeStream = null;
@@ -651,7 +657,10 @@ const Upload = () => {
             cleanUpStream();
             document.removeEventListener("visibilitychange", handleVisibility);
         };
-    }, [currentStepID, cameraStatus]);
+        // cameraStatus is SET by this effect (loading/ready/denied) — it must never
+        // be a dependency here, or every status change re-triggers the whole effect,
+        // tearing down the stream mid-flight and looping forever (black screen).
+    }, [currentStepID]);
 
 
     const capturePhotoFromCamera = () => {
@@ -839,6 +848,12 @@ const Upload = () => {
                 extras: form?.extras,
                 months: form?.months,
                 units: form?.units
+            }
+
+            const err = ValidatePost(postPayload)
+            if (err != "") {
+                setError({ title: "Post validation error", body: err })
+                return
             }
 
             const { status, msg } = isEditing
