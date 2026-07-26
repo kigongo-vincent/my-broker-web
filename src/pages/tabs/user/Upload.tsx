@@ -941,7 +941,7 @@ const Upload = () => {
             )}
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end z-10">
-                <div className="flex flex-col gap-6 items-center fixed w-full text-white bottom-0 p-10 backdrop-blur-sm bg-black/40">
+                <div className="flex flex-col gap-6 items-center fixed w-full text-white bottom-0 p-6 backdrop-blur-sm bg-black/40">
                     <div className="flex items-center w-full justify-around">
                         <button
                             type="button"
@@ -949,7 +949,7 @@ const Upload = () => {
                             className="bg-white/10 p-5 rounded-full hover:bg-white/20 active:scale-95 transition"
                             aria-label="Open gallery"
                         >
-                            <Lineicons icon={GallerySolid} size={30} />
+                            <Lineicons icon={GallerySolid} size={20} />
                         </button>
 
                         <div className="p-1 flex items-center justify-center border-2 border-white rounded-full">
@@ -957,7 +957,7 @@ const Upload = () => {
                                 type="button"
                                 disabled={cameraStatus !== "ready"}
                                 onClick={capturePhotoFromCamera}
-                                className="bg-white h-20 rounded-full w-20 active:scale-90 transition disabled:opacity-40"
+                                className="bg-white h-15 rounded-full w-15 active:scale-90 transition disabled:opacity-40"
                                 aria-label="Take photo"
                             />
                         </div>
@@ -968,7 +968,7 @@ const Upload = () => {
                             className="bg-white/10 p-5 rounded-full hover:bg-white/20 active:scale-95 transition"
                             aria-label="Cancel"
                         >
-                            <Lineicons icon={XmarkSolid} size={30} />
+                            <Lineicons icon={XmarkSolid} size={20} />
                         </button>
                     </div>
 

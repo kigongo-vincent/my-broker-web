@@ -1,6 +1,8 @@
 import { User } from "../../../components/pages/tabs/Post"
-import BGL from "../../../assets/light.png"
-import BGD from "../../../assets/dark.png"
+// import BGL from "../../../assets/light.png"
+const BGL = "https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png"
+// import BGD from "../../../assets/dark.png"
+const BGD = "https://camo.githubusercontent.com/c42c83df2fd1e442ef1e0ed69cc20d21f65308fc2f0dca2a8035360738d49c8c/68747470733a2f2f7765622e77686174736170702e636f6d2f696d672f62672d636861742d74696c652d6461726b5f61346265353132653731393562366237333364393131306234303866303735642e706e67"
 import useSystemTheme from "../../../hooks/theme"
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Lineicons from "@lineiconshq/react-lineicons"
@@ -302,7 +304,7 @@ const MessageList = ({ messages }: MessageListProps) => {
     }, [messageCount])
 
     return (
-        <div className="max-h-[90vh] pt-[11vh] overflow-y-auto flex flex-col gap-5 w-full p-4">
+        <div className="max-h-[80vh] pt-[11vh] overflow-y-auto flex flex-col gap-5 w-full p-4">
             <FlexRender
                 emptyContainer={<></>}
                 items={messages || []}
@@ -340,7 +342,7 @@ const ChatComposer = ({ draft, onDraftChange, onSend, sending }: ChatComposerPro
 
     return (
         <div className="shrink-0 flex  fixed bottom-0  left-0 items-center px-4 pb-5 pt-2 gap-2 w-full">
-            <div className="rounded-full flex bg-pale items-center px-6  border border-text/10 h-18 flex-1">
+            <div className="rounded-full flex bg-pale items-center px-6 pr-2 dark:border border-text/10 h-18 flex-1">
                 <input
                     ref={inputRef}
                     value={draft}
@@ -530,9 +532,9 @@ const ChatRoom = () => {
                 </div>
             </Activity>
 
-            <img src={bg} className="absolute h-full w-full dark:mix-blend-luminosity object-cover" alt="" />
+            <img src={bg} className="absolute h-full w-full dark:mix-blend-luminosity object-cover " alt="" />
 
-            <div className={`absolute inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
+            <div className={`absolute bg-paper/90 inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
                 <ChatHeader
                     partnerId={Number(partner?.ID)}
                     partnerName={partner?.name}
