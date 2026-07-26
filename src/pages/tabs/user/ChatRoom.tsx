@@ -251,8 +251,8 @@ const ChatHeader = ({ partnerName, partnerPhoto, partnerLastSeen, onBack, onOpen
     return (
         <div className="w-full fixed z-200 top-0 ">
             <div className="flex w-full bg-paper border-b  border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4  items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <button onClick={onBack} className="h-14 ">
+                <div className="flex items-center ">
+                    <button onClick={onBack} className="btn pl-0">
                         <Lineicons icon={ArrowLeftOutlined} />
                     </button>
                     <User
