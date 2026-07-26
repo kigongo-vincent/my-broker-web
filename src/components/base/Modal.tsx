@@ -36,7 +36,7 @@ const Modal = ({ position = "center", onClose, children, hideClose, className, o
 
     const { theme } = useSystemTheme()
 
-    const overlayStyles = theme == "light" ? "bg-black/5 backdrop-blur-md " : " backdrop-blur-md"
+    const overlayStyles = theme == "light" ? "bg-black/5  " : ""
 
     const content = (
         <AnimatePresence>

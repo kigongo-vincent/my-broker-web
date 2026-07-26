@@ -32,7 +32,7 @@ const Tab = (t: LinkI) => {
     // TikTok style plus/upload button styling (pill-shaped with cyan/magenta shadow or primary background)
     if (isUpload) {
         return (
-            <div className="flex flex-col items-start justify-center bg-primary rounded-lg h-full py-1.5 cursor-pointer group px-1" onClick={action}>
+            <div className="flex flex-col items-start justify-center bg-primary rounded-lg h-full py-2 cursor-pointer group px-1" onClick={action}>
                 <div className="relative flex items-center justify-center h-full min-h-full  w-[11vw]  flex-1 bg-primary text-white rounded-lg  transition-transform duration-200 active:scale-95">
                     {/* TikTok inner multi-colored pill layer accent */}
                     {/* <div className="absolute inset-0 bg-primary/40 rounded-[10px] -left-1 -z-10 blur-[0.5px]" /> */}

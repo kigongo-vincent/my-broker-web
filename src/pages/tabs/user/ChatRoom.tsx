@@ -532,9 +532,11 @@ const ChatRoom = () => {
                 </div>
             </Activity>
 
-            <img src={bg} className="absolute h-full w-full dark:mix-blend-luminosity object-cover " alt="" />
+            <img src={bg} className="absolute h-full w-full  object-cover " alt="" />
 
-            <div className={`absolute bg-paper/90 inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
+            <div className="absolute h-full w-full left-0 top-0 bg-paper/90"></div>
+
+            <div className={`absolute  inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
                 <ChatHeader
                     partnerId={Number(partner?.ID)}
                     partnerName={partner?.name}

@@ -47,7 +47,7 @@ const Header = ({ back, title, noMargin, noblur, caption }: props) => {
                 {
                     !title
                         ?
-                        <p className='font-semibold black-ops-one-regular text-xl'>My Broker</p>
+                        <p className='font-semibold black-ops-one-regular text-2xl'>My Broker</p>
                         :
                         !caption
                             ?
