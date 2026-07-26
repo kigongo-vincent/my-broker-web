@@ -6,7 +6,7 @@ const BGD = "https://camo.githubusercontent.com/c42c83df2fd1e442ef1e0ed69cc20d21
 import useSystemTheme from "../../../hooks/theme"
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { ArrowLeftCircleSolid, HandTakingUserSolid, MenuMeatballs1Solid, Trash3Solid, User4Solid, XmarkSolid } from "@lineiconshq/free-icons"
+import { ArrowLeftOutlined, HandTakingUserSolid, MenuMeatballs1Solid, Trash3Solid, User4Solid, XmarkSolid } from "@lineiconshq/free-icons"
 import { UserI, useUserStore } from "../../../store/auth"
 import Modal from "../../../components/base/Modal"
 import FlexRender from "../../../components/base/FlexRender"
@@ -251,9 +251,9 @@ const ChatHeader = ({ partnerName, partnerPhoto, partnerLastSeen, onBack, onOpen
     return (
         <div className="w-full fixed z-200 top-0 ">
             <div className="flex w-full bg-paper border-b  border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4  items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4">
                     <button onClick={onBack} className="h-14 ">
-                        <Lineicons icon={ArrowLeftCircleSolid} />
+                        <Lineicons icon={ArrowLeftOutlined} />
                     </button>
                     <User
                         ID={partnerId}

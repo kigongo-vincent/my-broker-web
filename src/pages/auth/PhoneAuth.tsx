@@ -330,13 +330,13 @@ const PhoneAuth = () => {
 
                 <Modal
                     actions={<><button onClick={() => setShowSignupModal(false)} className="btn bg-pale">cancel</button><button onClick={() => { setStep(2); setShowSignupModal(false) }} className="btn bg-primary text-white">continue</button></>}
-                    open={showSignupModal} onClose={() => setShowSignupModal(false)}>
+                    open={showSignupModal} position="bottom" onClose={() => setShowSignupModal(false)}>
                     <p className="text-xl font-semibold">Sign up confirmation</p>
                     <p className="text-text/50 text-sm mt-1">The phone number <u>{phone}</u> is not yet registered on the platform, would you like to continue with creating a new account</p>
                     <br />
                 </Modal>
 
-                <Modal position="center" hideClose open={showSetupModal} onClose={() => { setShowSetupModal(false); navigate("/tabs/user/") }}>
+                <Modal position="right" open={showSetupModal} onClose={() => { setShowSetupModal(false); navigate("/tabs/user/") }}>
                     <div className="rounded-3xl bg-paper ">
                         {
                             setupStep == 1 && <>
