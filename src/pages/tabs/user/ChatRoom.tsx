@@ -304,7 +304,7 @@ const MessageList = ({ messages }: MessageListProps) => {
     }, [messageCount])
 
     return (
-        <div className="max-h-[80vh] pt-[11vh] overflow-y-auto flex flex-col gap-5 w-full p-4">
+        <div className=" flex flex-col gap-5 w-full p-4">
             <FlexRender
                 emptyContainer={<></>}
                 items={messages || []}
@@ -458,7 +458,6 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
 
 const ChatRoom = () => {
     const { theme } = useSystemTheme()
-    const [loading] = useState(false)
     const [draft, setDraft] = useState("")
     const [showUserMenu, setShowMenu] = useState<boolean>(false)
     const bg = theme == "dark" ? BGD : BGL
@@ -534,9 +533,7 @@ const ChatRoom = () => {
 
             <img src={bg} className="absolute h-full w-full  object-cover " alt="" />
 
-            <div className="absolute h-full w-full left-0 top-0 dark:bg-paper/90"></div>
-
-            <div className={`absolute  inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
+            <div className="absolute h-full w-full overflow-y-auto left-0 top-0 dark:bg-paper/90">
                 <ChatHeader
                     partnerId={Number(partner?.ID)}
                     partnerName={partner?.name}
@@ -546,8 +543,9 @@ const ChatRoom = () => {
                     onOpenMenu={() => setShowMenu(true)}
                 />
 
-
-                <MessageList messages={messages} />
+                <div className="my-[10vh]">
+                    <MessageList messages={messages} />
+                </div>
 
                 <ChatComposer
                     draft={draft}
@@ -556,6 +554,17 @@ const ChatRoom = () => {
                     sending={sendMutation.isPending}
                 />
             </div>
+
+            {/* 
+
+            <div className={`absolute  inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
+
+
+
+                <MessageList messages={messages} />
+
+               
+            </div> */}
 
             <UserActionsMenu
                 open={showUserMenu}

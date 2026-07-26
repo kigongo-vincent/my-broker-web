@@ -56,7 +56,7 @@ const Tab = (t: LinkI) => {
                 </span>
 
                 <Activity mode={hasBadge ? "visible" : "hidden"}>
-                    <span className="absolute -top-1 -right-2 min-w-[16px] h-[16px] px-1 bg-danger text-[9px] font-bold text-white rounded-full flex items-center justify-center ring-2 ring-background shadow-sm">
+                    <span className="absolute -top-1 -right-2 min-w-[16px] h-[16px] px-1 bg-danger text-[9px] font-bold text-white rounded-full flex items-center justify-center">
                         {typeof badgeContent === "number" && badgeContent > 99 ? "99+" : badgeContent}
                     </span>
                 </Activity>
