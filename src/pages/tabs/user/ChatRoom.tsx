@@ -534,7 +534,7 @@ const ChatRoom = () => {
 
             <img src={bg} className="absolute h-full w-full  object-cover " alt="" />
 
-            <div className="absolute h-full w-full left-0 top-0 bg-paper/90"></div>
+            <div className="absolute h-full w-full left-0 top-0 dark:bg-paper/90"></div>
 
             <div className={`absolute  inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
                 <ChatHeader
