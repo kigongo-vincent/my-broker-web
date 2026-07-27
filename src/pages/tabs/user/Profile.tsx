@@ -169,13 +169,12 @@ const Profile = () => {
                     </div>
             }
 
-            <div className="h-30"></div>
 
             {/* fixed nav  */}
-            <Activity mode={isOwner || !getUser()?.ID ? "hidden" : "visible"}>
-                <div className='fixed z-10 px-4 gap-2 flex items-center border-t border-text/10 h-20 bottom-0 left-0 w-full bg-paper'>
+            <Activity mode={isOwner || !getUser()?.ID || true ? "hidden" : "visible"}>
+                <div className='fixed  px-4 gap-2 flex items-center border-t border-text/10 h-20 bottom-0 left-0 w-full bg-paper'>
 
-                    <button onClick={handleWhatsApp} disabled={u?.hideContact} className={`btn flex-1 font-medium rounded-full bg-[#128C7E] text-white ${u?.hideContact && "opacity-10"}`}>
+                    <button onClick={handleWhatsApp} disabled={u?.hideContact} className={`btn flex-1 font-medium rounded-full bg-pale ${u?.hideContact && "opacity-10"}`}>
                         <Lineicons icon={WhatsappOutlined} />
                         chat via whatsapp
                     </button>

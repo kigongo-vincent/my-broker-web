@@ -494,7 +494,7 @@ const Verify = () => {
         <div>
             <Header back />
             <div className=" px-4">
-                <div className="shadow-custom p-6 rounded-2xl dark:border border-text/10">
+                <div className="shadow-custom  rounded-2xl ">
                     <h2 className="text-xl font-semibold">Face verification</h2>
                     <p className="leading-7 mt-2 text-text/50">
                         Verification earns you a <b>verification badge</b>, which represents you as an
@@ -505,7 +505,7 @@ const Verify = () => {
                         <button
                             disabled={alreadyHandled || pending}
                             onClick={handleRequest}
-                            className="btn bg-primary text-white mt-10 w-full rounded-full disabled:opacity-60"
+                            className="btn bg-primary text-white mt-10 w-full  disabled:opacity-60"
                         >
                             <CheckBadgeIcon className="h-6 w-6" />
                             {

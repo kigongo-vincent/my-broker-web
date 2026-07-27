@@ -3,8 +3,8 @@ import Lineicons from "@lineiconshq/react-lineicons"
 import { ReactNode, useMemo, useState } from "react"
 import FlexRender from "../../../components/base/FlexRender"
 import { BaseI, useUserStore, } from "../../../store/auth"
-import Modal from "../../../components/base/Modal"
 import { Link } from "react-router"
+import { BottomSheet } from "react-spring-bottom-sheet"
 
 
 export interface SettingComponentI extends BaseI {
@@ -100,13 +100,16 @@ const Settings = () => {
             <FlexRender className="gap-6" items={settings} render={(item, index) => <SettingComponent {...item} key={index} />} />
 
             {/* logout  */}
-            <Modal actions={<><button onClick={() => setShowlogoutModal(false)} className="btn bg-pale">cancel</button><button onClick={() => { logout() }} className="btn bg-primary text-white">confirm</button></>} open={showLogoutModal} onClose={() => setShowlogoutModal(false)}>
+            <BottomSheet open={showLogoutModal} onDismiss={() => setShowlogoutModal(false)}>
 
-                <p className="text-xl flex items-center mb-1 gap-2 font-semibold">
-                    Logout confirmation</p>
-                <p className="text-text/70">
-                    Are you sure you want to logout</p>
-            </Modal>
+                <div className="py-10 px-4">
+                    <p className="text-xl flex items-center  mb-1 gap-2 font-semibold">
+                        Logout confirmation</p>
+                    <p className="text-text/70">
+                        Are you sure you want to logout</p>
+                    <div className="flex mt-4 gap-2"><button onClick={() => setShowlogoutModal(false)} className="btn border border-text/10 flex-1">cancel</button><button onClick={() => { logout() }} className="btn flex-1 bg-primary text-white">confirm</button></div>
+                </div>
+            </BottomSheet>
         </div>
     )
 }

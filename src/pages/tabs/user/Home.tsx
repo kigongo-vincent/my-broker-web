@@ -117,7 +117,7 @@ const Home = () => {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="mb-4 border border-primary/40 mt-5  flex items-center gap-4 p-6 bg-primary/5 rounded-2xl">
+                                className="mb-4  mt-5  flex items-center gap-4 p-6 bg-primary/5 rounded-2xl">
                                 <motion.img initial={{ y: -100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} src="https://static.vecteezy.com/system/resources/thumbnails/060/043/598/small/tranquil-picturesque-modern-apartment-building-facade-modular-design-no-background-with-transparent-background-sharp-free-png.png" className="  object-contain    w-[35%] " alt="" />
                                 <div className="flex flex-col items-start">
                                     <p className="text-lg font-semibold">Your rental plug</p>

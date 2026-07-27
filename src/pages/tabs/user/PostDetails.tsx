@@ -181,7 +181,7 @@ const PostDetails = () => {
                                 shrink-0
                                 snap-center
                                 w-full
-                                h-[70vh]
+                                h-[60vh]
 
                                 overflow-hidden
                                 bg-pale
@@ -354,7 +354,7 @@ const PostDetails = () => {
                 </Modal>
 
                 <Modal position="right" className="relative" open={image?.length != 0} onClose={() => setImage("")}>
-                    <img onClick={() => setImage("")} src={image} className="absolute left-0 top-0 h-full object-cover object-center w-full " />
+                    <img onClick={() => setImage("")} src={image} className="absolute left-0 top-0 h-full object-contain object-center w-full " />
                 </Modal>
 
             </div>

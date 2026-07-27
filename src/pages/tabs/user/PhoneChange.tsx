@@ -96,7 +96,7 @@ const PhoneChange = () => {
 
                         <div className="flex items-center justify-end gap-4">
                             <button className="btn bg-pale flex-1" onClick={() => navigate(-1)}>cancel</button>
-                            <button className="btn bg-primary flex-1" onClick={handleStep1Continue}>
+                            <button className="btn bg-primary text-white flex-1" onClick={handleStep1Continue}>
                                 next
                             </button>
                         </div>
@@ -112,7 +112,7 @@ const PhoneChange = () => {
 
                         <div className="flex items-center justify-end gap-4">
                             <button className="btn bg-pale flex-1" onClick={handleBackToStep1}>back</button>
-                            <button className="btn bg-primary flex-1" onClick={onSubmit}>
+                            <button className="btn bg-primary text-white flex-1" onClick={onSubmit}>
                                 <Loader loading={loading}>
                                     confirm
                                 </Loader>

@@ -351,7 +351,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                         <p className="font-medium text-text">
                             {TextCropper(u?.name, 23)}
                         </p>
-                        {u?.verified && <CheckBadgeIcon className="h-5 w-5 text-primary" />}
+                        {u?.verification == "approved" && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
                         {u?.role == "broker" && <span className="text-sm font-medium text-primary">broker</span>}
                     </div>
                     <span className="text-sm text-text/50">
@@ -375,7 +375,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
 
             {/* actions sheet */}
             <BottomSheet open={showActions} onDismiss={() => setShowActions(false)}>
-                <div className="flex flex-col gap-3  rounded-3xl  p-4">
+                <div className="flex flex-col gap-3  rounded-3xl  p-4 py-10">
                     {!u?.hideContact && (
                         <button
                             onClick={handleCall}
@@ -425,7 +425,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
     )
 }
 
-const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholderSrc?: string; alt: string }) => {
+export const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholderSrc?: string; alt: string }) => {
     const [highResLoaded, setHighResLoaded] = useState(false);
 
     return (
@@ -520,7 +520,7 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
     }
 
     return (
-        <div className="flex flex-col overflow-hidden rounded-2xl ">
+        <div className="flex flex-col overflow-hidden  ">
             {/* user */}
             {!p?.hideHeader && <User post={p} {...p.author} />}
 
@@ -605,7 +605,7 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
                     <span className="text-text/60">/month</span>
 
                     <Activity mode={p.negotiable ? "visible" : "hidden"}>
-                        <span className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary">
+                        <span className="rounded-full bg-primary text-white px-2 py-1 text-xs ">
                             negotiable
                         </span>
                     </Activity>

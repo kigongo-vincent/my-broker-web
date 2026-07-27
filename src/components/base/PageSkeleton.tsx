@@ -85,3 +85,35 @@ export const PostSkeleton = () => {
         </div>
     )
 }
+
+export const ChatSkeleton = () => {
+
+    return (
+        <div className="flex flex-col items-center  h-screen">
+            <div className="h-20 fixed top-0 left-0 w-full flex items-center   animate-pulse  bg-text/10" >
+                <div className="flex items-center  px-4 gap-3">
+                    <div className="h-14 w-14 animate-pulse rounded-full bg-text/10" />
+                    <div className="flex-1 space-y-2  w-[60vw] h-6">
+                        <div className="h-4 w-2/5 animate-pulse rounded-full bg-text/10" />
+                        <div className="h-3 w-3/4 animate-pulse rounded-full bg-text/10" />
+                    </div>
+                </div>
+
+            </div>
+
+            <div className="p-4 w-full">
+                <div className="h-20 w-[30vw] mt-20 animate-pulse rounded-xl bg-text/10 " />
+                <div className="h-20 w-[40vw] mt-2 animate-pulse rounded-xl bg-text/10 " />
+            </div>
+
+            <div className="shrink-0 flex  fixed bottom-0  left-0 items-center px-4 pb-5 pt-2 gap-2 w-full">
+                <div className="h-16 w-full animate-pulse bg-text/10 flex justify-end items-center rounded-full">
+                    <div className="h-10 w-10 animate-pulse rounded-full bg-text/10 mr-4" />
+                </div>
+            </div>
+
+
+        </div>
+    )
+
+}

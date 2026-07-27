@@ -36,12 +36,13 @@ const Account = () => {
     }, [u, editing])
 
     const handleCancel = () => {
-        setName(u?.name ?? "")
-        setEmail(u?.email ?? "")
-        setPhoto(u?.photo ?? "")
-        setFee(u?.BrokerDetails?.Fee ?? "")
-        setBio(u?.BrokerDetails?.Bio ?? "")
-        setEditing(false)
+        // setName(u?.name ?? "")
+        // setEmail(u?.email ?? "")
+        // setPhoto(u?.photo ?? "")
+        // setFee(u?.BrokerDetails?.Fee ?? "")
+        // setBio(u?.BrokerDetails?.Bio ?? "")
+        // setEditing(false)
+        navigate(-1)
     }
 
     const handleSave = async () => {
@@ -129,11 +130,11 @@ const Account = () => {
                 </Activity>
 
                 {editing ? (
-                    <div className="flex gap-3 mt-4">
-                        <button onClick={handleCancel} className="btn flex-1 rounded-full bg-pale">
+                    <div className="flex gap-2 mt-4">
+                        <button onClick={handleCancel} className="btn flex-1 rounded bg-pale">
                             cancel
                         </button>
-                        <button onClick={handleSave} disabled={saving} className="btn flex-1 rounded-full bg-primary text-white disabled:opacity-60">
+                        <button onClick={handleSave} disabled={saving} className="btn flex-1  bg-primary text-white disabled:opacity-60">
                             <Loader loading={saving}>save</Loader>
                         </button>
                     </div>

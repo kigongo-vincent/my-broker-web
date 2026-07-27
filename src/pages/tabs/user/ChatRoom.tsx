@@ -1,4 +1,4 @@
-import { User } from "../../../components/pages/tabs/Post"
+import { formatAmount, formatLocation, User } from "../../../components/pages/tabs/Post"
 // import BGL from "../../../assets/light.png"
 const BGL = "https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png"
 // import BGD from "../../../assets/dark.png"
@@ -6,9 +6,8 @@ const BGD = "https://camo.githubusercontent.com/c42c83df2fd1e442ef1e0ed69cc20d21
 import useSystemTheme from "../../../hooks/theme"
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { ArrowLeftOutlined, HandTakingUserSolid, MenuMeatballs1Solid, Trash3Solid, User4Solid, XmarkSolid } from "@lineiconshq/free-icons"
+import { ArrowLeftOutlined, CheckSolid, HandTakingUserSolid, MenuMeatballs1Solid, Trash3Solid, User4Solid, XmarkSolid } from "@lineiconshq/free-icons"
 import { UserI, useUserStore } from "../../../store/auth"
-import Modal from "../../../components/base/Modal"
 import FlexRender from "../../../components/base/FlexRender"
 import { PaperAirplaneIcon } from "@heroicons/react/20/solid"
 import { useLocation, useNavigate, useParams } from "react-router"
@@ -18,6 +17,8 @@ import PostComponent from "../../../components/pages/tabs/Post"
 import { DeleteReq, Post } from "../../../../api"
 import { useAppStore } from "../../../store/app"
 import Loader from "../../../components/base/Loader"
+import { BottomSheet } from "react-spring-bottom-sheet"
+import { ChatSkeleton } from "../../../components/base/PageSkeleton"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -205,14 +206,14 @@ const useChatRoomData = (partnerId: string | undefined, currentUser: UserI | und
 // Presentational: Message bubble
 // ---------------------------------------------------------------------------
 
-const Message = ({ senderId, Attachment, text, CreatedAt, post }: Partial<ChatMessageI>) => {
+const Message = ({ senderId, Attachment, text, CreatedAt, post, isRead }: Partial<ChatMessageI>) => {
 
     const { user } = useUserStore()
     const mine = Number((user as UserI)?.ID) == senderId
 
     return (
         <>
-            <div className={`bg-pale ${mine && "bg-primary  flex flex-col gap-1.5 items-end self-end text-white"} p-6 py-4 rounded-xl ${"max-w-[80%] w-max"}  `}>
+            <div className={`bg-pale ${mine && "  flex flex-col gap-1.5 items-end self-end text-white"} p-6 py-4 rounded-xl ${"max-w-[80%] w-max"}  `}>
                 <span>{text}</span>
 
                 {Attachment && (
@@ -220,8 +221,14 @@ const Message = ({ senderId, Attachment, text, CreatedAt, post }: Partial<ChatMe
                         <img src={Attachment} className="rounded-3xl mt-4" alt="" />
                     </div>
                 )}
-                <div className="mt-3 text-sm opacity-50 ">
+                <div className="mt-3 text-sm opacity-50 flex items-center gap-1 ">
                     {CreatedAt ? new Date(CreatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                    <div className="flex items-center">
+                        <Lineicons icon={CheckSolid} size={16} />
+                        {
+                            isRead && <Lineicons icon={CheckSolid} size={16} className="-ml-3" />
+                        }
+                    </div>
                 </div>
             </div>
             {post?.ID != 0 && post && (
@@ -422,9 +429,9 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
     }
 
     return (
-        <Modal open={open} className="" onClose={onClose}>
-            <div className="flex flex-col gap-4 ">
-                <button onClick={onViewProfile} className="btn justify-start gap-5">
+        <BottomSheet open={open} className="" onDismiss={onClose}>
+            <div className="flex flex-col gap-4 py-10">
+                <button onClick={onViewProfile} className="btn justify-start gap-5 w-full">
                     <Lineicons icon={User4Solid} />
                     View profile
                 </button>
@@ -447,7 +454,7 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
                     </Loader>
                 </button>
             </div>
-        </Modal>
+        </BottomSheet>
     )
 }
 
@@ -471,6 +478,7 @@ const ChatRoom = () => {
     useChatSocket(id, ParsedUser?.ID)
 
     const messages = roomQuery.data?.data?.Messages || []
+    const loading = roomQuery?.isLoading
 
     const partner = useMemo(() => {
 
@@ -505,6 +513,10 @@ const ChatRoom = () => {
         )
     }, [draft, id, ParsedUser?.ID, sendMutation])
 
+    if (loading) {
+        return <ChatSkeleton />
+    }
+
 
     return (
         <div className="relative  overflow-hidden flex-1 h-screen">
@@ -515,13 +527,13 @@ const ChatRoom = () => {
                         <img src={selectedPost?.assets[0]?.url} alt="" className="h-16 w-16 object-cover rounded-xl" />
                         <div className="flex flex-col justify-center flex-1">
                             <div className="flex gap-2 items-center">
-                                <h2 className="text-xl font-medium">
-                                    {selectedPost?.price.currency} {selectedPost?.price.amount.toLocaleString("en-US")}
+                                <h2 className=" font-medium">
+                                    {selectedPost?.price.currency} {formatAmount(Number(selectedPost?.price.amount))}
                                 </h2>
                             </div>
 
                             <div className="flex items-center gap-1 text-text/50 text-sm">
-                                <span>{selectedPost?.location.name}</span>
+                                <span>{formatLocation(selectedPost?.location.name || "")}</span>
                             </div>
                         </div>
                         <button onClick={() => setSelectedPost(undefined)} className="justify-self-end  h-16 flex items-center justify-center w-16">

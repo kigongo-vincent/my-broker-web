@@ -919,7 +919,7 @@ export const useGeoData = () => {
 export const usePostDetails = () => {
   const { postId } = useParams();
   return useQuery({
-    queryKey: ["details"],
+    queryKey: ["details", postId],
     queryFn: async () => await Get<PostI>("posts/post/" + postId),
   });
 };
