@@ -119,13 +119,16 @@ const useChatSocket = (roomId: string | undefined, currentUserId: number | undef
                                 : undefined,
                     }
 
-                    queryClient.setQueryData<ChatRoomI | undefined>(
+                    queryClient.setQueryData<{ data?: ChatRoomI } | undefined>(
                         chatKeys.room(roomId),
                         (old) => {
-                            if (!old) return old
+                            if (!old?.data) return old
                             return {
                                 ...old,
-                                Messages: [...(old.Messages || []), newMessage],
+                                data: {
+                                    ...old.data,
+                                    Messages: [...(old.data.Messages || []), newMessage],
+                                },
                             }
                         }
                     )
@@ -162,26 +165,33 @@ const useChatRoomData = (partnerId: string | undefined, currentUser: UserI | und
     const sendMutation = useMutation({
         mutationFn: sendChatMessage,
         onMutate: async (payload) => {
+            // 1. Cancel any in-flight refetches FIRST so they can't overwrite
+            //    the optimistic update we're about to write.
             await queryClient.cancelQueries({ queryKey: chatKeys.room(partnerId) })
 
+            // 2. Snapshot the previous value for rollback.
             const previous = queryClient.getQueryData<ChatRoomI>(chatKeys.room(partnerId))
 
+            // 3. Build and write the optimistic message.
             const optimisticMessage: ChatMessageI = {
-                // Using a negative number or temporary flag helps identify it
                 ID: Date.now() * -1,
-                SenderID: payload.from,
+                senderId: payload.from,
                 postId: payload.data.postId,
-                Text: payload.data.text,
+                text: payload.data.text,
+                post: payload.data.post,
                 CreatedAt: new Date().toISOString(),
             }
 
-            queryClient.setQueryData<ChatRoomI | undefined>(
+            queryClient.setQueryData<{ data?: ChatRoomI } | undefined>(
                 chatKeys.room(partnerId),
                 (old) => {
-                    if (!old) return old
+                    if (!old?.data) return old
                     return {
                         ...old,
-                        Messages: [...(old.Messages || []), optimisticMessage],
+                        data: {
+                            ...old.data,
+                            Messages: [...(old.data.Messages || []), optimisticMessage],
+                        },
                     }
                 }
             )
@@ -193,7 +203,6 @@ const useChatRoomData = (partnerId: string | undefined, currentUser: UserI | und
                 queryClient.setQueryData(chatKeys.room(partnerId), context.previous)
             }
         },
-        // ADD THIS: This ensures the UI syncs with the server after the message is sent
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: chatKeys.room(partnerId) })
         },
@@ -491,6 +500,9 @@ const ChatRoom = () => {
     const handleSend = useCallback(() => {
         const trimmed = draft.trim()
         if (!trimmed || !id) return
+
+        setDraft("")
+        setSelectedPost(undefined)
 
         sendMutation.mutate(
             {

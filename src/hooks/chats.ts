@@ -18,6 +18,7 @@ export interface ChatMessageI {
   ID?: number;
   RoomID?: number;
   SenderID?: number;
+  status?: "sending" | "done" | "failed";
   senderId?: number;
   Text?: string;
   text?: string;
