@@ -222,7 +222,7 @@ const Message = ({ senderId, Attachment, text, CreatedAt, post, isRead }: Partia
 
     return (
         <>
-            <div className={`bg-pale ${mine && "  flex flex-col gap-1.5 items-end self-end text-white"} p-6 py-4 rounded-xl ${"max-w-[80%] w-max"}  `}>
+            <div className={`bg-pale ${mine && "  flex flex-col gap-1.5  self-end"} p-6 py-4 rounded-xl ${"max-w-[80%] w-max"}  `}>
                 <span>{text}</span>
 
                 {Attachment && (
