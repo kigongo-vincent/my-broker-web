@@ -366,7 +366,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                 <Activity mode={canShowActions ? "visible" : "hidden"}>
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowActions(true) }}
-                        className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 active:bg-white/10"
+                        className="flex h-10 w-10 items-center justify-center "
                     >
                         <EllipsisVerticalIcon className="h-9 w-9" />
                     </button>
