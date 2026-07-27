@@ -23,13 +23,13 @@ const ChatComponent = (c: ChatRoomI) => {
                 <div className="flex items-center justify-between">
                     <p className="font-medium">{participant?.name || "Conversation"}</p>
                     <Activity mode={unRead ? "visible" : "hidden"}>
-                        <span className="px-4 py-1 rounded-full text-sm bg-primary text-white">new</span>
+                        <span className="px-4 py-1 rounded-full text-sm bg-danger text-white">new</span>
                     </Activity>
                 </div>
 
                 <div className="flex items-center mt-1 justify-between">
-                    <p className="text-text/50">{TextCropper(c?.lastMessage?.text || "no messages yet", 38)}</p>
-                    <div className="flex items-center gap-1 text-sm font-semibold opacity-40">
+                    <p className="">{TextCropper(c?.lastMessage?.text || "no messages yet", 38)}</p>
+                    <div className="flex items-center text-text/50 gap-1 text-sm font-semibold ">
                         <p>{c?.lastMessage?.CreatedAt ? new Date(c.lastMessage?.CreatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</p>
                     </div>
                 </div>

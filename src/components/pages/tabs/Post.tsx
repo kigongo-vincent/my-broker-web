@@ -375,11 +375,12 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
 
             {/* actions sheet */}
             <BottomSheet open={showActions} onDismiss={() => setShowActions(false)}>
-                <div className="flex flex-col gap-3 rounded-3xl  p-4">
+                <div className="flex flex-col gap-3  rounded-3xl  p-4">
                     {!u?.hideContact && (
                         <button
                             onClick={handleCall}
                             className="btn
+                            w-full justify-start
                             "
                         >
                             <Lineicons icon={Telephone1Solid} />
@@ -388,7 +389,10 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                     )}
                     <button
                         onClick={handleChat}
-                        className="btn"
+                        className="btn
+                            w-full justify-start
+                        "
+
                     >
                         <Lineicons icon={Message2Outlined} />
                         <span className="">Message {u?.name}</span>
@@ -397,6 +401,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                         <button
                             onClick={handleWhatsApp}
                             className="btn
+                            w-full justify-start
                             "
                         >
                             <Lineicons icon={WhatsappOutlined} />

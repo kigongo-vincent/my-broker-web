@@ -1,6 +1,6 @@
-import { Activity, useEffect, useRef, useState } from "react"
+import { Activity, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router"
-import { PostI, User } from "../../../components/pages/tabs/Post"
+import { formatAmount, formatLocation, PostI, User } from "../../../components/pages/tabs/Post"
 import Header from "../../../components/pages/tabs/Header"
 import GoogleLogo from "../../../assets/google-maps-logo.webp"
 import MapComponent from "../../../components/pages/upload/Map"
@@ -22,6 +22,7 @@ import Loader from "../../../components/base/Loader"
 import { DeleteReq, Put } from "../../../../api"
 import { BottomSheet } from "react-spring-bottom-sheet"
 import { PostSkeleton } from "../../../components/base/PageSkeleton"
+import { Bed, Toilet, Bathtub } from "@phosphor-icons/react"
 
 interface IconI {
     url: string;
@@ -122,6 +123,18 @@ const PostDetails = () => {
     const PostAuthorID = post?.author.ID
     const IsOwner = UserID == PostAuthorID
     const sheetRef = useRef(null)
+    const [activeIndex, setActiveIndex] = useState(0)
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const handleScroll = () => {
+        const el = scrollRef.current
+        if (!el || el.clientWidth === 0) return
+        const index = Math.round(el.scrollLeft / el.clientWidth)
+        setActiveIndex(index)
+    }
+    const mediaAssets = useMemo(
+        () => post?.assets?.filter(item => item.type === "image" || item.type === "video") || [],
+        [post?.assets]
+    )
 
     if (isLoading) {
         return (
@@ -146,6 +159,8 @@ const PostDetails = () => {
 
             {/* assets */}
             <div
+                ref={scrollRef}
+                onScroll={handleScroll}
                 className="
                     flex
                     gap-4
@@ -203,6 +218,18 @@ const PostDetails = () => {
                                     />
                             }
 
+                            {mediaAssets.length > 1 && (
+                                <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5">
+                                    {mediaAssets.map((_, index) => (
+                                        <span
+                                            key={index}
+                                            className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                                                }`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
                         </div>
 
                     ))
@@ -211,58 +238,57 @@ const PostDetails = () => {
             </div>
 
 
-            <div className="p-4 flex flex-col gap-2">
-                <div className="flex items-end">
-
-                </div>
+            <div className="p-4 flex  flex-col gap-2">
                 <br />
                 <User {...post?.author as UserI} noActions />
                 <br />
-                <div className="flex items-end gap-2">
+                <div className="flex flex-col gap-4 bg-pale rounded-xl p-4 py-6">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 className=" underline decoration-2 underline-offset-2">
+                            {post?.price.currency} {formatAmount(Number(post?.price.amount))}
+                        </h2>
+                        <span className="text-text/60">/month</span>
 
-                    <h3 className="text-2xl font-semibold">{post?.price?.currency} {post?.price?.amount?.toLocaleString("en-US")}</h3>
+                        <Activity mode={post?.negotiable ? "visible" : "hidden"}>
+                            <span className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary">
+                                negotiable
+                            </span>
+                        </Activity>
+                        <div className={`${post?.available ? "bg-success" : "bg-danger"} w-max rounded-full px-2 py-1 text-xs font-medium text-white`}>
+                            {post?.available == false && "un"}available
+                        </div>
+                    </div>
+                    <p className="text-text/50">{formatLocation(post?.location?.name || "")}</p>
 
-                    <Activity
-                        mode={
-                            post?.negotiable
-                                ? "visible"
-                                : "hidden"
-                        }
-                    >
-
-                        <span className="bg-primary text-white px-4 py-2 rounded-full text-sm">
-                            negotiable
+                    <div className="flex flex-wrap gap-4 text-text/50">
+                        <span className="flex items-center gap-1.5">
+                            <Bed size={20} weight="fill" />
+                            {post?.bedrooms} bedroom{post?.bedrooms !== 1 && "s"}
                         </span>
-
-                    </Activity>
-                </div>
-                <p>{post?.location?.name}</p>
-
-                <div className="flex -items-center flex-wrap gap-3">
-                    <div className="bg-pale px-5 flex items-center py-3 rounded-full">
-                        {post?.bedrooms} bedroom{post?.bedrooms !== 1 && "s"}
-                    </div>
-                    <div className="bg-pale px-5 flex items-center py-3 rounded-full">
-                        {post?.bathrooms} bathroom{post?.bathrooms !== 1 && "s"}
-                    </div>
-                    <div className="bg-pale px-5 flex items-center py-3 rounded-full">
-                        {post?.toilets} toliet{post?.toilets !== 1 && "s"}
+                        <span className="flex items-center gap-1.5">
+                            <Toilet size={20} weight="fill" />
+                            {post?.toilets} toilet{post?.toilets !== 1 && "s"}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <Bathtub size={20} weight="fill" />
+                            {post?.bathrooms} bathroom{post?.bathrooms !== 1 && "s"}
+                        </span>
                     </div>
                 </div>
 
-                <div className="border-text/10 border my-4 rounded-xl p-4">
+                <div className="bg-pale py-6 my-4 rounded-xl p-4">
                     <div className="flex items-center gap-1">
-                        <p className="text-2xl font-semibold">{post?.units}</p>
-                        <p className="text-lg">unit{post?.units != 1 && "s"} available</p>
+                        <p className=" font-semibold">{post?.units}</p>
+                        <p className="">unit{post?.units != 1 && "s"} available</p>
                     </div>
-                    <p className="flex items-center mt-2 gap-2 text-yellow-600 bg-yellow-600/5 px-6 py-4 rounded-full">
-                        <ExclamationTriangleIcon className="h-8 w-8" />
+                    <p className="flex items-center mt-2 gap-2 text-yellow-600 bg-yellow-600/5 px-6 py-4 rounded-xl">
+                        <ExclamationTriangleIcon className="h-6 w-6" />
                         <span>{post?.months} month{post?.months != 1 && "s"} needed for the first month</span>
                     </p>
                 </div>
 
                 <div>
-                    <p className="text-xl font-semibold">Amenities</p>
+                    <p className=" font-semibold">Amenities</p>
                     <p className="text-text/50 text-sm mt-1">Below are some of the things that come inclusive on your monthly rent</p>
 
                     <br />
