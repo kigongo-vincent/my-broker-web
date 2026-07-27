@@ -5,8 +5,9 @@ import Modal from "../../base/Modal"
 import {
     HeartOutlined,
     HeartSolid,
-    Message2Solid,
-    Telephone1Solid
+    Message2Outlined,
+    Telephone1Solid,
+    WhatsappOutlined
 } from "@lineiconshq/free-icons"
 import { Activity, ReactNode, useEffect, useMemo, useRef, useState } from "react"
 import { CheckBadgeIcon, EllipsisVerticalIcon } from "@heroicons/react/20/solid"
@@ -319,6 +320,20 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
     }
 
     const canShowActions = !(noActions || getUser()?.ID == u?.ID)
+    function handleWhatsApp(): void {
+        if (!isAuthenticated) {
+            LoginPrompt("direct messages")
+            return
+        }
+
+        if (u?.phone) {
+            // Strips out spaces, dashes, and special characters from the phone number
+            const cleanPhone = u.phone
+            window.open(`https://wa.me/${cleanPhone}`, "_blank")
+        } else {
+            alert("Phone number is not available for this user.")
+        }
+    }
 
     return (
         <div className={`flex cursor-pointer items-center justify-between  ${post && "px-4"} py-3`}>
@@ -336,7 +351,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             {TextCropper(u?.name, 23)}
                         </p>
                         {u?.verified && <CheckBadgeIcon className="h-5 w-5 text-primary" />}
-                        {u?.role == "broker" && <span className="text-xs text-primary">broker</span>}
+                        {u?.role == "broker" && <span className="text-sm font-medium text-primary">broker</span>}
                     </div>
                     <span className="text-sm text-text/50">
                         last seen {u.lastSeen}
@@ -352,32 +367,43 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                         onClick={(e) => { e.stopPropagation(); setShowActions(true) }}
                         className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 active:bg-white/10"
                     >
-                        <EllipsisVerticalIcon className="h-6 w-6" />
+                        <EllipsisVerticalIcon className="h-9 w-9" />
                     </button>
                 </Activity>
             )}
 
             {/* actions sheet */}
-            <Modal position="bottom" open={showActions} onClose={() => setShowActions(false)}>
-                <div className="flex flex-col gap-3 rounded-3xl bg-paper p-4">
+            <BottomSheet open={showActions} onDismiss={() => setShowActions(false)}>
+                <div className="flex flex-col gap-3 rounded-3xl  p-4">
                     {!u?.hideContact && (
                         <button
                             onClick={handleCall}
-                            className="flex items-center gap-3 rounded-2xl bg-pale px-4 py-4"
+                            className="btn
+                            "
                         >
                             <Lineicons icon={Telephone1Solid} />
-                            <span className="font-medium">Call {u?.name}</span>
+                            <span >Call {u?.name}</span>
                         </button>
                     )}
                     <button
                         onClick={handleChat}
-                        className="flex items-center gap-3 rounded-2xl bg-pale px-4 py-4"
+                        className="btn"
                     >
-                        <Lineicons icon={Message2Solid} />
-                        <span className="font-medium">Message {u?.name}</span>
+                        <Lineicons icon={Message2Outlined} />
+                        <span className="">Message {u?.name}</span>
                     </button>
+                    {!u?.hideContact && (
+                        <button
+                            onClick={handleWhatsApp}
+                            className="btn
+                            "
+                        >
+                            <Lineicons icon={WhatsappOutlined} />
+                            <span >chat via whatsapp</span>
+                        </button>
+                    )}
                 </div>
-            </Modal>
+            </BottomSheet>
 
             <BottomSheet open={showAuthPrompt} onDismiss={() => setShowAuthPrompt(false)}>
                 <div className="rounded-3xl bg-paper p-4">

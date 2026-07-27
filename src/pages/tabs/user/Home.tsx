@@ -16,21 +16,16 @@ const FAB = ({ ...attr }: FABProps) => {
     const constraintsRef = useRef<HTMLDivElement>(null)
 
     return (
-        <motion.div
-            ref={constraintsRef}
-            className="fixed inset-0 pointer-events-none z-40"
+        <motion.button
+            drag
+            dragConstraints={constraintsRef}
+            dragElastic={0}
+            dragMomentum={false}
+            onClick={attr?.onClick}
+            className="fixed bottom-40 right-10 bg-primary h-18 w-18 flex items-center justify-center text-white rounded-full pointer-events-auto"
         >
-            <motion.button
-                drag
-                dragConstraints={constraintsRef}
-                dragElastic={0}
-                dragMomentum={false}
-                onClick={attr?.onClick}
-                className="fixed bottom-40 right-10 bg-primary h-18 w-18 flex items-center justify-center text-white rounded-full pointer-events-auto"
-            >
-                <Lineicons icon={MapMarker1Solid} />
-            </motion.button>
-        </motion.div>
+            <Lineicons icon={MapMarker1Solid} />
+        </motion.button>
     )
 }
 const LIMIT = 3
