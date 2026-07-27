@@ -494,7 +494,7 @@ const Verify = () => {
         <div>
             <Header back />
             <div className=" px-4">
-                <div className="shadow-custom  rounded-2xl ">
+                <div className="  rounded-2xl ">
                     <h2 className="text-xl font-semibold">Face verification</h2>
                     <p className="leading-7 mt-2 text-text/50">
                         Verification earns you a <b>verification badge</b>, which represents you as an
