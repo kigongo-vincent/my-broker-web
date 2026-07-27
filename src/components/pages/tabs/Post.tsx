@@ -101,6 +101,7 @@ export interface PostI extends BaseI {
     liked?: boolean
     available: boolean
     hideHeader?: boolean
+
 }
 
 export const ValidatePost = (post: Partial<PostI>): string => {
@@ -452,7 +453,12 @@ const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholde
 //   2. clean full-bleed media carousel with dot pagination
 //   3. dark details panel below the media (location, price, stats)
 // ---------------------------------------------------------------------------
-const Post = (p: PostI) => {
+
+export interface postProps extends PostI {
+    hideAvailability?: boolean
+}
+
+const Post = ({ hideAvailability, ...p }: postProps) => {
     const [liked, setLiked] = useState(false)
     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
     const [activeIndex, setActiveIndex] = useState(0)
@@ -461,7 +467,7 @@ const Post = (p: PostI) => {
     const isAuthenticated = Boolean((user as UserI)?.ID)
     const { setFavouritesCount, favouritesCount, LoginPrompt } = useAppStore()
     const isOwner = getUser()?.ID == p?.authorId
-    const showAvailability = isOwner
+    const showAvailability = isOwner && !hideAvailability
     const scrollRef = useRef<HTMLDivElement>(null)
 
     const mediaAssets = useMemo(
@@ -581,11 +587,7 @@ const Post = (p: PostI) => {
                 onClick={handleClick}
                 className="flex cursor-pointer flex-col gap-3  px-4 py-4 "
             >
-                {showAvailability && (
-                    <div className={`${p?.available ? "bg-success" : "bg-danger"} w-max rounded-full px-4 py-2 text-sm font-medium text-white`}>
-                        {p?.available == false && "un"}available
-                    </div>
-                )}
+
 
                 <div className="text-text/60">
                     Located <span className=" text-text">{TextCropper(formatLocation(p.location.name), 60)}</span>
@@ -602,6 +604,11 @@ const Post = (p: PostI) => {
                             negotiable
                         </span>
                     </Activity>
+                    {showAvailability && (
+                        <div className={`${p?.available ? "bg-success" : "bg-danger"} w-max rounded-full px-2 py-1 text-xs font-medium text-white`}>
+                            {p?.available == false && "un"}available
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-wrap gap-4 text-text/50">

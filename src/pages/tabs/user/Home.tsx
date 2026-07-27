@@ -162,7 +162,7 @@ const Home = () => {
                     <div className="flex flex-col gap-10">
                         {posts.map((item, index) => (
                             <div key={item.ID || index}>
-                                <Post {...(item as PostI)} />
+                                <Post {...(item as PostI)} hideAvailability />
                                 {index === sentinelIndex && (
                                     <div ref={sentinelRef} className="h-1 w-full" />
                                 )}
