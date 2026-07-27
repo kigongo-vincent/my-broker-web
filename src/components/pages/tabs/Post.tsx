@@ -321,7 +321,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
     const canShowActions = !(noActions || getUser()?.ID == u?.ID)
 
     return (
-        <div className={`flex cursor-pointer items-center justify-between bg-dark ${post && "px-4"} py-3`}>
+        <div className={`flex cursor-pointer items-center justify-between  ${post && "px-4"} py-3`}>
             <div
                 className="flex items-center gap-3"
                 onClick={() => navigate(`/profile/${u?.ID}`)}
@@ -483,7 +483,7 @@ const Post = (p: PostI) => {
     }
 
     return (
-        <div className="flex flex-col overflow-hidden rounded-2xl bg-dark">
+        <div className="flex flex-col overflow-hidden rounded-2xl ">
             {/* user */}
             {!p?.hideHeader && <User post={p} {...p.author} />}
 
@@ -553,7 +553,7 @@ const Post = (p: PostI) => {
             {/* details */}
             <div
                 onClick={handleClick}
-                className="flex cursor-pointer flex-col gap-3 bg-dark px-4 py-4 "
+                className="flex cursor-pointer flex-col gap-3  px-4 py-4 "
             >
                 {showAvailability && (
                     <div className={`${p?.available ? "bg-success" : "bg-danger"} w-max rounded-full px-4 py-2 text-sm font-medium text-white`}>
