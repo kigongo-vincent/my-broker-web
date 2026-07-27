@@ -9,11 +9,51 @@ import {
     Telephone1Solid
 } from "@lineiconshq/free-icons"
 import { Activity, ReactNode, useEffect, useMemo, useRef, useState } from "react"
-import { CheckBadgeIcon } from "@heroicons/react/20/solid"
+import { CheckBadgeIcon, EllipsisVerticalIcon } from "@heroicons/react/20/solid"
+import { Bed, Bathtub, Toilet } from "@phosphor-icons/react"
 import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
 import { useAppStore } from "../../../store/app"
 import { motion } from "framer-motion"
+import { BottomSheet } from "react-spring-bottom-sheet"
+
+
+// ------------------------------------------------------------
+
+export const formatAmount = (amount: number): string => {
+    const abs = Math.abs(amount)
+    const sign = amount < 0 ? "-" : ""
+
+    const format = (value: number, suffix: string) => {
+        const rounded = Math.round(value * 10) / 10
+        return `${sign}${rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)}${suffix}`
+    }
+
+    if (abs >= 1_000_000_000) return format(abs / 1_000_000_000, "B")
+    if (abs >= 1_000_000) return format(abs / 1_000_000, "M")
+    if (abs >= 1_000) return format(abs / 1_000, "k")
+
+    return `${sign}${abs}`
+}
+
+const capitalize = (s: string): string =>
+    s.length ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s
+
+export const formatLocation = (location: string): string => {
+    const parts = location
+        .split(",")
+        .map(p => p.trim())
+        .filter(Boolean)
+        .map(capitalize)
+        .slice(0, 3)
+
+    if (parts.length === 0) return ""
+    if (parts.length === 1) return parts[0]
+
+    const [first, second, ...rest] = parts
+    return [`${first} ${second}`, ...rest].join(", ")
+}
+// ------------------------------------------------------------
 
 export type PostType = "rental" | "short-stay" | "residential"
 export type PostAssetType = "image" | "video" | "thumb"
@@ -203,7 +243,7 @@ const FlipAvatar = ({
         <div
             ref={containerRef}
             onClick={onClick}
-            className="h-14 w-14 shrink-0"
+            className="h-12 w-12 shrink-0"
             style={{ perspective: 1000 }}
         >
             <motion.div
@@ -219,7 +259,7 @@ const FlipAvatar = ({
                 >
                     <img
                         src={photo}
-                        className="h-14 w-14 rounded-full object-cover"
+                        className="h-12 w-12 rounded-full object-cover"
                         alt=""
                     />
                 </div>
@@ -233,7 +273,7 @@ const FlipAvatar = ({
                         backgroundColor: bgColor,
                     }}
                 >
-                    <span className="text-lg font-semibold text-white">
+                    <span className="text-base font-semibold text-white">
                         {initials}
                     </span>
                 </div>
@@ -242,15 +282,21 @@ const FlipAvatar = ({
     )
 }
 
+// ---------------------------------------------------------------------------
+// User header — modular, Instagram-style: dark bar, avatar + name/last-seen,
+// and a single kebab menu that opens a bottom sheet with call/chat actions.
+// ---------------------------------------------------------------------------
 export const User = ({ noActions, actions, post, ...u }: Props) => {
 
     const { getUserPhoto, user, getUser } = useUserStore()
     const navigate = useNavigate()
     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+    const [showActions, setShowActions] = useState(false)
     const isAuthenticated = Boolean((user as UserI)?.ID)
     const { setSelectedPost, LoginPrompt } = useAppStore()
 
     const handleCall = () => {
+        setShowActions(false)
         if (!isAuthenticated) {
             LoginPrompt("direct messages")
             return
@@ -262,32 +308,35 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         }
     }
 
-    const handleChat = async (e: React.MouseEvent) => {
+    const handleChat = async () => {
+        setShowActions(false)
         if (isAuthenticated) {
-            e.preventDefault()
             setSelectedPost(post)
             navigate(`/chat/${u?.ID || u.ID}`, { state: { user: u } })
         } else {
             LoginPrompt("direct messages")
         }
-
     }
 
+    const canShowActions = !(noActions || getUser()?.ID == u?.ID)
+
     return (
-        <div className={`flex cursor-pointer ${post && "px-4"} items-center justify-between`}>
-            <div className="flex items-center gap-2">
+        <div className={`flex cursor-pointer items-center justify-between bg-dark ${post && "px-4"} py-3`}>
+            <div
+                className="flex items-center gap-3"
+                onClick={() => navigate(`/profile/${u?.ID}`)}
+            >
                 <FlipAvatar
                     photo={getUserPhoto?.(u.photo) || ""}
                     name={u?.name}
-                    onClick={() => navigate(`/profile/${u?.ID}`)}
                 />
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1">
-                        <p className="font-medium">
+                        <p className="font-medium text-text">
                             {TextCropper(u?.name, 23)}
                         </p>
-                        {u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
-                        {u?.role == "broker" && <div className="text-sm text-primary">broker</div>}
+                        {u?.verified && <CheckBadgeIcon className="h-5 w-5 text-primary" />}
+                        {u?.role == "broker" && <span className="text-xs text-primary">broker</span>}
                     </div>
                     <span className="text-sm text-text/50">
                         last seen {u.lastSeen}
@@ -298,30 +347,39 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
             {actions ? (
                 actions
             ) : (
-                (
-                    <Activity mode={noActions || getUser()?.ID == u?.ID ? "hidden" : "visible"}>
-                        <div className="flex gap-3">
-                            {
-                                !u?.hideContact && <button
-                                    onClick={handleCall}
-                                    className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
-                                >
-                                    <Lineicons icon={Telephone1Solid} />
-                                </button>
-                            }
-
-                            <button
-                                onClick={handleChat}
-                                className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
-                            >
-                                <Lineicons icon={Message2Solid} />
-                            </button>
-                        </div>
-                    </Activity>
-                )
+                <Activity mode={canShowActions ? "visible" : "hidden"}>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setShowActions(true) }}
+                        className="flex h-10 w-10 items-center justify-center rounded-full text-white/70 active:bg-white/10"
+                    >
+                        <EllipsisVerticalIcon className="h-6 w-6" />
+                    </button>
+                </Activity>
             )}
 
-            <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
+            {/* actions sheet */}
+            <Modal position="bottom" open={showActions} onClose={() => setShowActions(false)}>
+                <div className="flex flex-col gap-3 rounded-3xl bg-paper p-4">
+                    {!u?.hideContact && (
+                        <button
+                            onClick={handleCall}
+                            className="flex items-center gap-3 rounded-2xl bg-pale px-4 py-4"
+                        >
+                            <Lineicons icon={Telephone1Solid} />
+                            <span className="font-medium">Call {u?.name}</span>
+                        </button>
+                    )}
+                    <button
+                        onClick={handleChat}
+                        className="flex items-center gap-3 rounded-2xl bg-pale px-4 py-4"
+                    >
+                        <Lineicons icon={Message2Solid} />
+                        <span className="font-medium">Message {u?.name}</span>
+                    </button>
+                </div>
+            </Modal>
+
+            <BottomSheet open={showAuthPrompt} onDismiss={() => setShowAuthPrompt(false)}>
                 <div className="rounded-3xl bg-paper p-4">
                     <p className="text-xl font-semibold">Sign in to continue</p>
                     <p className="mt-2 text-sm text-text/60">Create an account or log in to contact owners, start chats, and save listings.</p>
@@ -330,7 +388,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                         <button onClick={() => setShowAuthPrompt(false)} className="btn flex-1 rounded-full bg-pale">Cancel</button>
                     </div>
                 </div>
-            </Modal>
+            </BottomSheet>
         </div>
     )
 }
@@ -362,19 +420,39 @@ const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; placeholde
     );
 };
 
+// ---------------------------------------------------------------------------
+// Post — modular IG-style card:
+//   1. dark header bar (User)
+//   2. clean full-bleed media carousel with dot pagination
+//   3. dark details panel below the media (location, price, stats)
+// ---------------------------------------------------------------------------
 const Post = (p: PostI) => {
     const [liked, setLiked] = useState(false)
     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
+    const [activeIndex, setActiveIndex] = useState(0)
     const { user, getUser } = useUserStore()
     const navigate = useNavigate()
     const isAuthenticated = Boolean((user as UserI)?.ID)
     const { setFavouritesCount, favouritesCount, LoginPrompt } = useAppStore()
     const isOwner = getUser()?.ID == p?.authorId
     const showAvailability = isOwner
+    const scrollRef = useRef<HTMLDivElement>(null)
+
+    const mediaAssets = useMemo(
+        () => p.assets?.filter(item => item.type === "image" || item.type === "video") || [],
+        [p.assets]
+    )
 
     useEffect(() => {
         setLiked(Boolean(p?.favourites?.some(f => f?.ID == (user as UserI)?.ID)))
     }, [p?.favourites])
+
+    const handleScroll = () => {
+        const el = scrollRef.current
+        if (!el || el.clientWidth === 0) return
+        const index = Math.round(el.scrollLeft / el.clientWidth)
+        setActiveIndex(index)
+    }
 
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation()
@@ -404,28 +482,28 @@ const Post = (p: PostI) => {
         navigate(`/post/${p?.ID}`)
     }
 
-
-
     return (
-        <div className="flex flex-col gap-4" >
+        <div className="flex flex-col overflow-hidden rounded-2xl bg-dark">
             {/* user */}
-            {
-                !p?.hideHeader && <User post={p} {...p.author} />
+            {!p?.hideHeader && <User post={p} {...p.author} />}
 
-            }
-            {/* assets */}
-            <div onClick={handleClick} className={`flex gap-4  overflow-x-auto snap-x ${p?.hideHeader && "rounded-lg"} snap-mandatory scrollbar-hide`}>
-                {p.assets?.[0] && p.assets
-                    .filter(item => item.type === "image" || item.type === "video")
-                    .map((item, index) => {
-                        const originalIndex = p.assets.findIndex(a => a.url === item.url);
-                        const nextAsset = p.assets[originalIndex + 1];
-                        const thumbnailSrc = nextAsset && nextAsset.type === "thumb" ? nextAsset.url : undefined;
+            {/* media */}
+            <div className="relative">
+                <div
+                    ref={scrollRef}
+                    onScroll={handleScroll}
+                    onClick={handleClick}
+                    className="flex h-[30vh] w-full snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+                >
+                    {mediaAssets.map((item, index) => {
+                        const originalIndex = p.assets.findIndex(a => a.url === item.url)
+                        const nextAsset = p.assets[originalIndex + 1]
+                        const thumbnailSrc = nextAsset && nextAsset.type === "thumb" ? nextAsset.url : undefined
 
                         return (
                             <div
                                 key={index}
-                                className="relative shrink-0 snap-center w-[100%] h-[50vh] min-h-max  overflow-hidden bg-pale"
+                                className="relative h-full w-full shrink-0 snap-center overflow-hidden bg-pale"
                             >
                                 {item.type === "image" ? (
                                     <NativeLazyImage
@@ -437,80 +515,83 @@ const Post = (p: PostI) => {
                                     <video
                                         src={item.url}
                                         controls
-                                        className="absolute inset-0 w-full h-full object-cover"
+                                        className="absolute inset-0 h-full w-full object-cover"
                                     />
                                 )}
-
-                                {/* first asset overlay only */}
-                                {index === 0 && (
-                                    <div className="absolute inset-0 p-4 flex flex-col justify-between bg-gradient-to-t from-black from-20% to-black/30 ">
-                                        {/* actions */}
-                                        <div className="flex justify-between ">
-
-                                            <span className="bg-white text-dark font-medium text-sm flex items-center gap-2 h-max px-5 py-2 rounded-full">
-                                                {p?.type || "residential"}
-                                            </span>
-                                            <button
-                                                onClick={handleLike}
-                                                className="bg-white/30 text-white p-4 rounded-2xl transition-transform active:scale-95"
-                                            >
-                                                <Lineicons icon={liked ? HeartSolid : HeartOutlined} />
-                                            </button>
-                                        </div>
-
-                                        {/* details */}
-                                        <div onClick={handleClick} className="flex flex-col gap-3 text-white cursor-pointer">
-                                            {
-                                                showAvailability && <div className={`${p?.available ? "bg-success" : "bg-danger"} w-max px-4 rounded-full text-sm font-medium py-2 text-white`}>
-                                                    {p?.available == false && "un"}available
-                                                </div>
-                                            }
-                                            <div className="flex gap-2 items-center">
-
-
-                                                <h2 className="text-2xl font-medium">
-                                                    {p.price.currency} {p.price.amount.toLocaleString("en-US")}
-                                                </h2>
-
-                                                <Activity mode={p.negotiable ? "visible" : "hidden"}>
-                                                    <span className="bg-primary/20 text-primary px-4 py-2 rounded-full text-sm">
-                                                        negotiable
-                                                    </span>
-                                                </Activity>
-                                            </div>
-
-                                            <div className="flex items-center gap-1 text-sm">
-                                                <span>{TextCropper(p.location.name, 60)}</span>
-                                            </div>
-
-                                            <div className="flex gap-2 flex-wrap">
-                                                <div className="bg-white/10 min-w-max gap-1 px-4 h-12 flex items-center rounded-full">
-                                                    {/* <img src="https://png.pngtree.com/png-vector/20230903/ourmid/pngtree-open-white-toilet-png-image_9951695.png" alt="" className="h-8 w-8 object-contain" /> */}
-                                                    {p.toilets} {" "}
-                                                    toilet{p.toilets !== 1 && "s"}
-                                                </div>
-                                                {/* <div className="bg-white/20 px-4 flex items-center py-3 rounded-full"> */}
-                                                <div className="bg-white/10 min-w-max px-4 h-12 gap-1 flex items-center rounded-full">
-
-                                                    {/* <img src="https://static.vecteezy.com/system/resources/thumbnails/046/853/951/small_2x/eco-friendly-shower-solutions-free-png.png" alt="" className="h-8 w-8 object-contain" /> */}
-                                                    {p.bathrooms} {" "}
-                                                    bathroom{p.bathrooms !== 1 && "s"}
-                                                </div>
-                                                {/* <div className="bg-white/20 px-4 flex items-center py-3 rounded-full"> */}
-                                                <div className="bg-white/10 min-w-max px-4 h-12 gap-2 flex items-center rounded-full">
-
-                                                    {/* <img src="https://www.transparentpng.com/download/bed/black-white-elegant-bed-png-hd--rgrF4o.png" alt="" className="h-8 w-8 object-contain" /> */}
-                                                    {p.bedrooms} {" "}
-                                                    bedroom{p.bedrooms !== 1 && "s"}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
-                        );
-                    })
-                }
+                        )
+                    })}
+                </div>
+
+                {/* type chip */}
+                <span className="absolute left-4 top-4 flex h-max items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-medium text-dark">
+                    {p?.type || "residential"}
+                </span>
+
+                {/* like button */}
+                <button
+                    onClick={handleLike}
+                    className="absolute right-4 top-4 rounded-2xl bg-black/30 p-4 text-white transition-transform active:scale-95"
+                >
+                    <Lineicons icon={liked ? HeartSolid : HeartOutlined} />
+                </button>
+
+                {/* pagination dots */}
+                {mediaAssets.length > 1 && (
+                    <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5">
+                        {mediaAssets.map((_, index) => (
+                            <span
+                                key={index}
+                                className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                                    }`}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* details */}
+            <div
+                onClick={handleClick}
+                className="flex cursor-pointer flex-col gap-3 bg-dark px-4 py-4 "
+            >
+                {showAvailability && (
+                    <div className={`${p?.available ? "bg-success" : "bg-danger"} w-max rounded-full px-4 py-2 text-sm font-medium text-white`}>
+                        {p?.available == false && "un"}available
+                    </div>
+                )}
+
+                <div className="text-text/60">
+                    Located <span className=" text-text">{TextCropper(formatLocation(p.location.name), 60)}</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <h2 className=" underline decoration-2 underline-offset-2">
+                        {p.price.currency} {formatAmount(p.price.amount)}
+                    </h2>
+                    <span className="text-text/60">/month</span>
+
+                    <Activity mode={p.negotiable ? "visible" : "hidden"}>
+                        <span className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary">
+                            negotiable
+                        </span>
+                    </Activity>
+                </div>
+
+                <div className="flex flex-wrap gap-4 text-text/50">
+                    <span className="flex items-center gap-1.5">
+                        <Bed size={20} weight="fill" />
+                        {p.bedrooms} bedroom{p.bedrooms !== 1 && "s"}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <Toilet size={20} weight="fill" />
+                        {p.toilets} toilet{p.toilets !== 1 && "s"}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                        <Bathtub size={20} weight="fill" />
+                        {p.bathrooms} bathroom{p.bathrooms !== 1 && "s"}
+                    </span>
+                </div>
             </div>
 
             <Modal hideClose position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
