@@ -56,8 +56,8 @@ const Index = () => {
 
             <main className="flex flex-col items-center w-full  justify-center gap-2">
                 <Logo className="h-24 mb-2" />
-                <h3 className="text-3xl black-ops-one-regular font-bold -mb-2">My Broker</h3>
-                <p className="  text-center text-text/70  leading-7.5 my-10 max-w-[90%]">are you house hunting, get rentals at the comfort of your place, for the landlord, get straight to the tenant, no middleman</p>
+                <h3 className="text-2xl black-ops-one-regular font-bold -mb-2">My Broker</h3>
+                <p className="  text-center text-text/70  leading-7.5 my-6 max-w-[90%]">are you house hunting, get rentals at the comfort of your place, for the landlord, get straight to the tenant, no middleman</p>
 
                 <button
                     onClick={() => navigate("/auth/phone")}

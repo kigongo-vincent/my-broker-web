@@ -23,7 +23,7 @@ const FAB = ({ ...attr }: FABProps) => {
             dragElastic={0}
             dragMomentum={false}
             onClick={attr?.onClick}
-            className="fixed bottom-30 right-5 bg-primary h-13 w-13 flex items-center justify-center text-white rounded-full pointer-events-auto"
+            className="fixed bottom-30 right-5 bg-primary h-15 w-15 flex items-center justify-center text-white rounded-full pointer-events-auto"
         >
             <Lineicons icon={MapMarker1Solid} />
         </motion.button>
@@ -40,7 +40,7 @@ const FAB2 = ({ ...attr }: FABProps) => {
             dragElastic={0}
             dragMomentum={false}
             onClick={attr?.onClick}
-            className="fixed bottom-30 left-5 bg-white shadow-custom h-13 w-13 flex items-center justify-center  rounded-full pointer-events-auto"
+            className="fixed bottom-30 left-5 bg-white shadow-custom h-15 w-15 flex items-center justify-center  rounded-full pointer-events-auto"
         >
             <img src={Bot} alt="" className="h-13 w-13" />
         </motion.button>
