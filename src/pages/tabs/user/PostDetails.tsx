@@ -43,7 +43,7 @@ export const IconFinder = (i: IconType | string): string => {
 
 const PostAuthorActions = ({ ...p }: Partial<PostI>) => {
     const navigate = useNavigate()
-    const { setPostToUpdate, setError, setSuccess } = useAppStore()
+    const { setPostToUpdate, setError, setSuccess, } = useAppStore()
     const [showDelete, setShowDelete] = useState(false)
     const [available, setAvailable] = useState(false)
     const [deleting, setDeleting] = useState(false)
@@ -106,7 +106,6 @@ const PostAuthorActions = ({ ...p }: Partial<PostI>) => {
 const PostDetails = () => {
     const [showMaP, setShowMap] = useState(false)
     const [image, setImage] = useState("")
-    const [showAuthPrompt, setShowAuthPrompt] = useState(false)
     const { theme } = useSystemTheme()
     const { user, getUser } = useUserStore()
 
@@ -124,6 +123,7 @@ const PostDetails = () => {
     const IsOwner = UserID == PostAuthorID
     const sheetRef = useRef(null)
     const [activeIndex, setActiveIndex] = useState(0)
+    const { LoginPrompt } = useAppStore()
     const scrollRef = useRef<HTMLDivElement>(null)
     const handleScroll = () => {
         const el = scrollRef.current
@@ -314,11 +314,13 @@ const PostDetails = () => {
                             <PostAuthorActions {...post} />
                             :
                             <>
-                                <button onClick={() => isAuthenticated ? window.open(`tel:${post?.author?.phone || ""}`, "_self") : setShowAuthPrompt(true)} className="btn bg-paper flex-1 rounded-full border border-text/10">
-                                    <PhoneIcon className="h-6 w-6" />
-                                    <span>contact owner</span>
-                                </button>
-                                <button onClick={() => isAuthenticated ? navigate("/chat/" + post?.author?.ID) : setShowAuthPrompt(true)} className="btn rounded-full flex-1 bg-primary text-white">
+                                {
+                                    post?.author?.hideContact == false && <button onClick={() => isAuthenticated ? window.open(`tel:${post?.author?.phone || ""}`, "_self") : LoginPrompt("messages")} className="btn bg-paper flex-1 rounded-full border border-text/10">
+                                        <PhoneIcon className="h-6 w-6" />
+                                        <span>contact owner</span>
+                                    </button>
+                                }
+                                <button onClick={() => isAuthenticated ? navigate("/chat/" + post?.authorId) : LoginPrompt("messages")} className="btn rounded-full flex-1 bg-primary text-white">
                                     <Lineicons icon={ChatBubble2Solid} />
                                     <span>chat in app</span>
                                 </button>
@@ -341,17 +343,6 @@ const PostDetails = () => {
                         <MapComponent defaultCenter={{ lat: post?.location?.cordinates?.lat || 0.3476, lng: post?.location?.cordinates?.lon || 32.5825 }} theme={theme?.toUpperCase() as ColorScheme} />
                     </div>
                 </BottomSheet>
-
-                <Modal position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>
-                    <div className="rounded-3xl bg-paper p-4">
-                        <p className="text-xl font-semibold">Sign in to continue</p>
-                        <p className="mt-2 text-sm text-text/60">Log in or create an account to contact owners and start chats.</p>
-                        <div className="mt-6 flex gap-3">
-                            <button onClick={() => { setShowAuthPrompt(false); navigate("/auth/phone") }} className="btn flex-1 rounded-full bg-primary text-white">Log in</button>
-                            <button onClick={() => setShowAuthPrompt(false)} className="btn flex-1 rounded-full bg-pale">Cancel</button>
-                        </div>
-                    </div>
-                </Modal>
 
                 <Modal position="right" className="relative" open={image?.length != 0} onClose={() => setImage("")}>
                     <img onClick={() => setImage("")} src={image} className="absolute left-0 top-0 h-full object-contain object-center w-full " />
