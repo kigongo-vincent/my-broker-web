@@ -109,6 +109,7 @@ export const useAppStore = create<AppStoreI>()(
         filters: state.filters,
         showHomeBadge: state.showHomeBadge,
         favouritesCount: state.favouritesCount,
+        completeOnBoarding: state.completeOnBoarding,
         // only persist what actually needs to survive reload
       }),
     }

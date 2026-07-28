@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { MapMarker1Solid, MapMarker5Solid } from "@lineiconshq/free-icons"
 import Header from "../../../components/pages/tabs/Header"
 import Lineicons from "@lineiconshq/react-lineicons"
@@ -6,6 +6,7 @@ import { PriceI, Currency, PostType } from "../../../components/pages/tabs/Post"
 import { AnimatePresence, motion } from "framer-motion"
 import { useNavigate } from "react-router"
 import { useAppStore } from "../../../store/app"
+import { searchAddress, reverseGeocode } from "./Upload"
 
 interface PriceRangeI {
     label: string
@@ -204,8 +205,10 @@ const Filter = () => {
             : null
     )
     const [locating, setLocating] = useState(false)
-    const [geocoding, setGeocoding] = useState(false)
     const [applying, setApplying] = useState(false)
+    const [searching, setSearching] = useState(false)
+    const [suggestions, setSuggestions] = useState<any[]>([])
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const navigate = useNavigate()
 
     // Pad-style quick-select state for numeric filters. "any" means the filter
@@ -267,11 +270,8 @@ const Filter = () => {
             async (position) => {
                 const { latitude, longitude } = position.coords
                 try {
-                    const res = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-                    )
-                    const data = await res.json()
-                    const label = data.display_name ?? `${latitude}, ${longitude}`
+                    const data = await reverseGeocode(latitude, longitude)
+                    const label = data.display_name || `${latitude}, ${longitude}`
                     setFilters((prev) => ({
                         ...prev,
                         locationQuery: label,
@@ -291,34 +291,36 @@ const Filter = () => {
         )
     }
 
-    // Forward geocode typed text into coordinates. Radius search needs a lat/lon,
-    // so free-typed addresses have to be resolved before they're useful as a filter.
-    const handleGeocodeTypedLocation = async () => {
-        if (!filters.locationQuery.trim()) return
-
-        setGeocoding(true)
-        try {
-            const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(filters.locationQuery.trim())}`
-            )
-            const results = await res.json()
-            const first = results?.[0]
-            if (first) {
-                updateField("resolvedLocation", {
-                    lat: Number(first.lat),
-                    lon: Number(first.lon),
-                    label: first.display_name ?? filters.locationQuery.trim(),
-                })
-            }
-        } catch {
-            // leave resolvedLocation as-is; handleApplyFilters will just skip the radius filter
-        } finally {
-            setGeocoding(false)
-        }
-    }
-
+    // Debounced typeahead search as the user types, matching ChatFilter's flow.
     const handleLocationTextChange = (value: string) => {
         setFilters((prev) => ({ ...prev, locationQuery: value, resolvedLocation: null }))
+
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        if (value.trim().length < 3) {
+            setSuggestions([])
+            return
+        }
+        debounceRef.current = setTimeout(async () => {
+            setSearching(true)
+            try {
+                const results = await searchAddress(value)
+                setSuggestions(results)
+            } catch {
+                setSuggestions([])
+            } finally {
+                setSearching(false)
+            }
+        }, 350)
+    }
+
+    const handleSelectSuggestion = (item: any) => {
+        const label = item.display_name
+        setSuggestions([])
+        setFilters((prev) => ({
+            ...prev,
+            locationQuery: label,
+            resolvedLocation: { lat: parseFloat(item.lat), lon: parseFloat(item.lon), label },
+        }))
     }
 
     const handleSelectRange = (range: PriceRangeI) => {
@@ -444,7 +446,7 @@ const Filter = () => {
                         </div>
 
                         <button
-                            className="btn bg-primary rounded-full w-full text-white disabled:opacity-60"
+                            className="btn bg-pale  w-full  disabled:opacity-60"
                             onClick={handleUseCurrentLocation}
                             disabled={locating}
                         >
@@ -452,7 +454,7 @@ const Filter = () => {
                             <span>{locating ? "locating..." : "use current location"}</span>
                         </button>
 
-                        <div className="bg-pale w-full dark:border border-text/10 rounded-full h-16 flex gap-3 items-center pl-6 pr-1.5">
+                        <div className="bg-pale w-full  rounded-xl h-14 flex gap-3 items-center pl-4 pr-6 relative">
                             <Lineicons icon={MapMarker5Solid} className="text-text/50" />
                             <input
                                 type="text"
@@ -460,17 +462,20 @@ const Filter = () => {
                                 className="flex-1 outline-0"
                                 value={filters.locationQuery}
                                 onChange={(e) => handleLocationTextChange(e.target.value)}
-                                onBlur={handleGeocodeTypedLocation}
                             />
-                            {filters.locationQuery.trim() && !filters.resolvedLocation && (
-                                <button
-                                    type="button"
-                                    className="btn bg-primary rounded-full text-white text-sm px-4 disabled:opacity-60"
-                                    onClick={handleGeocodeTypedLocation}
-                                    disabled={geocoding}
-                                >
-                                    {geocoding ? "..." : "find"}
-                                </button>
+                            {searching && <span className="text-xs opacity-70 pr-2">searching…</span>}
+                            {suggestions.length > 0 && (
+                                <div className="bg-pale rounded-xl flex flex-col absolute top-[calc(100%+0.5rem)] left-0 right-0 z-20 shadow-custom overflow-hidden max-h-56 overflow-y-auto">
+                                    {suggestions.map((item, i) => (
+                                        <div
+                                            key={i}
+                                            onClick={() => handleSelectSuggestion(item)}
+                                            className="p-3 text-text/80 hover:bg-black/5 cursor-pointer text-sm border-b border-text/5 last:border-0"
+                                        >
+                                            {item.display_name}
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
 

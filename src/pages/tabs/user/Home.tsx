@@ -23,7 +23,7 @@ const FAB = ({ ...attr }: FABProps) => {
             dragElastic={0}
             dragMomentum={false}
             onClick={attr?.onClick}
-            className="fixed bottom-30 right-5 bg-primary h-18 w-18 flex items-center justify-center text-white rounded-full pointer-events-auto"
+            className="fixed bottom-30 right-5 bg-primary h-13 w-13 flex items-center justify-center text-white rounded-full pointer-events-auto"
         >
             <Lineicons icon={MapMarker1Solid} />
         </motion.button>
@@ -40,7 +40,7 @@ const FAB2 = ({ ...attr }: FABProps) => {
             dragElastic={0}
             dragMomentum={false}
             onClick={attr?.onClick}
-            className="fixed bottom-30 left-5 bg-white shadow-custom h-18 w-18 flex items-center justify-center  rounded-full pointer-events-auto"
+            className="fixed bottom-30 left-5 bg-white shadow-custom h-13 w-13 flex items-center justify-center  rounded-full pointer-events-auto"
         >
             <img src={Bot} alt="" className="h-13 w-13" />
         </motion.button>
@@ -140,7 +140,7 @@ const Home = () => {
                                 <div className="flex flex-col items-start">
                                     <p className="text-lg font-semibold">Your rental plug</p>
                                     <p className="text-sm text-text/60 leading-5 mt-1">house hunting has never been easier & cheaper</p>
-                                    <button onClick={() => setShowHomeBadge()} className="bg-primary text-white px-4 py-1 rounded-full mt-2">close</button>
+                                    <button onClick={() => setShowHomeBadge()} className="bg-text/10 px-4 py-1 rounded-full mt-2">close</button>
                                 </div>
                             </motion.div>
                     }

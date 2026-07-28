@@ -1,5 +1,4 @@
-
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import AppRouter from "./routes/Index"
 import { useAppStore } from "./store/app"
 import { BottomSheet, BottomSheetRef } from 'react-spring-bottom-sheet'
@@ -12,6 +11,7 @@ import { Get } from "../api"
 import { useUserStore } from "./store/auth"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { CloudCheckCircleSolid } from "@lineiconshq/free-icons"
+
 export const RModal = () => {
   const { RootBottomContent, setRootBottomContent } = useAppStore()
   const sheetRef = useRef<BottomSheetRef | null>(null)
@@ -29,8 +29,13 @@ export const RModal = () => {
 
 const App = () => {
   const { pathname } = useLocation()
-  const { error, setFavouritesCount, setError, success, setSuccess } = useAppStore()
+  const navigate = useNavigate()
+  const { error, setFavouritesCount, setCompleteOnBoarding, setError, success, setSuccess, completeOnBoarding } = useAppStore()
   const { token } = useUserStore()
+
+  // "intent" -> "Are you looking for a rental?"
+  // "upload"  -> "Would you like to upload a listing instead?"
+  const [stage, setStage] = useState<"intent" | "upload">("intent")
 
   // This forces the page to jump to the top left instantly on every route change
   useEffect(() => {
@@ -50,7 +55,21 @@ const App = () => {
     setFavouritesCount(Number(data?.data?.count))
   }, [data])
 
+  const handleLookingForRental = () => {
+    navigate("/chat-filter")
+  }
 
+  const handleNotInterested = () => {
+    setStage("upload")
+  }
+
+  const handleWantsToUpload = () => {
+    navigate("/upload")
+  }
+
+  const handleNoUpload = () => {
+    setCompleteOnBoarding?.(true)
+  }
 
   return (
     <>
@@ -84,6 +103,28 @@ const App = () => {
         <h3 className="text-[24px] mt-2">Desktop detected</h3>
         <p className="text-[14px] text-text/40 -mt-3">Please use a mobile phone</p>
       </div>
+
+      {/* onboarding intent sheet */}
+      <BottomSheet
+        open={!completeOnBoarding && token != ""}
+        onDismiss={() => { }}
+      >
+        {stage === "intent" ? (
+          <div className="py-10 px-4 min-h-[26vh] text-center flex justify-around flex-col gap-4">
+            <h3 className="text-xl font-semibold">Are you looking for a rental?</h3>
+            <p className="text-text/60 leading-7"></p>
+            <button onClick={handleLookingForRental} className="btn outline-0 bg-primary text-white w-full rounded-full">Yes, find a rental</button>
+            <button onClick={handleNotInterested} className="btn outline-0 bg-pale w-full rounded-full">Not interested</button>
+          </div>
+        ) : (
+          <div className="py-10 px-4 min-h-[26vh] flex justify-around flex-col gap-4">
+            <h3 className="text-xl font-semibold">Would you like to upload a listing instead?</h3>
+            <p className="text-text/60 leading-7"></p>
+            <button onClick={handleWantsToUpload} className="btn outline-0 bg-primary text-white w-full rounded-full">Yes, upload a listing</button>
+            <button onClick={handleNoUpload} className="btn outline-0 bg-pale w-full rounded-full">No thanks</button>
+          </div>
+        )}
+      </BottomSheet>
 
     </>
 
