@@ -362,7 +362,6 @@ const ChatFilter = () => {
                         <div className="bg-pale w-full rounded-full h-16 flex gap-2 items-center px-5 relative">
                             <Lineicons icon={MapMarker5Solid} className="text-text/50" />
                             <input
-                                autoFocus
                                 type="text"
                                 value={locationInput}
                                 onChange={(e) => handleLocationTyping(e.target.value)}
