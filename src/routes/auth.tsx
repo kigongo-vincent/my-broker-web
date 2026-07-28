@@ -2,12 +2,14 @@ import { Route, Routes } from "react-router"
 import AuthSplash from "../pages/auth/Index"
 import PhoneAuth from "../pages/auth/PhoneAuth"
 import NotFound from "../pages/NotFound"
+import Google from "../pages/auth/Google"
 
 const auth = () => {
     return (
         <Routes>
             <Route path="/" Component={AuthSplash} />
             <Route path="/phone" Component={PhoneAuth} />
+            <Route path="/google" Component={Google} />
             <Route path="/*" Component={NotFound} />
 
         </Routes>
