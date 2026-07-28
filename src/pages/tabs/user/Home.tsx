@@ -10,6 +10,7 @@ import { useInfinitePosts } from "../../../hooks/posts"
 import { useAppStore } from "../../../store/app"
 import { BadgeSkeleton, ListStackSkeleton } from "../../../components/base/PageSkeleton"
 import Empty from "../../../components/base/Empty"
+import Bot from "../../../assets/bot.webp"
 
 interface FABProps extends HTMLAttributes<HTMLButtonElement> { }
 const FAB = ({ ...attr }: FABProps) => {
@@ -25,6 +26,23 @@ const FAB = ({ ...attr }: FABProps) => {
             className="fixed bottom-40 right-10 bg-primary h-18 w-18 flex items-center justify-center text-white rounded-full pointer-events-auto"
         >
             <Lineicons icon={MapMarker1Solid} />
+        </motion.button>
+    )
+}
+
+const FAB2 = ({ ...attr }: FABProps) => {
+    const constraintsRef = useRef<HTMLDivElement>(null)
+
+    return (
+        <motion.button
+            drag
+            dragConstraints={constraintsRef}
+            dragElastic={0}
+            dragMomentum={false}
+            onClick={attr?.onClick}
+            className="fixed bottom-40 left-10 bg-white shadow-custom h-18 w-18 flex items-center justify-center  rounded-full pointer-events-auto"
+        >
+            <img src={Bot} alt="" className="h-13 w-13" />
         </motion.button>
     )
 }
@@ -185,6 +203,8 @@ const Home = () => {
             )}
 
             <FAB onClick={() => navigate(`/map`)} />
+            <FAB2 onClick={() => navigate(`/chat-filter`)} />
+
         </div>
     )
 }

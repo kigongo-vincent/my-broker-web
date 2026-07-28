@@ -126,7 +126,7 @@ const Chip = ({
     <button
         type="button"
         onClick={onClick}
-        className={`px-4 py-2 rounded-full text-sm border transition-colors ${active ? "bg-primary text-white border-primary" : "bg-pale text-text border-text/10"
+        className={`btn rounded-full text-sm transition-colors ${active ? "bg-primary text-white" : "bg-pale text-text"
             }`}
     >
         {children}
@@ -151,6 +151,7 @@ const ChatFilter = () => {
     const [searching, setSearching] = useState(false)
     const [suggestions, setSuggestions] = useState<any[]>([])
     const [applying, setApplying] = useState(false)
+    const [keyboardOffset, setKeyboardOffset] = useState(0)
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -159,6 +160,28 @@ const ChatFilter = () => {
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
     }, [bubbles])
+
+    /* ---- keep the header fixed and only resize the scrollable body   */
+    /* when the on-screen keyboard opens (visualViewport), instead of   */
+    /* letting the whole page get pushed up/resized by the keyboard.    */
+    useEffect(() => {
+        const vv = window.visualViewport
+        if (!vv) return
+
+        const handleResize = () => {
+            const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+            setKeyboardOffset(offset)
+        }
+
+        vv.addEventListener("resize", handleResize)
+        vv.addEventListener("scroll", handleResize)
+        handleResize()
+
+        return () => {
+            vv.removeEventListener("resize", handleResize)
+            vv.removeEventListener("scroll", handleResize)
+        }
+    }, [])
 
     const pushBubble = (from: Bubble["from"], content: ReactNode) => {
         setBubbles((p) => [...p, { id: `${from}-${p.length}`, from, content }])
@@ -335,7 +358,7 @@ const ChatFilter = () => {
         switch (currentStep) {
             case "location":
                 return (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3  w-full">
                         <div className="bg-pale w-full rounded-full h-16 flex gap-2 items-center px-5 relative">
                             <Lineicons icon={MapMarker5Solid} className="text-text/50" />
                             <input
@@ -447,7 +470,7 @@ const ChatFilter = () => {
                                 type="button"
                                 disabled={applying}
                                 onClick={handleApply}
-                                className="btn bg-primary rounded-full text-white flex-1 disabled:opacity-60"
+                                className="btn bg-primary min-w-max rounded-full text-white flex-1 disabled:opacity-60"
                             >
                                 <span>{applying ? "applying..." : "show properties"}</span>
                                 {!applying && <Lineicons icon={ArrowRightSolid} size={16} />}
@@ -464,9 +487,15 @@ const ChatFilter = () => {
 
     return (
         <>
+            {/* Header sits outside the viewport-driven wrapper below, so the      */}
+            {/* on-screen keyboard (which shrinks visualViewport) never moves it.  */}
             <Header back title="Find a place" caption="answer a few quick questions" />
-            <div className="flex h-screen flex-col p-4">
-                <div ref={scrollRef} className="flex-1 overflow-y-auto flex flex-col gap-3 pb-4">
+
+            <div
+                className="flex flex-col overflow-hidden"
+                style={{ height: `calc(100dvh - ${keyboardOffset}px)` }}
+            >
+                <div ref={scrollRef} className="flex-1 overflow-y-auto flex flex-col gap-3 p-4 pb-2">
                     <AnimatePresence initial={false}>
                         {bubbles.map((b) =>
                             b.from === "bot" ? (
@@ -478,9 +507,10 @@ const ChatFilter = () => {
                     </AnimatePresence>
                 </div>
 
-                <div className="sticky bottom-0 pt-3 pb-2 bg-inherit">
+                <div className="fixed w-full  bottom-0 px-4 pt-3 pb-4  backdrop-blur-lg border-t border-text/5">
                     <AnimatePresence mode="wait">
                         <motion.div
+                            className=" flex justify-center"
                             key={currentStep}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
