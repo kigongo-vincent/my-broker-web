@@ -5,7 +5,7 @@ import { InputHTMLAttributes } from "react"
 import { useNavigate } from "react-router"
 import { useUserStore } from "../../../../store/auth"
 import { useAppStore } from "../../../../store/app"
-import Bot from "../../../../assets/bot.webp"
+// import Bot from "../../../../assets/bot.webp"
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
     filter?: boolean
