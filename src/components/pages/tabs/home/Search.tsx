@@ -44,7 +44,7 @@ const Search = ({ filter, className, value, handleSubmit, ...attr }: Props) => {
                 <AdjustmentsHorizontalIcon type="button" onClick={filterAction} className="h-[6.5vw] min-h-[6.5vw]  w-[6.5vw] min-w-[6.5vw] " />
 
             }
-            <img src={Bot} onClick={() => navigate(`/chat-filter`)} className="min-h-12 min-w-12 h-12 w-12" alt="" />
+            {/* <img src={Bot} onClick={() => navigate(`/chat-filter`)} className="min-h-12 min-w-12 h-12 w-12" alt="" /> */}
         </form>
     )
 }
