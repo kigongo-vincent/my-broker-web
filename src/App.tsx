@@ -56,7 +56,7 @@ const App = () => {
   }, [data])
 
   const handleLookingForRental = () => {
-    setCompleteOnBoarding?.(false)
+    setCompleteOnBoarding?.(true)
     navigate("/chat-filter")
   }
 
@@ -65,7 +65,7 @@ const App = () => {
   }
 
   const handleWantsToUpload = () => {
-    setCompleteOnBoarding?.(false)
+    setCompleteOnBoarding?.(true)
     navigate("/upload")
   }
 
