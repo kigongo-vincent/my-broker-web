@@ -15,6 +15,8 @@ interface AlertI {
 }
 
 export interface AppStoreI {
+  completeOnBoarding?: boolean;
+  setCompleteOnBoarding?: (v: boolean) => void;
   filters: FilterColumn[];
   showHomeBadge: boolean;
   setShowHomeBadge: () => void;
@@ -43,6 +45,10 @@ export const useAppStore = create<AppStoreI>()(
       postToUpdate: undefined,
       setPostToUpdate: (p) => {
         set({ postToUpdate: p });
+      },
+      completeOnBoarding: false,
+      setCompleteOnBoarding: (v) => {
+        set({ completeOnBoarding: v });
       },
       unread: 0,
       setUnread: (v) => {

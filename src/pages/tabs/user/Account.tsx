@@ -94,16 +94,18 @@ const Account = () => {
                         placeholder="john mccathy" />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <span className="text-sm">Email</span>
-                    <input
-                        disabled={!editing}
-                        value={email}
-                        onChange={(e) => setEmail(e.currentTarget.value)}
-                        type="email"
-                        className="outline-0 bg-pale h-14 rounded-lg px-6 text-text/50"
-                        placeholder="you@example.com" />
-                </div>
+                <Activity mode={u?.hideEmail ? "hidden" : "visible"}>
+                    <div className="flex flex-col gap-2">
+                        <span className="text-sm">Email</span>
+                        <input
+                            disabled={!editing}
+                            value={email}
+                            onChange={(e) => setEmail(e.currentTarget.value)}
+                            type="email"
+                            className="outline-0 bg-pale h-14 rounded-lg px-6 text-text/50"
+                            placeholder="you@example.com" />
+                    </div>
+                </Activity>
 
                 <Activity mode={u?.role == "broker" ? "visible" : "hidden"}>
 
