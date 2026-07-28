@@ -5,6 +5,7 @@ import { InputHTMLAttributes } from "react"
 import { useNavigate } from "react-router"
 import { useUserStore } from "../../../../store/auth"
 import { useAppStore } from "../../../../store/app"
+import Bot from "../../../../assets/bot.webp"
 
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
     filter?: boolean
@@ -43,6 +44,7 @@ const Search = ({ filter, className, value, handleSubmit, ...attr }: Props) => {
                 <AdjustmentsHorizontalIcon type="button" onClick={filterAction} className="h-[6.5vw] w-[6.5vw] " />
 
             }
+            <img src={Bot} onClick={() => navigate(`/chat-filter`)} className="h-10 w-10" alt="" />
         </form>
     )
 }

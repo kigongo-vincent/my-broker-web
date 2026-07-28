@@ -13,6 +13,7 @@ import PhoneChange from "../pages/tabs/user/PhoneChange"
 import MapP from "../pages/tabs/user/MapP"
 import NotFound from "../pages/NotFound"
 import Terms from "../pages/auth/Terms"
+import ChatFilter from "../components/base/ChatFilter"
 
 
 const Index = () => {
@@ -23,6 +24,7 @@ const Index = () => {
             <Routes>
                 <Route path="/" Component={() => <Navigate to="/tabs/user/" replace />} />
                 <Route path="/auth/*" Component={auth} />
+                <Route path="/chat-filter" Component={ChatFilter} />
                 <Route path="/upload" Component={Upload} />
                 <Route path="/tabs/*" Component={tabs} />
                 <Route path="/terms" Component={Terms} />
