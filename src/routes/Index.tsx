@@ -14,6 +14,7 @@ import MapP from "../pages/tabs/user/MapP"
 import NotFound from "../pages/NotFound"
 import Terms from "../pages/auth/Terms"
 import ChatFilter from "../components/base/ChatFilter"
+import Privacy from "../pages/tabs/user/Privacy"
 
 
 const Index = () => {
@@ -40,6 +41,7 @@ const Index = () => {
                         <Route path="/account" Component={Account} />
                         <Route path="/verification" Component={Verify} />
                         <Route path="/phone" Component={PhoneChange} />
+                        <Route path="/privacy" Component={Privacy} />
                     </>
                 </>
                 <Route path="/*" Component={NotFound} />

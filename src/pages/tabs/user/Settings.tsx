@@ -1,4 +1,4 @@
-import { BadgeDecagramPercentSolid, PhoneSolid, PowerButtonSolid, TargetUserSolid, } from "@lineiconshq/free-icons"
+import { BadgeDecagramPercentSolid, Locked2Solid, PhoneSolid, PowerButtonSolid, TargetUserSolid, } from "@lineiconshq/free-icons"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { ReactNode, useMemo, useState } from "react"
 import FlexRender from "../../../components/base/FlexRender"
@@ -72,13 +72,13 @@ const Settings = () => {
         //     caption: "Transfer account to another email",
         //     path: ""
         // },
-        // {
-        //     ID: 5,
-        //     icon: <Lineicons icon={UserMultiple4Solid} />,
-        //     title: "Manage users",
-        //     caption: "Review & manage users",
-        //     path: "/users"
-        // },
+        {
+            ID: 5,
+            icon: <Lineicons icon={Locked2Solid} />,
+            title: "Privacy",
+            caption: "define what people can see about you",
+            path: "/privacy"
+        },
         {
             ID: 6,
             icon: <Lineicons icon={PowerButtonSolid} />,

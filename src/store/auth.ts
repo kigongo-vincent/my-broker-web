@@ -25,6 +25,7 @@ export interface UserI extends Partial<BaseI> {
   phone?: string;
   photo?: string;
   hideContact?: boolean;
+  hideEmail?: boolean;
   verified?: boolean;
   broker?: boolean;
   verification?: verification;
