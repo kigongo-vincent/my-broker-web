@@ -50,7 +50,11 @@ const PhoneAuth = () => {
     const [loading, setLoading] = useState(false)
     const { login, setUser } = useUserStore()
 
-    const step1 = async () => {
+    const step1 = async (e: unknown) => {
+
+        // @ts-expect-error
+        e?.preventDefault()
+
         try {
             setLoading(true)
             if (phone) {

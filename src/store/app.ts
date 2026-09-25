@@ -67,7 +67,7 @@ export const useAppStore = create<AppStoreI>()(
       setSuccess: (v) => {
         set({ success: v });
       },
-      showHomeBadge: true,
+      showHomeBadge: false,
       setShowHomeBadge: () => {
         set({ showHomeBadge: !get()?.showHomeBadge });
       },
