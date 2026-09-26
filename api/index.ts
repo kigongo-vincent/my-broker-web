@@ -5,6 +5,7 @@ import {
   showSuccessToast,
 } from "../lib/index";
 
+// @ts-ignore
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const REQUEST_TIMEOUT_MS = 45_000;
@@ -150,6 +151,7 @@ export const Post = async <T, U>(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
         ...authHeaders(),
       },
       body: JSON.stringify(data),
@@ -179,6 +181,7 @@ export const Get = async <T>(path: string): Promise<APIResponse<T>> => {
   try {
     const res = await fetchWithTimeout(`${API_BASE_URL}/${path}`, {
       headers: {
+        "ngrok-skip-browser-warning": "true",
         ...authHeaders(),
       },
     });
@@ -212,6 +215,7 @@ export const Put = async <T, U>(
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
         ...authHeaders(),
       },
       body: JSON.stringify(data),
@@ -242,6 +246,7 @@ export const DeleteReq = async <U>(path: string): Promise<APIResponse<U>> => {
     const res = await fetchWithTimeout(`${API_BASE_URL}/${path}`, {
       method: "DELETE",
       headers: {
+        "ngrok-skip-browser-warning": "true",
         ...authHeaders(),
       },
     });
