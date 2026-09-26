@@ -23,6 +23,8 @@ import { DeleteReq, Put } from "../../../../api"
 import { BottomSheet } from "react-spring-bottom-sheet"
 import { PostSkeleton } from "../../../components/base/PageSkeleton"
 import { Bed, Toilet, Bathtub } from "@phosphor-icons/react"
+import { LazyLoadImage } from "react-lazy-load-image-component"
+import "react-lazy-load-image-component/src/effects/blur.css"
 
 interface IconI {
     url: string;
@@ -40,6 +42,12 @@ export type IconType = "parking" | "water" | "electricity" | "trash";
 export const IconFinder = (i: IconType | string): string => {
     return icons.find((ii) => ii?.label == i)?.url || "";
 };
+
+// A single real asset (image or video) paired with its low-res thumb, if any.
+interface MediaPair {
+    full: { url: string; type: string };
+    thumb?: { url: string; type: string };
+}
 
 const PostAuthorActions = ({ ...p }: Partial<PostI>) => {
     const navigate = useNavigate()
@@ -131,10 +139,21 @@ const PostDetails = () => {
         const index = Math.round(el.scrollLeft / el.clientWidth)
         setActiveIndex(index)
     }
-    const mediaAssets = useMemo(
-        () => post?.assets?.filter(item => item.type === "image" || item.type === "video") || [],
-        [post?.assets]
-    )
+
+    // Pair each real asset (image/video) with the thumb that immediately
+    // follows it in the raw assets array, so thumbs act as blur-up
+    // placeholders instead of showing up as their own carousel slides.
+    const mediaAssets = useMemo<MediaPair[]>(() => {
+        const pairs: MediaPair[] = []
+        post?.assets?.forEach(item => {
+            if (item.type === "image" || item.type === "video") {
+                pairs.push({ full: item })
+            } else if (item.type === "thumb" && pairs.length) {
+                pairs[pairs.length - 1].thumb = item
+            }
+        })
+        return pairs
+    }, [post?.assets])
 
     if (isLoading) {
         return (
@@ -172,7 +191,7 @@ const PostDetails = () => {
             >
 
                 {
-                    post?.assets?.map((item, index) => (
+                    mediaAssets.map(({ full, thumb }, index) => (
 
                         <div
                             key={index}
@@ -189,11 +208,14 @@ const PostDetails = () => {
                         >
 
                             {
-                                item.type === "image"
+                                full.type === "image"
                                     ?
-                                    <img
-                                        onClick={() => setImage(item?.url)}
-                                        src={item.url}
+                                    <LazyLoadImage
+                                        onClick={() => setImage(full.url)}
+                                        src={full.url}
+                                        placeholderSrc={thumb?.url}
+                                        effect="blur"
+                                        wrapperClassName="!absolute !inset-0 w-full h-full"
                                         className="
                                             cursor-pointer
                                             absolute
@@ -206,7 +228,8 @@ const PostDetails = () => {
                                     />
                                     :
                                     <video
-                                        src={item.url}
+                                        src={full.url}
+                                        poster={thumb?.url}
                                         controls
                                         className="
                                             absolute
@@ -220,10 +243,10 @@ const PostDetails = () => {
 
                             {mediaAssets.length > 1 && (
                                 <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5">
-                                    {mediaAssets.map((_, index) => (
+                                    {mediaAssets.map((_, i) => (
                                         <span
-                                            key={index}
-                                            className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                                            key={i}
+                                            className={`h-1.5 rounded-full transition-all ${i === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
                                                 }`}
                                         />
                                     ))}
