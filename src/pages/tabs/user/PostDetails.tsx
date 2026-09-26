@@ -363,7 +363,7 @@ const PostDetails = () => {
 
                 <BottomSheet open={showMaP} onDismiss={() => setShowMap(false)} ref={sheetRef} className="z-000">
                     <div className="h-[70vh]">
-                        <MapComponent defaultCenter={{ lat: post?.location?.cordinates?.lat || 0.3476, lng: post?.location?.cordinates?.lon || 32.5825 }} theme={theme?.toUpperCase() as ColorScheme} />
+                        <MapComponent provider="leaflet" defaultCenter={{ lat: post?.location?.cordinates?.lat || 0.3476, lng: post?.location?.cordinates?.lon || 32.5825 }} theme={theme?.toUpperCase() as ColorScheme} />
                     </div>
                 </BottomSheet>
 

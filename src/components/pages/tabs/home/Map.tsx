@@ -15,7 +15,7 @@ const Map = ({ properties, showDirections }: Props) => {
 
     return (
         <div className="h-[100vh] w-100vh rounded-2xl overflow-hidden">
-            <MapComponent showDirections={showDirections} theme={theme?.toUpperCase() as ColorScheme} properties={properties} />
+            <MapComponent showDirections={showDirections} provider="leaflet" theme={theme?.toUpperCase() as ColorScheme} properties={properties} />
         </div>
     )
 }

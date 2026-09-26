@@ -187,7 +187,7 @@ const PhoneAuth = () => {
             id: 1,
             content: <>
                 <Logo className="h-26 w-26" />
-                <h3 className="text-2xl  font-bold  -mb-5">My Broker</h3>
+                <h3 className="text-2xl  font-bold black-ops-one-regular -mb-5">My Broker</h3>
                 <p className=" text-center text-text/50  text-sm leading-6 mt-2 max-w-[80%]">Continue with your phone, its that easy</p>
 
 

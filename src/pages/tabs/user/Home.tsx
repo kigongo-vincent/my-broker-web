@@ -53,7 +53,7 @@ const Home = () => {
     const tabs = ["rentals", "short stays"]
     const [selectedTab, setSelectedTab] = useState(tabs[0])
     const [query, setQuery] = useState("")
-    const { filters, removeFilter, showHomeBadge, setShowHomeBadge } = useAppStore()
+    const { filters, removeFilter, setShowHomeBadge } = useAppStore()
 
     const navigate = useNavigate()
 
@@ -126,7 +126,7 @@ const Home = () => {
                     </>
                 }
 
-                <Activity mode={showHomeBadge ? "visible" : "hidden"}>
+                <Activity mode={"hidden"}>
                     {
                         isLoading
                             ?

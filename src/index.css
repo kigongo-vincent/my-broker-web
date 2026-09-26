@@ -73,7 +73,7 @@ html {
 
 @layer components {
   .btn {
-    @apply h-13 min-w-14 w-max rounded-lg px-6 flex items-center font-[400] justify-center gap-2;
+    @apply h-13.5 min-w-14 w-max rounded-lg px-6 flex items-center font-[400] justify-center gap-2;
   }
   * {
     /* @apply transform active:scale-[1.01]; */
