@@ -3,8 +3,8 @@
 html {
   /* font-family: poppins, "Poppins", "sans-serif"; */
   font-family: "SF Pro Display", "poppins", sans-serif;
-  font-size: 3.7vw;
-  line-height: calc(3.3vw * 1.5);
+  font-size: 4vw;
+  /* line-height: calc(3.3vw * 1.5); */
   color: var(--color-text);
   font-weight: 400;
 }
@@ -19,8 +19,16 @@ html {
   --rsbs-overlay-rounded: 16px;
 }
 
-::-webkit-scrollbar {
-  display: none;
+/* Hide scrollbars everywhere, but keep scrolling functional */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, mobile WebKit */
+  width: 0;
+  height: 0;
 }
 
 :root {
