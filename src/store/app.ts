@@ -75,10 +75,7 @@ export const useAppStore = create<AppStoreI>()(
         set({
           RootBottomContent: {
             title: "Login is required",
-            body:
-              "inorder to acess " +
-              p +
-              " you have to be logged in, its super simple, would you like to proceed",
+            body: "inorder to acess " + p + " you have to be logged in",
             action: {
               title: "get started",
               method: () => {

@@ -186,8 +186,8 @@ const PhoneAuth = () => {
         [{
             id: 1,
             content: <>
-                <Logo className="h-26 w-26" />
-                <h3 className="text-2xl  font-bold black-ops-one-regular -mb-5">My Broker</h3>
+                <Logo className="h-20 w-20" />
+                <h3 className="text-xl  font-bold black-ops-one-regular -mb-5">My Broker</h3>
                 <p className=" text-center text-text/50  text-sm leading-6 mt-2 max-w-[80%]">Continue with your phone, its that easy</p>
 
 
@@ -213,9 +213,9 @@ const PhoneAuth = () => {
         }, {
             id: 2,
             content: <>
-                <Logo className="h-26 w-26" />
+                <Logo className="h-20 w-20" />
 
-                <h3 className="text-2xl  font-semibold  -mb-5">{pinStage == 1 ? "Create pin" : "Confirm pin"}</h3>
+                <h3 className="text-xl  font-semibold  -mb-5">{pinStage == 1 ? "Create pin" : "Confirm pin"}</h3>
                 <p className="  text-center text-text/50  text-sm leading-6 mt-2 max-w-[80%]">
                     {pinStage == 1
                         ? "please create a new pin you will use when accessing the platform"
@@ -254,7 +254,7 @@ const PhoneAuth = () => {
         }, {
             id: 3,
             content: <>
-                <Logo className="h-26 w-26" />
+                <Logo className="h-20 w-20" />
 
                 <h3 className="text-2xl  font-semibold  -mb-5">Enter pin</h3>
                 <p className="  text-center text-text/50  text-sm leading-6 mt-2 max-w-[80%]">please provide the pincode of your account</p>

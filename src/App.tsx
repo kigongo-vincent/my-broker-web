@@ -20,7 +20,7 @@ export const RModal = () => {
     <BottomSheet open={Boolean(RootBottomContent?.title)} onDismiss={() => setRootBottomContent(undefined)} ref={sheetRef} className="z-000">
       <div className="py-10 px-4 min-h-[26vh] flex justify-around  flex-col gap-4">
         <h3 className="text-xl font-semibold">{RootBottomContent?.title}</h3>
-        <p className="text-text/60 leading-7">{RootBottomContent?.body}</p>
+        <p className="text-text/60 mb-4 leading-7">{RootBottomContent?.body}</p>
         <button onClick={() => { setRootBottomContent(undefined); navigate("/auth") }} className="btn outline-0 bg-primary text-white w-full rounded-full">{RootBottomContent?.action?.title}</button>
       </div>
     </BottomSheet>
@@ -103,7 +103,6 @@ const App = () => {
       {/* desktop disclaimer  */}
       <div className="hidden sm:flex  flex-col items-center justify-center h-screen">
         <h3 className="text-[24px] mt-2">Desktop detected</h3>
-        <p className="text-[14px] text-text/40 -mt-3">Please use a mobile phone</p>
       </div>
 
       {/* onboarding intent sheet */}

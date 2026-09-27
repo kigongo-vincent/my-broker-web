@@ -11,6 +11,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "inline", // Inlines the background daemon script to satisfy mobile engines instantly
