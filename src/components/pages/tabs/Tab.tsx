@@ -29,13 +29,16 @@ const Tab = (t: LinkI) => {
         t?.label !== "home" && LoginPrompt(t?.label || "")
     }
 
-    // TikTok style plus/upload button styling (pill-shaped with cyan/magenta shadow or primary background)
+    // TikTok style plus/upload button styling
     if (isUpload) {
         return (
-            <div className="flex flex-col items-start justify-center bg-primary rounded-lg h-full py-2 cursor-pointer group px-1" onClick={action}>
-                <div className="relative flex items-center justify-center h-full min-h-full  w-[11vw]  flex-1 bg-primary text-white rounded-lg  transition-transform duration-200 active:scale-95">
-                    {/* TikTok inner multi-colored pill layer accent */}
-                    {/* <div className="absolute inset-0 bg-primary/40 rounded-[10px] -left-1 -z-10 blur-[0.5px]" /> */}
+            /* Added select-none and webkit inline styles to prevent text highlight/native search trigger */
+            <div
+                className="flex flex-col items-start justify-center bg-primary rounded-lg h-full py-2 cursor-pointer group px-1 select-none"
+                style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+                onClick={action}
+            >
+                <div className="relative flex items-center justify-center h-full min-h-full w-[11vw] flex-1 bg-primary text-white rounded-lg transition-transform duration-200 active:scale-95">
                     <div className="absolute inset-0 bg-secondary/40 rounded-[10px] -right-1 -z-10 blur-[0.5px]" />
                     <span className="flex items-center justify-center font-bold text-xl">
                         {t?.icon}
@@ -46,7 +49,12 @@ const Tab = (t: LinkI) => {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full gap-0.5 cursor-pointer group py-1" onClick={action}>
+        /* Added select-none and webkit inline styles to prevent text highlight/native search trigger */
+        <div
+            className="flex flex-col items-center justify-center h-full w-full gap-0.5 cursor-pointer group py-1 select-none"
+            style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
+            onClick={action}
+        >
             <div
                 className={`relative flex items-center justify-center transition-all duration-200 active:scale-95 ${isActive ? "text-primary font-semibold" : "text-text/50 hover:text-text/80"
                     }`}
@@ -58,7 +66,6 @@ const Tab = (t: LinkI) => {
                 <Activity mode={hasBadge ? "visible" : "hidden"}>
                     <span className="absolute -top-3 -right-4 min-w-[6vw] h-[6vw] px-1 bg-danger text-sm font-medium text-white rounded-full flex items-center justify-center">
                         {typeof badgeContent === "number" && badgeContent > 99 ? "99+" : badgeContent}
-
                     </span>
                 </Activity>
             </div>

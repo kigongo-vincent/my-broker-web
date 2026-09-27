@@ -355,7 +355,11 @@ const PhoneAuth = () => {
                                     <input value={setupName} onChange={(e) => setSetupName(e.currentTarget.value)} className="outline-0 bg-pale h-14 rounded-full px-6" placeholder="Enter your full name" />
                                 </div>
                                 <div className="mt-6 flex gap-3">
-                                    <button onClick={() => { setShowSetupModal(false); navigate("/tabs/user/") }} className="btn flex-1 rounded-full bg-pale">Later</button>
+                                    <button onClick={() => {
+                                        navigate("/tabs/user")
+                                        setShowSetupModal(false);
+                                    }} className="btn flex-1 rounded-full bg-pale">Later</button>
+
                                     <button onClick={() => setSetupStep(2)} className="btn flex-1 rounded-full bg-primary text-white">Continue</button>
                                 </div>
                             </div>

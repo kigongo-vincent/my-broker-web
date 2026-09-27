@@ -262,11 +262,9 @@ interface ChatHeaderProps {
 
 const ChatHeader = ({ partnerName, partnerPhoto, partnerLastSeen, onBack, onOpenMenu, partnerId }: ChatHeaderProps) => {
 
-
-
     return (
-        <div className="w-full fixed z-200 top-0 ">
-            <div className="flex w-full bg-paper border-b  border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4  items-center justify-between">
+        <div className="w-full">
+            <div className="flex w-full bg-paper border-b border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4 items-center justify-between">
                 <div className="flex items-center ">
                     <button onClick={onBack} className="btn pl-0">
                         <Lineicons icon={ArrowLeftOutlined} />
@@ -290,12 +288,12 @@ const ChatHeader = ({ partnerName, partnerPhoto, partnerLastSeen, onBack, onOpen
 
 // ---------------------------------------------------------------------------
 // Presentational: Message list
+// This is now the ONLY scrollable element in the whole screen.
 // ---------------------------------------------------------------------------
 
 interface MessageListProps {
     messages: ChatMessageI[]
 }
-
 
 const MessageList = ({ messages }: MessageListProps) => {
     const { getUser } = useUserStore()
@@ -316,11 +314,11 @@ const MessageList = ({ messages }: MessageListProps) => {
     // Scroll to bottom only when the number of messages actually changes,
     // not on every re-render (e.g. while the user is typing a draft).
     useEffect(() => {
-        scrollRef.current?.scrollIntoView({ behavior: 'smooth' })
+        scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
     }, [messageCount])
 
     return (
-        <div className=" flex flex-col gap-5 w-full p-4">
+        <div className="flex flex-col gap-5 w-full p-4">
             <FlexRender
                 emptyContainer={<></>}
                 items={messages || []}
@@ -334,6 +332,9 @@ const MessageList = ({ messages }: MessageListProps) => {
 
 // ---------------------------------------------------------------------------
 // Presentational: Composer (input + send button)
+// No longer fixed / no longer needs the scroll-restore hack — it's a normal
+// flex child sitting below the single scroll container, so mobile browsers
+// have nothing extraneous to "helpfully" scroll when the input is focused.
 // ---------------------------------------------------------------------------
 
 interface ChatComposerProps {
@@ -344,27 +345,13 @@ interface ChatComposerProps {
 }
 
 const ChatComposer = ({ draft, onDraftChange, onSend, sending }: ChatComposerProps) => {
-    const inputRef = useRef<HTMLInputElement>(null)
-
-    // Some mobile browsers (esp. iOS Safari / WebViews) auto-scroll the
-    // nearest scrollable ancestor to bring a focused input "into view",
-    // which yanks our fixed-layout chat screen back to the top.
-    // Re-assert scroll position after focus so it snaps back down.
-    const handleFocus = () => {
-        requestAnimationFrame(() => {
-            window.scrollTo(0, 0)
-        })
-    }
-
     return (
-        <div className="shrink-0 flex  fixed bottom-0  left-0 items-center px-4 pb-5 pt-2 gap-2 w-full">
+        <div className="flex items-center px-4 pb-5 pt-2 gap-2 w-full">
             <div className="rounded-full flex bg-pale items-center px-6 pr-2 dark:border border-text/10 h-18 flex-1">
                 <input
-                    ref={inputRef}
                     value={draft}
                     onChange={(e) => onDraftChange(e.currentTarget.value)}
                     onKeyDown={(e) => e.key === "Enter" && onSend()}
-                    onFocus={handleFocus}
                     type="text"
                     placeholder="say something"
                     className="flex-1 outline-0"
@@ -469,8 +456,20 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
 
 // ---------------------------------------------------------------------------
 // Container: ChatRoom
+//
+// Layout notes (why this changed):
+// - Outer frame uses h-[100dvh] instead of h-screen. 100vh on mobile Safari
+//   includes the area behind the address bar; 100dvh doesn't, so the layout
+//   no longer overflows and force-scrolls the page itself.
+// - The outer frame is a flex column with exactly ONE scrollable descendant:
+//   the messages pane (flex-1 min-h-0 overflow-y-auto). Header and composer
+//   are normal (non-fixed) flex siblings, so there is no second scroll
+//   context fighting the page, and no need to fake-restore scroll position
+//   when the input is focused.
+// - The selected-post preview is a flex sibling positioned right above the
+//   composer instead of `fixed bottom-[10vh]`, so it can't drift if the
+//   composer's height ever changes (larger device, safe-area insets, etc).
 // ---------------------------------------------------------------------------
-
 
 const ChatRoom = () => {
     const { theme } = useSystemTheme()
@@ -495,7 +494,6 @@ const ChatRoom = () => {
     }, [roomQuery.data?.data])
 
     const { selectedPost, setSelectedPost } = useAppStore()
-
 
     const handleSend = useCallback(() => {
         const trimmed = draft.trim()
@@ -529,13 +527,33 @@ const ChatRoom = () => {
         return <ChatSkeleton />
     }
 
-
     return (
-        <div className="relative  overflow-hidden flex-1 h-screen">
+        <div className="relative overflow-hidden flex flex-col h-[100dvh]">
+            <img src={bg} className="absolute h-full w-full object-cover" alt="" />
+
+            {/* Header: normal flex child, reserves its own space. */}
+            <div className="relative z-20 shrink-0">
+                <ChatHeader
+                    partnerId={Number(partner?.ID)}
+                    partnerName={partner?.name}
+                    partnerPhoto={partner?.photo}
+                    partnerLastSeen={partner?.lastSeen}
+                    onBack={() => navigate(-1)}
+                    onOpenMenu={() => setShowMenu(true)}
+                />
+            </div>
+
+            {/* THE ONLY SCROLL CONTAINER on the screen.
+                flex-1 + min-h-0 lets this flex child actually shrink to fit
+                the remaining space and become scrollable, instead of growing
+                past the viewport and pushing a second scrollbar onto the page. */}
+            <div className="relative flex-1 min-h-0 overflow-y-auto dark:bg-paper/90">
+                <MessageList messages={messages} />
+            </div>
 
             <Activity mode={selectedPost ? "visible" : "hidden"}>
-                <div className="fixed w-full  z-300 bottom-[10vh] p-5">
-                    <div className="backdrop-blur-sm w-full bg-paper/80  border-text/10 border  flex items-center gap-3 rounded-xl p-4">
+                <div className="relative z-10 px-5 pb-2 shrink-0">
+                    <div className="backdrop-blur-sm w-full bg-paper/80 border-text/10 border flex items-center gap-3 rounded-xl p-4">
                         <img src={selectedPost?.assets[0]?.url} alt="" className="h-16 w-16 object-cover rounded-xl" />
                         <div className="flex flex-col justify-center flex-1">
                             <div className="flex gap-2 items-center">
@@ -555,22 +573,8 @@ const ChatRoom = () => {
                 </div>
             </Activity>
 
-            <img src={bg} className="absolute h-full w-full  object-cover " alt="" />
-
-            <div className="absolute h-full w-full overflow-y-auto left-0 top-0 dark:bg-paper/90">
-                <ChatHeader
-                    partnerId={Number(partner?.ID)}
-                    partnerName={partner?.name}
-                    partnerPhoto={partner?.photo}
-                    partnerLastSeen={partner?.lastSeen}
-                    onBack={() => navigate(-1)}
-                    onOpenMenu={() => setShowMenu(true)}
-                />
-
-                <div className="my-[10vh]">
-                    <MessageList messages={messages} />
-                </div>
-
+            {/* Composer: normal flex child sitting below the scroll container. */}
+            <div className="relative z-20 shrink-0">
                 <ChatComposer
                     draft={draft}
                     onDraftChange={setDraft}
@@ -578,17 +582,6 @@ const ChatRoom = () => {
                     sending={sendMutation.isPending}
                 />
             </div>
-
-            {/* 
-
-            <div className={`absolute  inset-0 h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden ${loading && "bg-paper/90 animate-pulse"}`}>
-
-
-
-                <MessageList messages={messages} />
-
-               
-            </div> */}
 
             <UserActionsMenu
                 open={showUserMenu}
