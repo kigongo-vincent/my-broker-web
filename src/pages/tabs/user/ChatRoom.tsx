@@ -17,8 +17,9 @@ import PostComponent from "../../../components/pages/tabs/Post"
 import { DeleteReq, Post } from "../../../../api"
 import { useAppStore } from "../../../store/app"
 import Loader from "../../../components/base/Loader"
-import { BottomSheet } from "react-spring-bottom-sheet"
+// import { BottomSheet } from "react-spring-bottom-sheet"
 import { ChatSkeleton } from "../../../components/base/PageSkeleton"
+import Modal from "../../../components/base/Modal"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -264,7 +265,7 @@ const ChatHeader = ({ partnerName, partnerPhoto, partnerLastSeen, onBack, onOpen
 
     return (
         <div className="w-full">
-            <div className="flex w-full bg-paper border-b border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6 py-4 items-center justify-between">
+            <div className="flex w-full bg-paper border-b border-text/10 dark:bg-paper/80 backdrop-blur-lg px-6  items-center justify-between">
                 <div className="flex items-center ">
                     <button onClick={onBack} className="btn pl-0">
                         <Lineicons icon={ArrowLeftOutlined} />
@@ -346,8 +347,8 @@ interface ChatComposerProps {
 
 const ChatComposer = ({ draft, onDraftChange, onSend, sending }: ChatComposerProps) => {
     return (
-        <div className="flex items-center px-4 pb-5 pt-2 gap-2 w-full">
-            <div className="rounded-full flex bg-pale items-center px-6 pr-2 dark:border border-text/10 h-18 flex-1">
+        <div className="flex -z-10 dark:bg-paper/90 items-center px-4 pb-5 pt-2 gap-2 w-full">
+            <div className="rounded-full flex bg-pale items-center px-4 pr-1 dark:border border-text/10 h-14 flex-1">
                 <input
                     value={draft}
                     onChange={(e) => onDraftChange(e.currentTarget.value)}
@@ -357,7 +358,7 @@ const ChatComposer = ({ draft, onDraftChange, onSend, sending }: ChatComposerPro
                     className="flex-1 outline-0"
                 />
                 <button onClick={onSend} disabled={sending} className="h-14 w-16 text-text/60 flex items-center justify-center">
-                    <PaperAirplaneIcon className="h-8 w-8" />
+                    <PaperAirplaneIcon className="h-6 w-6" />
                 </button>
             </div>
         </div>
@@ -390,9 +391,9 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
             setLoading(true)
             const { status, msg } = await Post<UserReport, unknown>("me/report", { ReporteeID: id ? +id : 0 })
             if (status != 200) {
-                setError({ title: "Failed to file report", body: msg })
+                setError({ title: "Failed to file report", body: msg || "" })
             } else {
-                setSuccess({ title: "Complaint sent", body: msg })
+                setSuccess({ title: "Complaint sent", body: msg || "" })
             }
             onClose?.()
 
@@ -409,12 +410,12 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
             setLoading(true)
             const { status, msg } = await DeleteReq<unknown>(`chats/clear/${RoomID}`)
             if (status == 200) {
-                setSuccess({ title: "Chat cleared", body: msg })
+                setSuccess({ title: "Chat cleared", body: msg || "" })
                 navigate(-1)
                 onClose?.()
             }
             else {
-                setError({ title: "Clear chat error", body: msg })
+                setError({ title: "Clear chat error", body: msg || "" })
             }
         } catch (error) {
             setError({ title: "Error", body: "something went wrong" })
@@ -425,7 +426,8 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
     }
 
     return (
-        <BottomSheet open={open} className="" onDismiss={onClose}>
+        // <BottomSheet open={open} className="" onDismiss={onClose}>
+        <Modal open={open} onClose={onClose}>
             <div className="flex flex-col gap-4 py-10">
                 <button onClick={onViewProfile} className="btn justify-start gap-5 w-full">
                     <Lineicons icon={User4Solid} />
@@ -450,7 +452,7 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
                     </Loader>
                 </button>
             </div>
-        </BottomSheet>
+        </Modal>
     )
 }
 

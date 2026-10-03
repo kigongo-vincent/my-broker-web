@@ -21,16 +21,14 @@ const Search = () => {
         hasNextPage,
         refetch,
     } = useInfinitePosts({ limit: LIMIT, search: query })
+    console.log(error)
 
     const posts = useMemo(
         () => (data?.pages.flatMap((page) => page.data) as Partial<PostI>[]) ?? [],
         [data]
     )
 
-    // total match count from the API's pagination payload (Total, capitalized,
-    // matching the Go struct's field name), falling back to what's loaded
-    // so far if the first page hasn't resolved a total yet
-    const totalMatches = data?.pages?.[0]?.pagination?.Total ?? posts.length
+    const totalMatches = data?.pages?.[0]?.pagination?.total ?? posts.length
 
     const sentinelRef = useRef<HTMLDivElement | null>(null)
 

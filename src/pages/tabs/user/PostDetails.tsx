@@ -8,7 +8,7 @@ import Modal from "../../../components/base/Modal"
 import { ExclamationTriangleIcon, PhoneIcon } from "@heroicons/react/20/solid"
 import { CategoryI } from "./Upload"
 import Lineicons from "@lineiconshq/react-lineicons"
-import { ChatBubble2Solid, EyeSolid, Pencil1Solid, Trash3Solid, XmarkSolid } from "@lineiconshq/free-icons"
+import { ChatBubble2Solid, EyeSolid, Pencil1Solid, Trash3Solid, WhatsappOutlined, Telephone1Solid, XmarkSolid } from "@lineiconshq/free-icons"
 import { UserI, useUserStore } from "../../../store/auth"
 import useSystemTheme from "../../../hooks/theme"
 import { ColorScheme } from "@vis.gl/react-google-maps"
@@ -25,6 +25,7 @@ import { PostSkeleton } from "../../../components/base/PageSkeleton"
 import { Bed, Toilet, Bathtub } from "@phosphor-icons/react"
 import { LazyLoadImage } from "react-lazy-load-image-component"
 import "react-lazy-load-image-component/src/effects/blur.css"
+import TikTokVideo, { getSafeTikTokVideoUrl } from "../../../components/pages/tabs/TikTokVideo"
 
 interface IconI {
     url: string;
@@ -42,6 +43,14 @@ export type IconType = "parking" | "water" | "electricity" | "trash";
 export const IconFinder = (i: IconType | string): string => {
     return icons.find((ii) => ii?.label == i)?.url || "";
 };
+
+const TikTokBrandIcon = () => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7">
+        <path fill="#25F4EE" d="M13.3 2h3.1c.2 1.8 1.2 3.4 2.8 4.3.9.5 1.8.8 2.8.9v3.2a10 10 0 0 1-5.6-1.8v7.2a6.7 6.7 0 1 1-6.7-6.7c.5 0 1 .1 1.5.2v3.4a3.4 3.4 0 1 0 2.1 3.1V2z" transform="translate(-1.1 1.2)" />
+        <path fill="#FE2C55" d="M13.3 2h3.1c.2 1.8 1.2 3.4 2.8 4.3.9.5 1.8.8 2.8.9v3.2a10 10 0 0 1-5.6-1.8v7.2a6.7 6.7 0 1 1-6.7-6.7c.5 0 1 .1 1.5.2v3.4a3.4 3.4 0 1 0 2.1 3.1V2z" transform="translate(.8 -.5)" />
+        <path fill="#000000" d="M13.3 2h3.1c.2 1.8 1.2 3.4 2.8 4.3.9.5 1.8.8 2.8.9v3.2a10 10 0 0 1-5.6-1.8v7.2a6.7 6.7 0 1 1-6.7-6.7c.5 0 1 .1 1.5.2v3.4a3.4 3.4 0 1 0 2.1 3.1V2z" />
+    </svg>
+);
 
 // A single real asset (image or video) paired with its low-res thumb, if any.
 interface MediaPair {
@@ -68,7 +77,7 @@ const PostAuthorActions = ({ ...p }: Partial<PostI>) => {
         try {
             const { status, msg } = await DeleteReq<unknown>("posts/post/" + p?.ID)
             if (status != 200) {
-                setError({ title: "Delete error", body: msg })
+                setError({ title: "Delete error", body: msg || "" })
                 return
             }
             setSuccess({ title: "Success", body: "the property was removed successfully" })
@@ -123,12 +132,16 @@ const PostDetails = () => {
     const isAuthenticated = Boolean((user as UserI)?.ID)
 
 
-    const { data, isLoading } = usePostDetails()
-    const post = data?.data
+    const { data, isLoading, isError, error } = usePostDetails()
+    const post = data
     const ammenities = post?.amenities?.map(a => ({ label: a, icon: IconFinder(a) } as CategoryI))
     const UserID = getUser()?.ID
     const PostAuthorID = post?.author.ID
-    const IsOwner = UserID == PostAuthorID
+    const IsOwner =
+        Boolean(post) &&
+        post?.source !== "tiktok" &&
+        UserID !== undefined &&
+        UserID === PostAuthorID
     const sheetRef = useRef(null)
     const [activeIndex, setActiveIndex] = useState(0)
     const { LoginPrompt } = useAppStore()
@@ -154,6 +167,15 @@ const PostDetails = () => {
         })
         return pairs
     }, [post?.assets])
+    const originalTikTokUrl =
+        post?.source === "tiktok"
+            ? getSafeTikTokVideoUrl(
+                post.assets?.find((asset) => asset.type === "video")?.url ?? ""
+            )
+            : undefined;
+    const tikTokContactDisabled = Boolean(
+        post?.author?.hideContact || !post?.author?.phone
+    );
 
     if (isLoading) {
         return (
@@ -164,6 +186,24 @@ const PostDetails = () => {
         )
     }
 
+    if (isError) {
+        return (
+            <>
+                <Header back noMargin />
+                <div className="p-6 text-center text-red-500">
+                    Failed to load post: {(error as Error)?.message}
+                </div>
+            </>
+        )
+    }
+    if (!post) {
+        return (
+            <>
+                <Header back noMargin />
+                <div className="p-6 text-center text-text/60">Post not found.</div>
+            </>
+        )
+    }
 
     return (
         <div className="w-full">
@@ -227,18 +267,18 @@ const PostDetails = () => {
                                         alt=""
                                     />
                                     :
-                                    <video
-                                        src={full.url}
-                                        poster={thumb?.url}
-                                        controls
-                                        className="
-                                            absolute
-                                            inset-0
-                                            w-full
-                                            h-full
-                                            object-cover
-                                        "
-                                    />
+                                    post?.source === "tiktok" ? (
+                                        <TikTokVideo url={full.url} poster={thumb?.url} />
+                                    ) : (
+                                        <video
+                                            src={full.url}
+                                            poster={thumb?.url}
+                                            controls
+                                            preload="none"
+                                            playsInline
+                                            className="absolute inset-0 h-full w-full object-cover"
+                                        />
+                                    )
                             }
 
                             {mediaAssets.length > 1 && (
@@ -264,75 +304,152 @@ const PostDetails = () => {
             <div className="p-4 flex  flex-col gap-2">
                 <br />
                 <User {...post?.author as UserI} noActions />
+                {post.source === "tiktok" && post.author?.phone && (
+                    <a
+                        href={`tel:${post.author.phone}`}
+                        className="mx-4 -mt-2 mb-2 w-fit text-sm font-medium text-primary underline underline-offset-2"
+                    >
+                        {post.author.phone}
+                    </a>
+                )}
                 <br />
                 <div className="flex flex-col gap-4 bg-pale rounded-xl p-4 py-6">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h2 className=" underline decoration-2 underline-offset-2">
-                            {post?.price.currency} {formatAmount(Number(post?.price.amount))}
-                        </h2>
-                        <span className="text-text/60">/month</span>
-
-                        <Activity mode={post?.negotiable ? "visible" : "hidden"}>
-                            <span className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary">
-                                negotiable
-                            </span>
-                        </Activity>
-                        <div className={`${post?.available ? "bg-success" : "bg-danger"} w-max rounded-full px-2 py-1 text-xs font-medium text-white`}>
-                            {post?.available == false && "un"}available
+                    {(Number(post?.price?.amount) > 0 || post?.available !== undefined) && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            {Number(post?.price?.amount) > 0 && (
+                                <>
+                                    <h2 className=" underline decoration-2 underline-offset-2">
+                                        {post?.price.currency} {formatAmount(Number(post?.price.amount))}
+                                    </h2>
+                                    <span className="text-text/60">/month</span>
+                                    <Activity mode={post?.negotiable ? "visible" : "hidden"}>
+                                        <span className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary">
+                                            negotiable
+                                        </span>
+                                    </Activity>
+                                </>
+                            )}
+                            {post?.available !== undefined && (
+                                <div className={`${post.available ? "bg-success" : "bg-danger"} w-max rounded-full px-2 py-1 text-xs font-medium text-white`}>
+                                    {post.available == false && "un"}available
+                                </div>
+                            )}
                         </div>
-                    </div>
+                    )}
                     <p className="text-text/50">{formatLocation(post?.location?.name || "")}</p>
 
-                    <div className="flex flex-wrap gap-4 text-text/50">
-                        <span className="flex items-center gap-1.5">
-                            <Bed size={20} weight="fill" />
-                            {post?.bedrooms} bedroom{post?.bedrooms !== 1 && "s"}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <Toilet size={20} weight="fill" />
-                            {post?.toilets} toilet{post?.toilets !== 1 && "s"}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                            <Bathtub size={20} weight="fill" />
-                            {post?.bathrooms} bathroom{post?.bathrooms !== 1 && "s"}
-                        </span>
-                    </div>
+                    {(Number(post?.bedrooms) > 0 || Number(post?.toilets) > 0 || Number(post?.bathrooms) > 0) && (
+                        <div className="flex flex-wrap gap-4 text-text/50">
+                            {Number(post?.bedrooms) > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                    <Bed size={20} weight="fill" />
+                                    {post?.bedrooms} bedroom{post?.bedrooms !== 1 && "s"}
+                                </span>
+                            )}
+                            {Number(post?.toilets) > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                    <Toilet size={20} weight="fill" />
+                                    {post?.toilets} toilet{post?.toilets !== 1 && "s"}
+                                </span>
+                            )}
+                            {Number(post?.bathrooms) > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                    <Bathtub size={20} weight="fill" />
+                                    {post?.bathrooms} bathroom{post?.bathrooms !== 1 && "s"}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                <div className="bg-pale py-6 my-4 rounded-xl p-4">
-                    <div className="flex items-center gap-1">
-                        <p className=" font-semibold">{post?.units}</p>
-                        <p className="">unit{post?.units != 1 && "s"} available</p>
+                {(Number(post?.units) > 0 || Number(post?.months) > 0) && (
+                    <div className="bg-pale py-6 my-4 rounded-xl p-4">
+                        {Number(post?.units) > 0 && (
+                            <div className="flex items-center gap-1">
+                                <p className=" font-semibold">{post?.units}</p>
+                                <p className="">unit{post?.units != 1 && "s"} available</p>
+                            </div>
+                        )}
+                        {Number(post?.months) > 0 && (
+                            <p className="flex items-center mt-2 gap-2 text-yellow-600 bg-yellow-600/5 px-6 py-4 rounded-xl">
+                                <ExclamationTriangleIcon className="h-6 w-6" />
+                                <span>{post?.months} month{post?.months != 1 && "s"} needed for the first month</span>
+                            </p>
+                        )}
                     </div>
-                    <p className="flex items-center mt-2 gap-2 text-yellow-600 bg-yellow-600/5 px-6 py-4 rounded-xl">
-                        <ExclamationTriangleIcon className="h-6 w-6" />
-                        <span>{post?.months} month{post?.months != 1 && "s"} needed for the first month</span>
-                    </p>
-                </div>
+                )}
 
-                <div>
-                    <p className=" font-semibold">Amenities</p>
-                    <p className="text-text/50 text-sm mt-1">Below are some of the things that come inclusive on your monthly rent</p>
-
-                    <br />
-                    <div className="grid gap-4 grid-cols-2">
-
-                        {
-                            ammenities?.map(a => <div key={a?.label} className={`flex px-4 py-10 rounded-xl bg-pale  flex-col items-center justify-center  ${a?.selected && "border border-primary/20 bg-primary/2"}`}>
-                                <img src={a?.icon} className="h-20 object-contain" alt="" />
-                                <p className="mt-6">{a?.label}</p>
-                            </div>)
-                        }
-
+                {Boolean(ammenities?.length) && (
+                    <div>
+                        <p className="font-semibold">Amenities</p>
+                        <p className="text-text/50 text-sm mt-1">Below are some of the things that come inclusive on your monthly rent</p>
+                        <br />
+                        <div className="grid gap-4 grid-cols-2">
+                            {ammenities?.map(a => (
+                                <div key={a.label} className={`flex px-4 py-10 rounded-xl bg-pale flex-col items-center justify-center ${a.selected && "border border-primary/20 bg-primary/2"}`}>
+                                    {a.icon && <img src={a.icon} className="h-20 object-contain" alt="" />}
+                                    <p className="mt-6">{a.label}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <br />
+                        <div className="h-[10vh]" />
                     </div>
-                    <br />
-                    <div className="h-[10vh]"></div>
-
-                </div>
+                )}
 
                 <div className="fixed h-22 gap-3 bottom-0 p-4 flex w-full bg-paper/80 backdrop-blur-sm shadow-md border-t left-0 border-text/10">
                     {
-                        IsOwner
+                        post.source === "tiktok" ? (
+                            <div className="flex w-full items-center gap-3">
+                                <button
+                                    type="button"
+                                    aria-label="Share TikTok video on WhatsApp"
+                                    title="Share on WhatsApp"
+                                    disabled={!originalTikTokUrl}
+                                    onClick={() => originalTikTokUrl && window.open(
+                                        `https://wa.me/?text=${encodeURIComponent(originalTikTokUrl)}`,
+                                        "_blank",
+                                        "noopener,noreferrer"
+                                    )}
+                                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-text/10 bg-pale text-text disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    <Lineicons icon={WhatsappOutlined} />
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label="Call property owner"
+                                    title="Call"
+                                    disabled={tikTokContactDisabled}
+                                    onClick={() => isAuthenticated
+                                        ? post.author?.phone && window.open(`tel:${post.author.phone}`, "_self")
+                                        : LoginPrompt("messages")}
+                                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-text/10 bg-pale text-text disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    <Lineicons icon={Telephone1Solid} />
+                                </button>
+                                {originalTikTokUrl ? (
+                                    <a
+                                        href={originalTikTokUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="View on TikTok"
+                                        title="View on TikTok"
+                                        className="btn h-14 min-w-0 flex-1 justify-center rounded-full bg-white text-black"
+                                    >
+                                        <img src="https://img.magnific.com/premium-vector/tiktok-app-icon-social-media-logo_277909-647.jpg?semt=ais_hybrid&w=740&q=80" className="h-8" />
+                                        <span>Visit on TikTok</span>
+                                    </a>
+                                ) : (
+                                    <span
+                                        aria-label="TikTok video unavailable"
+                                        className="btn h-14 min-w-0 flex-1 justify-center rounded-full bg-white text-black/40"
+                                    >
+                                        <span>TikTok unavailable</span>
+                                        <TikTokBrandIcon />
+                                    </span>
+                                )}
+                            </div>
+                        ) : IsOwner
                             ?
                             <PostAuthorActions {...post} />
                             :

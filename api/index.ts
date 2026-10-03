@@ -66,14 +66,15 @@ function handleUnauthorizedSession(apiPath: string) {
 }
 
 export interface APIResponse<T> {
-  msg: string;
+  msg?: string;
+  error?: string;
   data: T;
   status: number;
   pagination?: {
     page: number;
     limit: number;
     total: number;
-    totalPages: number;
+    totalPages?: number;
   };
 }
 
@@ -87,8 +88,12 @@ const safeJson = async (res: Response): Promise<any> => {
 
 function apiMessage(responseData: unknown): string {
   if (!responseData || typeof responseData !== "object") return "";
-  const o = responseData as { msg?: unknown; message?: unknown };
-  const m = o.msg ?? o.message;
+  const o = responseData as {
+    msg?: unknown;
+    message?: unknown;
+    error?: unknown;
+  };
+  const m = o.msg ?? o.message ?? o.error;
   return typeof m === "string" ? m : "";
 }
 
@@ -144,7 +149,8 @@ const getPaginationFromHeaders = (res: Response) => {
 export const Post = async <T, U>(
   path: string,
   data: T,
-  url?: string
+  url?: string,
+  options: { includeAuth?: boolean; notifyErrors?: boolean } = {}
 ): Promise<APIResponse<U>> => {
   try {
     const res = await fetchWithTimeout(`${url ? url : API_BASE_URL}/${path}`, {
@@ -152,56 +158,70 @@ export const Post = async <T, U>(
       headers: {
         "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "true",
-        ...authHeaders(),
+        ...(options.includeAuth === false ? {} : authHeaders()),
       },
       body: JSON.stringify(data),
     });
     const responseData = await safeJson(res);
-    handleHTTPError(res, responseData, path);
-    maybeSuccessToast(path, res, responseData);
+    if (options.notifyErrors !== false) {
+      handleHTTPError(res, responseData, path);
+      maybeSuccessToast(path, res, responseData);
+    }
     return {
       ...responseData,
       status: res.status,
-      pagination: getPaginationFromHeaders(res),
+      pagination:
+        getPaginationFromHeaders(res) ?? responseData?.pagination,
     } as APIResponse<U>;
   } catch (error) {
     const aborted =
       error instanceof DOMException && error.name === "AbortError";
-    showErrorToast(
-      aborted ? "Request timed out" : "Network error",
-      aborted
-        ? "The server took too long to respond. Try again."
-        : "Could not reach the server. Check your connection and try again."
-    );
+    if (options.notifyErrors !== false) {
+      showErrorToast(
+        aborted ? "Request timed out" : "Network error",
+        aborted
+          ? "The server took too long to respond. Try again."
+          : "Could not reach the server. Check your connection and try again."
+      );
+    }
     throw error;
   }
 };
 
-export const Get = async <T>(path: string): Promise<APIResponse<T>> => {
+export const Get = async <T>(
+  path: string,
+  url?: string,
+  options: { includeAuth?: boolean; notifyErrors?: boolean } = {}
+): Promise<APIResponse<T>> => {
   try {
-    const res = await fetchWithTimeout(`${API_BASE_URL}/${path}`, {
+    const res = await fetchWithTimeout(`${url ?? API_BASE_URL}/${path}`, {
       headers: {
         "ngrok-skip-browser-warning": "true",
-        ...authHeaders(),
+        ...(options.includeAuth === false ? {} : authHeaders()),
       },
     });
 
     const responseData = await safeJson(res);
-    handleHTTPError(res, responseData, path);
+    if (options.notifyErrors !== false) {
+      handleHTTPError(res, responseData, path);
+    }
     return {
       ...responseData,
       status: res.status,
-      pagination: getPaginationFromHeaders(res),
+      pagination:
+        getPaginationFromHeaders(res) ?? responseData?.pagination,
     } as APIResponse<T>;
   } catch (error) {
     const aborted =
       error instanceof DOMException && error.name === "AbortError";
-    showErrorToast(
-      aborted ? "Request timed out" : "Network error",
-      aborted
-        ? "The server took too long to respond. Try again."
-        : "Could not reach the server. Check your connection and try again."
-    );
+    if (options.notifyErrors !== false) {
+      showErrorToast(
+        aborted ? "Request timed out" : "Network error",
+        aborted
+          ? "The server took too long to respond. Try again."
+          : "Could not reach the server. Check your connection and try again."
+      );
+    }
     throw error;
   }
 };

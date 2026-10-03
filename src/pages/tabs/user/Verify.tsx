@@ -358,7 +358,7 @@ const Verify = () => {
             const b1 = await uploadToCloudinary(b, `approve-user-${getUser()?.ID}`, "back")
             const { msg, status } = await Post<{ attachments: string[] }, unknown>("requests", { attachments: [s1, f1, b1] })
             if (status != 200) {
-                setError(msg)
+                setError(msg || "")
                 return
             }
             setSuccess({ title: "success", body: "your verification request has been sent successfully, the QA team will review it and grant you a verification badger if they deem you fit", })

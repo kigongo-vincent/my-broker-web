@@ -15,8 +15,8 @@ import { Bed, Bathtub, Toilet } from "@phosphor-icons/react"
 import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
 import { useAppStore } from "../../../store/app"
-import { motion } from "framer-motion"
 import { BottomSheet } from "react-spring-bottom-sheet"
+import TikTokVideo from "./TikTokVideo"
 
 
 // ------------------------------------------------------------
@@ -83,7 +83,8 @@ export interface PriceI {
 
 export interface PostI extends BaseI {
     author: UserI
-    authorId?: UserI
+    authorId?: number
+    source?: "backend" | "tiktok"
     type: PostType
     assets: PostAssetI[]
     price: PriceI
@@ -198,88 +199,39 @@ const getColorFromString = (str?: string) => {
     return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
-const FLIP_INTERVAL = 300 // flip every 30s while visible
-const FLIP_BACK_DELAY = 600 // how long the back stays showing
+const formatPostedTime = (date?: string) => {
+    if (!date) return ""
+    const timestamp = new Date(date).getTime()
+    if (!Number.isFinite(timestamp)) return ""
 
-const FlipAvatar = ({
-    photo,
-    name,
-    onClick,
-}: {
-    photo: string
-    name?: string
-    onClick?: () => void
-}) => {
-    const [isFlipped, setIsFlipped] = useState(false)
-    const [isVisible, setIsVisible] = useState(false)
-    const containerRef = useRef<HTMLDivElement>(null)
+    const seconds = Math.round((timestamp - Date.now()) / 1000)
+    const intervals: [Intl.RelativeTimeFormatUnit, number][] = [
+        ["year", 60 * 60 * 24 * 365],
+        ["month", 60 * 60 * 24 * 30],
+        ["week", 60 * 60 * 24 * 7],
+        ["day", 60 * 60 * 24],
+        ["hour", 60 * 60],
+        ["minute", 60],
+    ]
+    const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
+    for (const [unit, size] of intervals) {
+        if (Math.abs(seconds) >= size) {
+            return `posted ${formatter.format(Math.round(seconds / size), unit)}`
+        }
+    }
+    return "posted just now"
+}
 
-    useEffect(() => {
-        const el = containerRef.current
-        if (!el) return
-
-        const observer = new IntersectionObserver(
-            ([entry]) => setIsVisible(entry.isIntersecting),
-            { threshold: 0.5 }
-        )
-        observer.observe(el)
-        return () => observer.disconnect()
-    }, [])
-
-    useEffect(() => {
-        if (!isVisible) return
-
-        const interval = setInterval(() => {
-            setIsFlipped(true)
-            const backTimeout = setTimeout(() => setIsFlipped(false), FLIP_BACK_DELAY)
-            return () => clearTimeout(backTimeout)
-        }, FLIP_INTERVAL)
-
-        return () => clearInterval(interval)
-    }, [isVisible])
-
-    const initials = useMemo(() => getInitials(name), [name])
-    const bgColor = useMemo(() => getColorFromString(name), [name])
-
+const UserAvatar = ({ photo, name }: { photo: string; name?: string }) => {
+    const initials = getInitials(name)
+    const bgColor = getColorFromString(name)
     return (
-        <div
-            ref={containerRef}
-            onClick={onClick}
-            className="h-12 w-12 shrink-0"
-            style={{ perspective: 1000 }}
-        >
-            <motion.div
-                className="relative h-full w-full"
-                style={{ transformStyle: "preserve-3d" }}
-                animate={{ rotateY: isFlipped ? 180 : 0 }}
-                transition={{ duration: 0.6, ease: "easeInOut" }}
-            >
-                {/* Front - photo */}
-                <div
-                    className="absolute inset-0"
-                    style={{ backfaceVisibility: "hidden" }}
-                >
-                    <img
-                        src={photo}
-                        className="h-12 w-12 rounded-full object-cover"
-                        alt=""
-                    />
-                </div>
-
-                {/* Back - colored initials */}
-                <div
-                    className="absolute inset-0 flex items-center justify-center rounded-full"
-                    style={{
-                        backfaceVisibility: "hidden",
-                        transform: "rotateY(180deg)",
-                        backgroundColor: bgColor,
-                    }}
-                >
-                    <span className="text-base font-semibold text-white">
-                        {initials}
-                    </span>
-                </div>
-            </motion.div>
+        <div className="isolate flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full" style={{ backgroundColor: bgColor }}>
+            {photo ? (
+                <img src={photo} className="block h-full w-full rounded-full object-cover" alt="" />
+            ) : (
+                <span className="text-base font-semibold text-white">{initials}</span>
+            )}
         </div>
     )
 }
@@ -320,7 +272,8 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         }
     }
 
-    const canShowActions = !(noActions || getUser()?.ID == u?.ID)
+    const isTikTokUser = u.source === "tiktok" || post?.source === "tiktok"
+    const canShowActions = !noActions && (isTikTokUser || getUser()?.ID != u?.ID)
     function handleWhatsApp(): void {
         if (!isAuthenticated) {
             LoginPrompt("direct messages")
@@ -340,9 +293,13 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         <div className={`flex cursor-pointer items-center justify-between  ${post && "px-4"} py-3`}>
             <div
                 className="flex items-center gap-3"
-                onClick={() => navigate(`/profile/${u?.ID}`)}
+                onClick={() => navigate(
+                    u.source === "tiktok" && u.username
+                        ? `/profile/tiktok/${encodeURIComponent(u.username)}`
+                        : `/profile/${u?.ID}`
+                )}
             >
-                <FlipAvatar
+                <UserAvatar
                     photo={getUserPhoto?.(u.photo) || ""}
                     name={u?.name}
                 />
@@ -354,24 +311,30 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                         {u?.verification == "approved" && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
                         {u?.role == "broker" && <span className="text-sm font-medium text-primary">broker</span>}
                     </div>
-                    <span className="text-sm text-text/50">
-                        last seen {u.lastSeen}
-                    </span>
+                    {isTikTokUser ? (
+                        post?.CreatedAt && (
+                            <span className="text-sm text-text/50">
+                                {formatPostedTime(post.CreatedAt)}
+                            </span>
+                        )
+                    ) : u.lastSeen && (
+                        <span className="text-sm text-text/50">
+                            last seen {u.lastSeen}
+                        </span>
+                    )}
                 </div>
             </div>
 
             {actions ? (
                 actions
-            ) : (
-                <Activity mode={canShowActions ? "visible" : "hidden"}>
+            ) : canShowActions ? (
                     <button
                         onClick={(e) => { e.stopPropagation(); setShowActions(true) }}
                         className="flex h-10 w-10 items-center justify-center "
                     >
                         <EllipsisVerticalIcon className="h-9 w-9" />
                     </button>
-                </Activity>
-            )}
+            ) : null}
 
             {/* actions sheet */}
             <BottomSheet open={showActions} onDismiss={() => setShowActions(false)}>
@@ -387,16 +350,15 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             <span >Call {u?.name}</span>
                         </button>
                     )}
-                    <button
-                        onClick={handleChat}
-                        className="btn
-                            w-full justify-start
-                        "
-
-                    >
-                        <Lineicons icon={Message2Outlined} />
-                        <span className="">Message {u?.name}</span>
-                    </button>
+                    {u.source !== "tiktok" && (
+                        <button
+                            onClick={handleChat}
+                            className="btn w-full justify-start"
+                        >
+                            <Lineicons icon={Message2Outlined} />
+                            <span>Message {u?.name}</span>
+                        </button>
+                    )}
                     {!u?.hideContact && (
                         <button
                             onClick={handleWhatsApp}
@@ -471,7 +433,11 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
     const navigate = useNavigate()
     const isAuthenticated = Boolean((user as UserI)?.ID)
     const { setFavouritesCount, favouritesCount, LoginPrompt } = useAppStore()
-    const isOwner = getUser()?.ID == p?.authorId
+    const currentUserId = getUser()?.ID
+    const isOwner =
+        p.source !== "tiktok" &&
+        currentUserId !== undefined &&
+        currentUserId === p.authorId
     const showAvailability = isOwner && !hideAvailability
     const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -494,6 +460,9 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation()
 
+        if (p.source === "tiktok") {
+            return
+        }
         if (!isAuthenticated) {
             LoginPrompt("direct messages")
             return
@@ -516,7 +485,10 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
     }
 
     const handleClick = () => {
-        navigate(`/post/${p?.ID}`)
+        if (p.source === "tiktok") return
+        navigate(
+            `/post/${p?.ID}`
+        )
     }
 
     return (
@@ -530,7 +502,7 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
                     ref={scrollRef}
                     onScroll={handleScroll}
                     onClick={handleClick}
-                    className="flex h-[30vh] w-full snap-x snap-mandatory overflow-x-auto scrollbar-hide"
+                    className={`flex ${p.source === "tiktok" ? "h-[50vh]" : "h-[30vh]"} w-full snap-x snap-mandatory overflow-x-auto scrollbar-hide`}
                 >
                     {mediaAssets.map((item, index) => {
                         const originalIndex = p.assets.findIndex(a => a.url === item.url)
@@ -549,11 +521,17 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
                                         placeholderSrc={thumbnailSrc}
                                     />
                                 ) : (
-                                    <video
-                                        src={item.url}
-                                        controls
-                                        className="absolute inset-0 h-full w-full object-cover"
-                                    />
+                                    p.source === "tiktok" ? (
+                                        <TikTokVideo url={item.url} poster={thumbnailSrc} />
+                                    ) : (
+                                        <video
+                                            src={item.url}
+                                            controls
+                                            preload="none"
+                                            playsInline
+                                            className="absolute inset-0 h-full w-full object-cover"
+                                        />
+                                    )
                                 )}
                             </div>
                         )
@@ -561,17 +539,21 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
                 </div>
 
                 {/* type chip */}
-                <span className="absolute left-4 top-4 flex h-max items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-medium text-dark">
-                    {p?.type || "residential"}
-                </span>
+                {p.source !== "tiktok" && (
+                    <span className="absolute left-4 top-4 flex h-max items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-medium text-dark">
+                        {p?.type || "residential"}
+                    </span>
+                )}
 
                 {/* like button */}
-                <button
-                    onClick={handleLike}
-                    className="absolute right-4 top-4 rounded-2xl bg-black/30 p-4 text-white transition-transform active:scale-95"
-                >
-                    <Lineicons icon={liked ? HeartSolid : HeartOutlined} />
-                </button>
+                {p.source !== "tiktok" && (
+                    <button
+                        onClick={handleLike}
+                        className="absolute right-4 top-4 rounded-2xl bg-black/30 p-4 text-white transition-transform active:scale-95"
+                    >
+                        <Lineicons icon={liked ? HeartSolid : HeartOutlined} />
+                    </button>
+                )}
 
                 {/* pagination dots */}
                 {mediaAssets.length > 1 && (
@@ -594,42 +576,57 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
             >
 
 
-                <div className="text-text/60">
-                    Located <span className=" text-text">{TextCropper(formatLocation(p.location.name), 60)}</span>
-                </div>
+                {p.location?.name?.trim() && (
+                    <div className="text-text/60">
+                        Located <span className=" text-text">{TextCropper(formatLocation(p.location.name), 60)}</span>
+                    </div>
+                )}
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <h2 className=" underline decoration-2 underline-offset-2">
-                        {p.price.currency} {formatAmount(p.price.amount)}
-                    </h2>
-                    <span className="text-text/60">/month</span>
+                {(p.price?.amount > 0 || showAvailability) && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        {p.price?.amount > 0 && (
+                            <>
+                                <h2 className=" underline decoration-2 underline-offset-2">
+                                    {p.price.currency} {formatAmount(p.price.amount)}
+                                </h2>
+                                <span className="text-text/60">/month</span>
+                                <Activity mode={p.negotiable ? "visible" : "hidden"}>
+                                    <span className="rounded-full bg-primary text-white px-2 py-1 text-xs ">
+                                        negotiable
+                                    </span>
+                                </Activity>
+                            </>
+                        )}
+                        {showAvailability && (
+                            <div className={`${p?.available ? "bg-success" : "bg-danger"} w-max rounded-full px-2 py-1 text-xs font-medium text-white`}>
+                                {p?.available == false && "un"}available
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                    <Activity mode={p.negotiable ? "visible" : "hidden"}>
-                        <span className="rounded-full bg-primary text-white px-2 py-1 text-xs ">
-                            negotiable
-                        </span>
-                    </Activity>
-                    {showAvailability && (
-                        <div className={`${p?.available ? "bg-success" : "bg-danger"} w-max rounded-full px-2 py-1 text-xs font-medium text-white`}>
-                            {p?.available == false && "un"}available
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex flex-wrap gap-4 text-text/50">
-                    <span className="flex items-center gap-1.5">
-                        <Bed size={20} weight="fill" />
-                        {p.bedrooms} bedroom{p.bedrooms !== 1 && "s"}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                        <Toilet size={20} weight="fill" />
-                        {p.toilets} toilet{p.toilets !== 1 && "s"}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                        <Bathtub size={20} weight="fill" />
-                        {p.bathrooms} bathroom{p.bathrooms !== 1 && "s"}
-                    </span>
-                </div>
+                {(p.bedrooms > 0 || p.toilets > 0 || p.bathrooms > 0) && (
+                    <div className="flex flex-wrap gap-4 text-text/50">
+                        {p.bedrooms > 0 && (
+                            <span className="flex items-center gap-1.5">
+                                <Bed size={20} weight="fill" />
+                                {p.bedrooms} bedroom{p.bedrooms !== 1 && "s"}
+                            </span>
+                        )}
+                        {p.toilets > 0 && (
+                            <span className="flex items-center gap-1.5">
+                                <Toilet size={20} weight="fill" />
+                                {p.toilets} toilet{p.toilets !== 1 && "s"}
+                            </span>
+                        )}
+                        {p.bathrooms > 0 && (
+                            <span className="flex items-center gap-1.5">
+                                <Bathtub size={20} weight="fill" />
+                                {p.bathrooms} bathroom{p.bathrooms !== 1 && "s"}
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             <Modal hideClose position="bottom" open={showAuthPrompt} onClose={() => setShowAuthPrompt(false)}>

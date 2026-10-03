@@ -70,7 +70,7 @@ const PhoneChange = () => {
         try {
             const { data, status, msg } = await Put<Partial<UserI>, UserI>("me", { phone: phone1, name: getUser()?.name })
             if (status != 200) {
-                setError({ title: ErrorTitle, body: msg })
+                setError({ title: ErrorTitle, body: msg || "" })
                 return
             }
             setUser?.(data)

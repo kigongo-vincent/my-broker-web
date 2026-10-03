@@ -138,7 +138,7 @@ const PhoneAuth = () => {
             if (phone) {
                 const { status, msg, data } = await Post<PhoneAuthRequest, AuthSuccessI>("users/phone", { phone: phone, step: 2, pinCode: pin1 })
                 if (status != 200) {
-                    setError(msg)
+                    setError(msg || "")
                     return
                 }
                 setSignupData(data)
@@ -170,7 +170,7 @@ const PhoneAuth = () => {
                     handleAuthSuccess(data)
                     return
                 }
-                setError(msg)
+                setError(msg || "")
             }
         } catch (error) {
 
@@ -315,7 +315,7 @@ const PhoneAuth = () => {
                 navigate("/tabs/user/")
             }
             else {
-                setError(msg)
+                setError(msg || "")
             }
         } catch {
             setError("We could not save your profile details yet. Please try again.")

@@ -62,13 +62,27 @@ const GOOGLE_MAP_ID = 'YOUR_GOOGLE_MAP_ID';
 const OSRM_BASE_URL = 'https://router.project-osrm.org';
 
 const formatPrice = (price?: number): string => {
-    if (!price) return '$0';
+    if (!price || price <= 0) return '';
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'UGX',
         maximumFractionDigits: 0
     }).format(price);
 };
+
+const postPath = (property: Partial<PostI>): string | undefined =>
+    property.source === 'tiktok'
+        ? `/post/tiktok/${encodeURIComponent(String(property.ID ?? ''))}`
+        : `/post/${encodeURIComponent(String(property.ID ?? ''))}`;
+
+const escapeHtml = (value: string): string =>
+    value.replace(/[&<>"']/g, (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[character] ?? character);
 
 /** Extracts a valid {lat,lng} from a property, or null if coordinates are missing/malformed. */
 const extractCoords = (p: Partial<PostI>): LatLng | null => {
@@ -118,10 +132,20 @@ const useCurrentLocation = (enabled: boolean) => {
 };
 
 /** The clickable price/name chip rendered on top of every Google property marker. */
-const PropertyLabel = ({ property }: { property: Partial<PostI> }) => (
-    <Link
-        to={`/post/${property?.ID}`}
-        style={{
+const PropertyLabel = ({ property }: { property: Partial<PostI> }) => {
+    const href = postPath(property);
+    const label = (
+        <>
+            {TextCropper(property?.location?.name || '', 20)}
+            {property?.price?.amount > 0 && (
+                <>
+                    <hr className="my-2 border border-text/10" />
+                    {formatPrice(property.price.amount)}
+                </>
+            )}
+        </>
+    );
+    const style = {
             background: 'var(--color-paper)',
             color: 'var(--color-text)',
             padding: '10px 20px',
@@ -132,23 +156,26 @@ const PropertyLabel = ({ property }: { property: Partial<PostI> }) => (
             transform: 'translate(-50%, -100%)',
             whiteSpace: 'nowrap',
             display: 'inline-block'
-        }}
-    >
-        {TextCropper(property?.location?.name || '', 20)}
-        <hr className="my-2 border border-text/10" />
-        {formatPrice(property?.price?.amount)}
-    </Link>
-);
+        };
+    return href ? (
+        <Link to={href} style={style}>{label}</Link>
+    ) : (
+        <span style={style}>{label}</span>
+    );
+};
 
 /** Same chip pre-rendered to an HTML string, for Leaflet's non-React DivIcon. */
 const propertyLabelHtml = (property: Partial<PostI>): string => {
-    const name = TextCropper(property?.location?.name || '', 20);
-    const price = formatPrice(property?.price?.amount);
+    const name = escapeHtml(TextCropper(property?.location?.name || '', 20));
+    const price = property?.price?.amount > 0 ? escapeHtml(formatPrice(property.price.amount)) : '';
+    const href = postPath(property);
+    if (!href) {
+        return `<span class="map-property-label">${name}${price ? `<hr class="my-2 border border-text/10" />${price}` : ''}</span>`;
+    }
     return `
-        <a href="/post/${property?.ID ?? ''}" class="map-property-label">
+        <a href="${escapeHtml(href)}" class="map-property-label">
             ${name}
-            <hr class="my-2 border border-text/10" />
-            ${price}
+            ${price ? `<hr class="my-2 border border-text/10" />${price}` : ''}
         </a>
     `;
 };
@@ -164,8 +191,11 @@ const LEAFLET_PROPERTY_LABEL_CSS = `
     background: transparent !important;
     border: none !important;
 }
-.map-property-label {
-    background: white;
+.leaflet-container a.map-property-label,
+.leaflet-container a.map-property-label:hover,
+.leaflet-container .map-property-label {
+    background: var(--color-paper) !important;
+    color: var(--color-text) !important;
     padding: 10px 20px;
     border-radius: 10px;
     font-weight: bold;
@@ -173,7 +203,7 @@ const LEAFLET_PROPERTY_LABEL_CSS = `
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     white-space: nowrap;
     display: inline-block;
-    text-decoration: none;
+    text-decoration: none !important;
     position: absolute;
     transform: translate(-50%, -100%);
 }
@@ -441,10 +471,6 @@ const LEAFLET_DARK_FILTER_CSS = `
 .map-leaflet-dark .leaflet-tile-pane {
     filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
 }
-.map-leaflet-dark .leaflet-marker-icon,
-.map-leaflet-dark .map-property-marker {
-    filter: invert(1) hue-rotate(180deg);
-}
 `;
 
 const resolveTileTheme = (theme?: MapTheme): 'light' | 'dark' => {
@@ -622,14 +648,12 @@ const LeafletMapView = ({ theme, properties, defaultCenter, showDirections }: Pr
 
     const boundsPoints = hasProperties ? [effectiveCenter, ...destinations] : [effectiveCenter];
 
-    // const isDark = resolveTileTheme(theme) === 'dark';
-    const isDark = true
+    const isDark = resolveTileTheme(theme) === 'dark';
 
     return (
         <div className={isDark ? 'map-leaflet-dark' : undefined} style={{ position: 'relative', width: '100%', height: '100%', zIndex: 1 }}>
             {/* Injects the shared label styling + optional dark-mode tile filter once; Leaflet markers render raw HTML, not React, so this can't be inline JSX like Google's PropertyLabel. */}
-            <style>{LEAFLET_PROPERTY_LABEL_CSS}</style>
-            {/* <style>{LEAFLET_DARK_FILTER_CSS}</style> */}
+            <style>{LEAFLET_PROPERTY_LABEL_CSS}{isDark ? LEAFLET_DARK_FILTER_CSS : ''}</style>
 
             <MapContainer
                 center={[effectiveCenter.lat, effectiveCenter.lng]}

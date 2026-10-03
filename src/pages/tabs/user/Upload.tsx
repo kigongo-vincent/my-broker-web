@@ -862,7 +862,7 @@ const Upload = () => {
 
             const expectedStatus = isEditing ? 200 : 201
             if (status != expectedStatus) {
-                setError({ title: "Error", body: msg })
+                setError({ title: "Error", body: msg || "" })
                 return
             }
             setSuccess({ body: `Post ${isEditing ? "updated" : "uploaded"} successfully`, title: "Success" })

@@ -68,6 +68,7 @@ const Home = () => {
         isLoading,
         isFetchingNextPage,
         isError,
+        error,
         fetchNextPage,
         hasNextPage,
         refetch,
@@ -122,7 +123,7 @@ const Home = () => {
                 {
                     filters?.length != 0 &&
                     <>
-                        <FlexRender className="mt-3 overflow-x-auto" row items={filters} render={(item, index) => <button onClick={() => removeFilter(item?.column)} key={index} className="btn min-w-max px-6 pr-2 py-1 bg-primary/10 text-primary  rounded-full">{item?.label} <Lineicons icon={XmarkSolid} className="bg-primary/20  rounded-full p-2 h-10 w-10" /></button>} />
+                        <FlexRender className="mt-3 overflow-x-auto" row items={filters} render={(item, index) => <button onClick={() => removeFilter(item?.column)} key={index} className="flex items-center gap-2 bg-pale min-w-max px-6 py-2 pr-1  rounded-full">{item?.label} <Lineicons icon={XmarkSolid} className="bg-danger  rounded-full p-2 h-8 w-8" /></button>} />
                     </>
                 }
 
@@ -167,7 +168,7 @@ const Home = () => {
                 </div>
             ) : isError ? (
                 <div className="p-4 text-center text-red-500">
-                    Failed to load properties
+                    Failed to load properties: {(error as Error)?.message}
                     <button className="btn bg-pale w-full text-text rounded-full mt-2" onClick={() => refetch()}>
                         Retry
                     </button>

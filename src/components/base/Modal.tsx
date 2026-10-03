@@ -68,9 +68,9 @@ const Modal = ({ position = "center", onClose, children, hideClose, className, o
                             >
 
                                 {/* header - fixed at top, not scrollable */}
-                                <div className="flex mb-4 items-center justify-end shrink-0">
+                                <div className="flex  items-center justify-end shrink-0">
                                     <button onClick={onClose} className="">
-                                        <XMarkIcon className="h-8 w-8" />
+                                        <XMarkIcon className="h-6 w-6" />
                                     </button>
                                 </div>
 

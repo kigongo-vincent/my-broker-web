@@ -32,7 +32,9 @@ const Index = () => {
 
                 <Route path="/chat/:id" Component={ChatRoom} />
                 <Route path="/post/:postId" Component={PostDetails} />
+                <Route path="/post/:source/:postId" Component={PostDetails} />
                 <Route path="/profile/:id" Component={Profile} />
+                <Route path="/profile/:source/:id" Component={Profile} />
                 <Route path="/search/:query" Component={Search} />
                 <Route path="/map" Component={MapP} />
                 <Route path="/filters" Component={Filter} />

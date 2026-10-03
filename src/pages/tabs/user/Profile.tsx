@@ -4,8 +4,6 @@ import Post, { PostI } from '../../../components/pages/tabs/Post'
 import FlexRender from '../../../components/base/FlexRender'
 import Header from '../../../components/pages/tabs/Header'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { APIResponse } from '../../../../api'
-import { Post as P } from "../../../../api/index"
 import { useNavigate, useParams } from 'react-router'
 import Empty from '../../../components/base/Empty'
 import { Telephone1Solid, Message2Solid, WhatsappOutlined } from '@lineiconshq/free-icons'
@@ -14,52 +12,38 @@ import { useAppStore } from '../../../store/app'
 import { ProfileSkeleton } from '../../../components/base/PageSkeleton'
 import { CheckBadgeIcon } from '@heroicons/react/24/solid'
 import { TextCropper } from '../../../utils/text'
+import { feedFactory, type FeedSource, type ProfilePage } from '../../../factories/feed'
 
-export interface AccountI {
-    user: Partial<UserI>
-    posts: PostI[]
-}
-
-export const useInfiniteUserProfile = (params: { limit: number; userId?: string }) => {
+export const useInfiniteUserProfile = (params: { limit: number; userId?: string; source: FeedSource }) => {
 
     return useInfiniteQuery({
-        queryKey: ['user-profile', params.userId ?? 'me'],
-        queryFn: async ({ pageParam = 1 }) => {
-            const path = `posts/user/${params.userId}`
-            const res = await P<{ pagination: { page: number; limit: number } }, AccountI>(
-                path,
-                { pagination: { page: pageParam, limit: params.limit } }
-            )
-            return res as APIResponse<AccountI>
-        },
+        queryKey: ['user-profile', params.source, params.userId ?? 'me', params.limit],
+        queryFn: ({ pageParam }) =>
+            feedFactory.fetchProfilePage(
+                params.userId ?? "",
+                pageParam,
+                params.limit,
+                params.source
+            ),
         getNextPageParam: (lastPage, allPages) => {
-            const pagination = lastPage.pagination
-            if (!pagination) return undefined
-
-            const { page, limit, total } = pagination
-            const fetched = allPages.length * limit
-            return fetched < total ? page + 1 : undefined
+            const { page, limit, total } = lastPage.pagination
+            return allPages.length * limit < total ? page + 1 : undefined
         },
         initialPageParam: 1,
     })
 }
 
-export interface AccountI {
-    user: Partial<UserI>
-    posts: PostI[]
-}
-
 const Profile = () => {
     const { user, getUserPhoto, getUser } = useUserStore()
-    const { id } = useParams()
-    const { data, isLoading, fetchNextPage, hasNextPage } = useInfiniteUserProfile({ limit: 5, userId: id })
+    const { id = "", source } = useParams()
+    const profileSource: FeedSource = source === "tiktok" ? "tiktok" : "backend"
+    const { data, isLoading, isError, error, fetchNextPage, hasNextPage } = useInfiniteUserProfile({ limit: 5, userId: id, source: profileSource })
 
-    const account = useMemo<AccountI | null>(() => {
-        const lastPage = data?.pages[data.pages.length - 1]
-        if (!lastPage) return null
-
-        const posts = data.pages.flatMap((page) => page.data.posts)
-        return { user: lastPage.data.user, posts }
+    const account = useMemo<ProfilePage | null>(() => {
+        const pages = data?.pages ?? []
+        if (!pages.length) return null
+        const posts = pages.flatMap((page) => page.posts)
+        return { user: pages[pages.length - 1].user, posts, pagination: pages[pages.length - 1].pagination }
     }, [data])
 
     const navigate = useNavigate()
@@ -105,20 +89,22 @@ const Profile = () => {
     }
 
 
-    const isOwner = getUser()?.ID == Number(id)
+    const isOwner = profileSource === "backend" && getUser()?.ID == Number(id)
 
     return (
         <div>
             <Header
                 back
                 title={account?.user?.name || (user as UserI | undefined)?.name || 'Profile'}
-                caption={"last seen " + account?.user?.lastSeen || ""}
+                caption={profileSource === "backend" && account?.user?.lastSeen ? "last seen " + account.user.lastSeen : ""}
             />
 
             {
                 isLoading
                     ?
                     <ProfileSkeleton />
+                    : isError
+                        ? <div className="p-6 text-center text-red-500">Failed to load profile: {(error as Error)?.message}</div>
                     :
                     <div className="mt-30">
                         <img
@@ -149,9 +135,7 @@ const Profile = () => {
                         </div>
                         <br />
 
-                        {isLoading ? (
-                            <div className="py-4 text-sm text-text/50"></div>
-                        ) : account?.posts.length === 0 ? (
+                        {account?.posts.length === 0 ? (
                             <Empty type='posts' />
                         ) : (
                             <FlexRender
@@ -171,7 +155,7 @@ const Profile = () => {
 
 
             {/* fixed nav  */}
-            <Activity mode={isOwner || !getUser()?.ID || true ? "hidden" : "visible"}>
+            <Activity mode={isOwner ? "hidden" : "visible"}>
                 <div className='fixed  px-4 gap-2 flex items-center border-t border-text/10 h-20 bottom-0 left-0 w-full bg-paper'>
 
                     <button onClick={handleWhatsApp} disabled={u?.hideContact} className={`btn flex-1 font-medium rounded-full bg-pale ${u?.hideContact && "opacity-10"}`}>
@@ -188,12 +172,14 @@ const Profile = () => {
                         </button>
                     }
 
-                    <button
-                        onClick={handleChat}
-                        className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
-                    >
-                        <Lineicons icon={Message2Solid} />
-                    </button>
+                    {profileSource === "backend" && (
+                        <button
+                            onClick={handleChat}
+                            className="bg-pale h-16 w-16 flex items-center justify-center rounded-full"
+                        >
+                            <Lineicons icon={Message2Solid} />
+                        </button>
+                    )}
 
                 </div>
             </Activity>

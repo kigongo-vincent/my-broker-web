@@ -631,9 +631,10 @@ import {
 } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import imageCompression from "browser-image-compression";
-import { Get, Post } from "../../api";
+import { Post } from "../../api";
 import { PostI } from "../components/pages/tabs/Post";
 import { useAppStore } from "../store/app";
+import { feedFactory, type FeedSource } from "../factories/feed";
 import {
   UploadWorkerDoneMsg,
   UploadWorkerErrorMsg,
@@ -653,26 +654,6 @@ const CLOUDINARY_UPLOAD_PRESET = import.meta.env
 /* ------------------------------------------------------------------ */
 /* Types                                                                */
 /* ------------------------------------------------------------------ */
-
-interface PaginationControls {
-  Limit: number;
-  Page: number;
-  Total: number;
-}
-
-interface APIRequest {
-  pagination: {
-    limit: number;
-    page: number;
-  };
-  search?: string;
-  columns?: Array<{
-    column: string;
-    operator: string;
-    value: unknown;
-    label?: string;
-  }>;
-}
 
 export interface PaginatedResponse<T> {
   content: T[];
@@ -855,10 +836,7 @@ export const usePosts = ({
 }: UsePostsParams) => {
   return useQuery({
     queryKey: ["posts", "feed", page, limit],
-    queryFn: async () =>
-      await Post<APIRequest, PostI[]>("posts/feed", {
-        pagination: { limit, page },
-      }),
+    queryFn: () => feedFactory.fetchPage({ page, limit }),
     placeholderData: keepPreviousData,
     enabled,
   });
@@ -874,37 +852,23 @@ export const useInfinitePosts = ({ limit, search }: UseInfinitePostsParams) => {
   const trimmedSearch = search?.trim() || "";
 
   return useInfiniteQuery({
-    queryKey: ["posts", "infinite", limit, filters.length, trimmedSearch],
-    queryFn: async ({ pageParam }) => {
-      const res = await Post<APIRequest, PostI[]>("posts/feed", {
-        pagination: {
+    queryKey: ["posts", "infinite", limit, filters, trimmedSearch],
+    queryFn: ({ pageParam }) =>
+      feedFactory.fetchPage(
+        {
+          page: pageParam.page,
           limit,
-          page: pageParam,
+          filters,
+          ...(trimmedSearch ? { search: trimmedSearch } : {}),
         },
-        ...(filters.length > 0 ? { columns: filters } : {}),
-        ...(trimmedSearch ? { search: trimmedSearch } : {}),
-      });
-
-      return {
-        data: res?.data || [],
-        pagination: res?.pagination as unknown as PaginationControls,
-      };
-    },
-    initialPageParam: 1,
+        pageParam.source
+      ),
+    initialPageParam: { page: 1 } as { page: number; source?: FeedSource },
     getNextPageParam: (lastPage) => {
-      // Halt if the previous page errored or returned nothing.
-      if (!lastPage?.pagination) {
-        return undefined;
-      }
-
-      const { Page, Limit, Total } = lastPage.pagination;
-
-      if (Page === undefined || Limit === undefined || Total === undefined) {
-        return undefined;
-      }
-
-      const fetchedSoFar = Page * Limit;
-      return fetchedSoFar < Total ? Page + 1 : undefined;
+      const { page, limit: pageLimit, total } = lastPage.pagination;
+      return page * pageLimit < total
+        ? { page: page + 1, source: lastPage.source }
+        : undefined;
     },
   });
 };
@@ -912,15 +876,17 @@ export const useInfinitePosts = ({ limit, search }: UseInfinitePostsParams) => {
 export const useGeoData = () => {
   return useQuery({
     queryKey: ["geo"],
-    queryFn: async () => await Get<Partial<PostI>[]>("posts/feed/geo"),
+    queryFn: () => feedFactory.fetchMapData(),
   });
 };
 
 export const usePostDetails = () => {
-  const { postId } = useParams();
+  const { postId, source = "backend" } = useParams();
+  const postSource: FeedSource = source === "tiktok" ? "tiktok" : "backend";
   return useQuery({
-    queryKey: ["details", postId],
-    queryFn: async () => await Get<PostI>("posts/post/" + postId),
+    queryKey: ["details", postSource, postId],
+    queryFn: () => feedFactory.fetchPostDetails(postId!, postSource),
+    enabled: Boolean(postId),
   });
 };
 
