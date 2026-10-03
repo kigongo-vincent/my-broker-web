@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { MapMarker1Solid, MapMarker5Solid } from "@lineiconshq/free-icons"
+import { MapMarker5Solid } from "@lineiconshq/free-icons"
 import Header from "../../../components/pages/tabs/Header"
 import Lineicons from "@lineiconshq/react-lineicons"
 import { PriceI, Currency, PostType } from "../../../components/pages/tabs/Post"
@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { useNavigate } from "react-router"
 import { useAppStore } from "../../../store/app"
 import { searchAddress, reverseGeocode } from "./Upload"
+import Loader from "../../../components/base/Loader"
 
 interface PriceRangeI {
     label: string
@@ -435,8 +436,9 @@ const Filter = () => {
 
     return (
         <AnimatePresence mode="sync">
-            <motion.div>
+            <motion.div className="overflow-auto h-screen">
                 <Header back title="filters" caption="apply filters to properties" />
+                <div className="h-3"></div>
                 <div className=" px-4">
                     <div className="flex flex-col gap-4  rounded-lg">
 
@@ -446,16 +448,16 @@ const Filter = () => {
                         </div>
 
                         <button
-                            className="btn bg-pale  w-full  disabled:opacity-60"
+                            className="btn bg-pale  w-full rounded-full  disabled:opacity-60"
                             onClick={handleUseCurrentLocation}
                             disabled={locating}
                         >
-                            <Lineicons icon={MapMarker1Solid} />
+                            <Lineicons icon={MapMarker5Solid} />
                             <span>{locating ? "locating..." : "use current location"}</span>
                         </button>
 
-                        <div className="bg-pale w-full  rounded-xl h-14 flex gap-3 items-center pl-4 pr-6 relative">
-                            <Lineicons icon={MapMarker5Solid} className="text-text/50" />
+                        <div className="bg-pale w-full  rounded h-14  flex gap-3 items-center pl-4 pr-6 relative">
+                            {/* <Lineicons icon={MapMarker5Solid} className="text-text/50" /> */}
                             <input
                                 type="text"
                                 placeholder="provide the location"
@@ -463,7 +465,9 @@ const Filter = () => {
                                 value={filters.locationQuery}
                                 onChange={(e) => handleLocationTextChange(e.target.value)}
                             />
-                            {searching && <span className="text-xs opacity-70 pr-2">searching…</span>}
+                            {searching && <span className="text-xs opacity-70 pr-2">
+                                <Loader loading />
+                            </span>}
                             {suggestions.length > 0 && (
                                 <div className="bg-pale rounded-xl flex flex-col absolute top-[calc(100%+0.5rem)] left-0 right-0 z-20 shadow-custom overflow-hidden max-h-56 overflow-y-auto">
                                     {suggestions.map((item, i) => (

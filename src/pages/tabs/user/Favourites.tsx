@@ -29,6 +29,7 @@ const Favourites = () => {
 
     return (
         <div>
+            <div className="h-22"></div>
             {isLoading ? <ListStackSkeleton rows={2} /> :
                 <FlexRender className={`gap-10 ${posts?.length == 0 || posts == null && "px-4"}`} items={posts || []} render={(item, index) => <Post {...(item as PostI)} key={index} />} />
             }

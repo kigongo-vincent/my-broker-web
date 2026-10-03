@@ -140,9 +140,10 @@ const Chat = () => {
 
 
     return (
-        <div>
+        <div className="">
+            <div className="h-22"></div>
             <Search placeholder="search for chats" value={query} onChange={(e) => setQuery(e?.currentTarget?.value)} />
-            <FlexRender row className="flex-row my-4 gap-2" items={tabs} render={(item, index) => <div
+            <FlexRender row className="flex-row my-1 gap-2" items={tabs} render={(item, index) => <div
                 onClick={() => setSlelectedTab(item)}
                 className={`px-5 py-3 flex-1 text-center cursor-pointer ${seletcedTab == item && "border-primary border-b-2 text-primary"}`} key={index}>{item}
             </div>} />

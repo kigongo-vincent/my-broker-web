@@ -1,4 +1,3 @@
-
 import { Activity } from "react"
 import { useAppStore } from "../../../store/app"
 import { UserI, useUserStore } from "../../../store/auth"
@@ -12,7 +11,7 @@ export interface props {
     noblur?: boolean
     noMargin?: boolean
 }
-
+// @ts-ignore
 const Header = ({ back, title, noMargin, noblur, caption }: props) => {
 
     const { token, getUserPhoto, user, getUser } = useUserStore()
@@ -32,7 +31,7 @@ const Header = ({ back, title, noMargin, noblur, caption }: props) => {
 
     return (
         <>
-            <div className={`fixed max-h-[8vh] min-h-[8vh] sm:w-[400px] border-b border-text/10 z-50 bg-paper  ${!noblur && "dark:backdrop-blur-sm dark:bg-paper/80"} top-0 w-full h-[8vh] flex items-center justify-between px-4`}>
+            <div className={`fixed max-h-[9vh]  min-h-[9vh] sm:w-[400px] border-b border-text/10 z-50 bg-paper top-0 w-full h-[8vh] flex items-center justify-between px-4`}>
 
                 {
                     !back
@@ -47,7 +46,7 @@ const Header = ({ back, title, noMargin, noblur, caption }: props) => {
                 {
                     !title
                         ?
-                        <p className='font-semibold black-ops-one-regular text-2xl'>My Broker</p>
+                        <p className='font-semibold black-ops-one-regular text-xl'>My Broker</p>
                         :
                         !caption
                             ?
@@ -73,7 +72,7 @@ const Header = ({ back, title, noMargin, noblur, caption }: props) => {
                 }
             </div>
             <Activity mode={noMargin ? "hidden" : "visible"}>
-                <div className="min-h-[11vh]"></div>
+                <div className="min-h-[9vh] shrink-0"></div>
             </Activity>
         </>
 

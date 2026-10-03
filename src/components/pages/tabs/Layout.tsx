@@ -11,25 +11,31 @@ export interface Props {
     children: ReactNode
 }
 
+const BASE_URL = "/tabs/user"
+const FULL_BLEED_PATHS = ["/tabs/user", "/tabs/user/", "/tabs/user/favourites"]
+
 const Layout = ({ children }: Props) => {
 
     const { pathname } = useLocation()
     const { favouritesCount } = useAppStore()
 
     const isUser = pathname?.includes("user")
+    const isFullBleed = FULL_BLEED_PATHS.includes(pathname)
+    const { setRefresh } = useAppStore()
 
-    const BASE_URL = "/tabs/user"
+
+
 
     const UserLinks: LinkI[] = useMemo(() => [{
         icon: <Lineicons icon={Home2Solid} />,
         path: `${BASE_URL}`,
-        label: "home"
+        label: "home",
+        action: () => setRefresh?.(true)
     },
     {
         icon: <Lineicons icon={Message2Solid} />,
         path: `${BASE_URL}/chat`,
         label: "messages",
-
     },
     {
         icon: <Lineicons icon={PlusSolid} />,
@@ -46,15 +52,20 @@ const Layout = ({ children }: Props) => {
         path: `${BASE_URL}/settings`,
         label: "settings"
     },
-    ], [favouritesCount])
+    ], [favouritesCount, setRefresh])
+
 
     return (
-        <div>
-            <Header />
-            <main className={`h-screen  ${!["/tabs/user", "/tabs/user/", "/tabs/user/favourites"]?.includes(pathname) && "px-4"} overscroll-y-auto`}>
+        // Fixed-height shell: nothing outside <main> is allowed to scroll
+        <div className="flex h-dvh w-full flex-col overflow-hidden mx-auto sm:w-[400px]">
+            <Header noMargin />
+            {/* The ONLY scroll container */}
+            <main
+                className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain ${!isFullBleed ? "px-4" : ""}`}
+                style={{ WebkitOverflowScrolling: "touch" }}
+            >
                 {children}
-                <div className="min-h-[14vh]"></div>
-
+                <div className="h-2 shrink-0" />
             </main>
             <Tabs links={isUser ? UserLinks : []} />
         </div>

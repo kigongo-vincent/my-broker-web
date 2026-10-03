@@ -60,6 +60,7 @@ const Privacy = () => {
     return (
         <div>
             <Header back title="privacy" />
+            <div className="h-5"></div>
             <div className="px-4">
 
                 <div className="flex border-b border-text/10 pb-4 mb-4 items-center gap-4 justify-between">

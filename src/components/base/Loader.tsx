@@ -1,7 +1,7 @@
 import { ReactNode } from "react"
 
 export interface Props {
-    children: ReactNode
+    children?: ReactNode
     loading: boolean
 }
 

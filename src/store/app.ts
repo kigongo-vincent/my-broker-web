@@ -17,6 +17,8 @@ interface AlertI {
 export interface AppStoreI {
   completeOnBoarding?: boolean;
   setCompleteOnBoarding?: (v: boolean) => void;
+  refresh: boolean;
+  setRefresh?: (val: boolean) => void;
   filters: FilterColumn[];
   showHomeBadge: boolean;
   setShowHomeBadge: () => void;
@@ -43,6 +45,8 @@ export const useAppStore = create<AppStoreI>()(
   persist(
     (set, get) => ({
       postToUpdate: undefined,
+      refresh: false,
+      setRefresh: (val: boolean) => set({ refresh: val }),
       setPostToUpdate: (p) => {
         set({ postToUpdate: p });
       },

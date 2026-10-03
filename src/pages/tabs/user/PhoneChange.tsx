@@ -86,6 +86,7 @@ const PhoneChange = () => {
     return (
         <div>
             <Header back title="phone change" caption="update your contact" />
+            <div className="h-2"></div>
             <div className="px-4 flex flex-col gap-6">
                 {step === 1 && (
                     <>

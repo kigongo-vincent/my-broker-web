@@ -146,17 +146,17 @@ const PropertyLabel = ({ property }: { property: Partial<PostI> }) => {
         </>
     );
     const style = {
-            background: 'var(--color-paper)',
-            color: 'var(--color-text)',
-            padding: '10px 20px',
-            borderRadius: '10px',
-            fontWeight: 'bold',
-            fontSize: '14px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            transform: 'translate(-50%, -100%)',
-            whiteSpace: 'nowrap',
-            display: 'inline-block'
-        };
+        background: 'white',
+        color: 'black',
+        padding: '10px 20px',
+        borderRadius: '10px',
+        fontWeight: 'bold',
+        fontSize: '14px',
+        // boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        transform: 'translate(-50%, -100%)',
+        whiteSpace: 'nowrap',
+        display: 'inline-block'
+    };
     return href ? (
         <Link to={href} style={style}>{label}</Link>
     ) : (
@@ -174,8 +174,7 @@ const propertyLabelHtml = (property: Partial<PostI>): string => {
     }
     return `
         <a href="${escapeHtml(href)}" class="map-property-label">
-            ${name}
-            ${price ? `<hr class="my-2 border border-text/10" />${price}` : ''}
+            ${price ? `${price}` : ''}
         </a>
     `;
 };
@@ -194,13 +193,13 @@ const LEAFLET_PROPERTY_LABEL_CSS = `
 .leaflet-container a.map-property-label,
 .leaflet-container a.map-property-label:hover,
 .leaflet-container .map-property-label {
-    background: var(--color-paper) !important;
-    color: var(--color-text) !important;
+    background: white !important;
+    color: black !important;
     padding: 10px 20px;
+    box-shadow: 5px 5px 10px rgba(0,0,0,.03);
     border-radius: 10px;
     font-weight: bold;
     font-size: 14px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     white-space: nowrap;
     display: inline-block;
     text-decoration: none !important;
@@ -417,7 +416,7 @@ const GoogleMapView = ({ theme, properties, defaultCenter, showDirections }: Pro
                             padding: '8px 12px',
                             borderRadius: '8px',
                             fontSize: '12px',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                            // boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
                         }}
                     >
                         Couldn't get your location: {locationError}
@@ -453,27 +452,30 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
 });
 
-// A single free, no-API-key tile source (OpenStreetMap standard tiles) used
-// for both themes. CARTO's basemaps — previously used here for a dedicated
-// dark style — now require a free API key for all raster tiles as of 2026,
-// which defeats the point of a no-signup Leaflet fallback. Dark mode is
-// instead achieved with a CSS filter applied to the same OSM tiles, a
-// common zero-dependency trick (invert + hue-rotate approximates a
-// "dark matter" look without needing a second keyed tile service).
-const LEAFLET_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+// Real light/dark basemap styles from CARTO (no API key). Voyager is the
+// closest free raster style to Google Maps; Dark Matter is its dark
+// counterpart. `{r}` becomes "@2x" on retina screens. To swap vendors later,
+// only this config changes.
 const LEAFLET_TILE_ATTRIBUTION =
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
+    '&copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-// Applied via a wrapping <div> around MapContainer when the resolved theme
-// is dark. Filter-based dark mode is imperfect (colors shift, POI icons can
-// look odd) but needs zero extra services or keys.
-const LEAFLET_DARK_FILTER_CSS = `
-.map-leaflet-dark .leaflet-tile-pane {
-    filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
-}
-`;
+const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY;
+
+const LEAFLET_TILES: Record<'light' | 'dark', { url: string; background: string }> = {
+    light: {
+        url: `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`,
+        background: '#e8eaed'
+    },
+    dark: {
+        url: `https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`,
+        background: '#212121'
+    }
+};
+
 
 const resolveTileTheme = (theme?: MapTheme): 'light' | 'dark' => {
+    return "light"
     if (theme === 'dark') return 'dark';
     if (theme === 'light') return 'light';
     // 'follow-system' / unset: read the same signal Google's ColorScheme
@@ -648,20 +650,27 @@ const LeafletMapView = ({ theme, properties, defaultCenter, showDirections }: Pr
 
     const boundsPoints = hasProperties ? [effectiveCenter, ...destinations] : [effectiveCenter];
 
-    const isDark = resolveTileTheme(theme) === 'dark';
+    const tileTheme = resolveTileTheme(theme);
+    const tiles = LEAFLET_TILES[tileTheme];
 
     return (
-        <div className={isDark ? 'map-leaflet-dark' : undefined} style={{ position: 'relative', width: '100%', height: '100%', zIndex: 1 }}>
-            {/* Injects the shared label styling + optional dark-mode tile filter once; Leaflet markers render raw HTML, not React, so this can't be inline JSX like Google's PropertyLabel. */}
-            <style>{LEAFLET_PROPERTY_LABEL_CSS}{isDark ? LEAFLET_DARK_FILTER_CSS : ''}</style>
+        <div style={{ position: 'relative', width: '100%', height: '100%', zIndex: 1 }}>
+            {/* Shared label styling; Leaflet markers render raw HTML, not React, so this can't be inline JSX like Google's PropertyLabel. */}
+            <style>{LEAFLET_PROPERTY_LABEL_CSS}</style>
 
             <MapContainer
                 center={[effectiveCenter.lat, effectiveCenter.lng]}
                 zoom={14}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', background: tiles.background }}
                 zoomControl={false}
             >
-                <TileLayer url={LEAFLET_TILE_URL} attribution={LEAFLET_TILE_ATTRIBUTION} />
+                <TileLayer
+                    key={tileTheme}
+                    url={tiles.url}
+                    attribution={LEAFLET_TILE_ATTRIBUTION}
+                    subdomains="abcd"
+                    maxZoom={20}
+                />
 
                 <Marker position={[effectiveCenter.lat, effectiveCenter.lng]} />
 
@@ -689,7 +698,7 @@ const LeafletMapView = ({ theme, properties, defaultCenter, showDirections }: Pr
                         padding: '8px 12px',
                         borderRadius: '8px',
                         fontSize: '12px',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                        // boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
                     }}
                 >
                     Couldn't get your location: {locationError}

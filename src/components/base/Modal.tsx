@@ -64,7 +64,7 @@ const Modal = ({ position = "center", onClose, children, hideClose, className, o
                                 exit={{ y: 28, opacity: 0 }}
                                 transition={sheetTransition}
                                 onClick={(e) => e.stopPropagation()}
-                                className={`bg-paper mx-3 sm:mx-4 w-[min(100%,98vw)] sm:w-[min(92vw,36rem)] md:w-[min(40vw,42rem)] max-h-[90vh] rounded-lg p-4 sm:p-6 flex flex-col ${className ?? ""} dark:border border-text/10`}
+                                className={`bg-[#161C29] mx-3 sm:mx-4 w-[min(100%,98vw)] sm:w-[min(92vw,36rem)] md:w-[min(40vw,42rem)] max-h-[90vh] rounded-lg p-4 sm:p-6 flex flex-col ${className ?? ""} `}
                             >
 
                                 {/* header - fixed at top, not scrollable */}

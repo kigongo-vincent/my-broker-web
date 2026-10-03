@@ -23,13 +23,14 @@ const FAB = ({ ...attr }: FABProps) => {
             dragElastic={0}
             dragMomentum={false}
             onClick={attr?.onClick}
-            className="fixed bottom-30 right-5 bg-primary h-15 w-15 flex items-center justify-center text-white rounded-full pointer-events-auto"
+            className="fixed bottom-25 right-5 bg-primary h-14 w-14 flex items-center justify-center text-white rounded-full pointer-events-auto"
         >
             <Lineicons icon={MapMarker1Solid} />
         </motion.button>
     )
 }
 
+// @ts-ignore
 const FAB2 = ({ ...attr }: FABProps) => {
     const constraintsRef = useRef<HTMLDivElement>(null)
 
@@ -40,7 +41,7 @@ const FAB2 = ({ ...attr }: FABProps) => {
             dragElastic={0}
             dragMomentum={false}
             onClick={attr?.onClick}
-            className="fixed bottom-30 left-5 bg-white shadow-custom h-15 w-15 flex items-center justify-center  rounded-full pointer-events-auto"
+            className="fixed bottom-25 left-5 bg-white shadow-custom h-14 w-14  flex items-center justify-center  rounded-full pointer-events-auto"
         >
             <img src={Bot} alt="" className="h-13 w-13" />
         </motion.button>
@@ -108,11 +109,29 @@ const Home = () => {
     }, [handleIntersect, posts.length])
 
     const sentinelIndex = Math.max(posts.length - PREFETCH_THRESHOLD, 0)
+    const { refresh, setRefresh } = useAppStore()
+
+    useEffect(() => {
+        if (refresh) {
+            // 1. Refetch data
+            refetch({})
+
+            // 2. Scroll the <main> container to the top (not the window)
+            const mainScrollContainer = document.querySelector('main');
+            if (mainScrollContainer) {
+                mainScrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+            }
+
+            // 3. Reset state
+            setRefresh?.(false)
+        }
+    }, [refresh, refetch, setRefresh])
 
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 flex-1">
 
             <div className="px-4 flex flex-col gap-1">
+                <div className="h-21"></div>
                 <Search
                     filter
                     value={query}
@@ -123,7 +142,7 @@ const Home = () => {
                 {
                     filters?.length != 0 &&
                     <>
-                        <FlexRender className="mt-3 overflow-x-auto" row items={filters} render={(item, index) => <button onClick={() => removeFilter(item?.column)} key={index} className="flex items-center gap-2 bg-pale min-w-max px-6 py-2 pr-1  rounded-full">{item?.label} <Lineicons icon={XmarkSolid} className="bg-danger  rounded-full p-2 h-8 w-8" /></button>} />
+                        <FlexRender className="mt-3 overflow-x-auto" row items={filters} render={(item, index) => <button onClick={() => removeFilter(item?.column)} key={index} className="flex items-center gap-2 bg-pale min-w-max px-6 py-2 pr-1  rounded-full">{item?.label} <Lineicons icon={XmarkSolid} className="bg-danger text-white rounded-full p-2 h-8 w-8" /></button>} />
                     </>
                 }
 
@@ -178,7 +197,7 @@ const Home = () => {
                 <Empty type="posts" title="No properties found" />
             ) : (
                 <>
-                    <div className="flex flex-col gap-10">
+                    <div className="flex flex-col gap-2">
                         {posts.map((item, index) => (
                             <div key={item.ID || index}>
                                 <Post {...(item as PostI)} hideAvailability />
@@ -191,11 +210,11 @@ const Home = () => {
 
                     <div className="flex items-center justify-center py-6">
                         {isFetchingNextPage ? (
-                            <span className="text-sm text-gray-400 animate-pulse">
+                            <span className="text-sm text-text/50 animate-pulse">
                                 Loading more properties...
                             </span>
                         ) : !hasNextPage ? (
-                            <span className="text-sm text-gray-400">
+                            <span className="text-sm text-text/50">
                                 You've reached the end.
                             </span>
                         ) : null}
@@ -204,7 +223,7 @@ const Home = () => {
             )}
 
             <FAB onClick={() => navigate(`/map`)} />
-            <FAB2 onClick={() => navigate(`/chat-filter`)} />
+            {/* <FAB2 onClick={() => navigate(`/chat-filter`)} /> */}
 
         </div>
     )

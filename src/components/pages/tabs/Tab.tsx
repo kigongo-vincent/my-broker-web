@@ -6,6 +6,7 @@ import { useUserStore } from "../../../store/auth"
 export interface LinkI {
     label?: string
     icon: ReactNode
+    action?: () => void
     path: string
     badge?: string | number
 }
@@ -27,6 +28,10 @@ const Tab = (t: LinkI) => {
             return
         }
         t?.label !== "home" && LoginPrompt(t?.label || "")
+        if (t?.action) {
+            t?.action()
+            return
+        }
     }
 
     // TikTok style plus/upload button styling
@@ -34,7 +39,7 @@ const Tab = (t: LinkI) => {
         return (
             /* Added select-none and webkit inline styles to prevent text highlight/native search trigger */
             <div
-                className="flex flex-col items-start justify-center bg-primary rounded-lg h-full py-2 cursor-pointer group px-1 select-none"
+                className="flex flex-col items-start justify-center bg-primary  rounded-lg h-[50%] py-2 cursor-pointer group px-1 select-none"
                 style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none" }}
                 onClick={action}
             >

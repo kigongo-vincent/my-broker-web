@@ -36,9 +36,11 @@ const Search = ({ filter, className, value, handleSubmit, ...attr }: Props) => {
     return (
         <form
             onSubmit={onFormSubmit}
-            className="bg-pale w-full rounded-full h-17 flex gap-3 items-center px-6 ">
-            <Lineicons icon={Search1Outlined} className="h-[6.5vw] w-[6.5vw] " />
-            <input type="text" value={value} placeholder="search for rentals" className={`flex-1 outline-0 ${className}`} {...attr} />
+            className="bg-pale w-full rounded-full h-15 flex gap-3 items-center px-5">
+            <Lineicons icon={Search1Outlined} className="h-[5.5vw] w-[5.5vw] " />
+            <input
+                data-keep-keyboard
+                type="text" value={value} placeholder="search for rentals" className={`flex-1 outline-0 ${className}`} {...attr} />
             {
                 filter &&
                 <AdjustmentsHorizontalIcon type="button" onClick={filterAction} className="h-[6.5vw] min-h-[6.5vw]  w-[6.5vw] min-w-[6.5vw] " />

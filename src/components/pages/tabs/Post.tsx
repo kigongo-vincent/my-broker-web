@@ -16,7 +16,8 @@ import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
 import { useAppStore } from "../../../store/app"
 import { BottomSheet } from "react-spring-bottom-sheet"
-import TikTokVideo from "./TikTokVideo"
+import TikTokVideo, { getSafeTikTokVideoUrl } from "./TikTokVideo"
+import GoogleLogo from "../../../assets/google-maps-logo.webp"
 
 
 // ------------------------------------------------------------
@@ -53,6 +54,26 @@ export const formatLocation = (location: string): string => {
 
     const [first, second, ...rest] = parts
     return [`${first} ${second}`, ...rest].join(", ")
+}
+
+// Normalises a phone number to international format. A leading 0 becomes +256
+// (Uganda), e.g. "0743 914 230" -> "+256743914230".
+export const formatPhone = (raw?: string): string => {
+    if (!raw) return ""
+    const cleaned = raw.replace(/[^\d+]/g, "")
+    if (!cleaned) return ""
+    if (cleaned.startsWith("+")) return "+" + cleaned.slice(1).replace(/\D/g, "")
+    if (cleaned.startsWith("00")) return "+" + cleaned.slice(2)
+    if (cleaned.startsWith("0")) return "+256" + cleaned.slice(1)
+    if (cleaned.startsWith("256")) return "+" + cleaned
+    return cleaned.length <= 9 ? "+256" + cleaned : "+" + cleaned
+}
+
+// wa.me wants digits only (no "+"). Without a phone it opens WhatsApp's contact picker.
+export const whatsappLink = (phone?: string, text?: string): string => {
+    const digits = formatPhone(phone).replace(/\D/g, "")
+    const query = text ? `?text=${encodeURIComponent(text)}` : ""
+    return `https://wa.me/${digits}${query}`
 }
 // ------------------------------------------------------------
 
@@ -272,6 +293,22 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         }
     }
 
+    // Google Maps link: prefer exact coordinates, fall back to the place name
+    const mapsUrl = (() => {
+        const lat = post?.location?.cordinates?.lat
+        const lon = post?.location?.cordinates?.lon
+        if (typeof lat === "number" && typeof lon === "number" && Number.isFinite(lat) && Number.isFinite(lon) && !(lat === 0 && lon === 0)) {
+            return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`
+        }
+        const name = post?.location?.name?.trim()
+        return name ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}` : ""
+    })()
+
+    const handleOpenMap = () => {
+        setShowActions(false)
+        if (mapsUrl) window.open(mapsUrl, "_blank", "noopener,noreferrer")
+    }
+
     const isTikTokUser = u.source === "tiktok" || post?.source === "tiktok"
     const canShowActions = !noActions && (isTikTokUser || getUser()?.ID != u?.ID)
     function handleWhatsApp(): void {
@@ -281,9 +318,14 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         }
 
         if (u?.phone) {
-            // Strips out spaces, dashes, and special characters from the phone number
-            const cleanPhone = u.phone
-            window.open(`https://wa.me/${cleanPhone}`, "_blank")
+            const tikTokUrl = post?.source === "tiktok"
+                ? getSafeTikTokVideoUrl(post.assets?.find((a) => a.type === "video")?.url ?? "")
+                : undefined
+            window.open(
+                whatsappLink(u.phone, tikTokUrl ? `Hi, I'm interested in this property: ${tikTokUrl}` : undefined),
+                "_blank",
+                "noopener,noreferrer"
+            )
         } else {
             alert("Phone number is not available for this user.")
         }
@@ -328,12 +370,12 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
             {actions ? (
                 actions
             ) : canShowActions ? (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setShowActions(true) }}
-                        className="flex h-10 w-10 items-center justify-center "
-                    >
-                        <EllipsisVerticalIcon className="h-9 w-9" />
-                    </button>
+                <button
+                    onClick={(e) => { e.stopPropagation(); setShowActions(true) }}
+                    className="flex h-10 w-10 items-center justify-center "
+                >
+                    <EllipsisVerticalIcon className="h-9 w-9" />
+                </button>
             ) : null}
 
             {/* actions sheet */}
@@ -368,6 +410,15 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                         >
                             <Lineicons icon={WhatsappOutlined} />
                             <span >chat via whatsapp</span>
+                        </button>
+                    )}
+                    {mapsUrl && (
+                        <button
+                            onClick={handleOpenMap}
+                            className="btn w-full justify-start"
+                        >
+                            <img src={GoogleLogo} className="h-6 w-6 object-contain" alt="" />
+                            <span>open in google maps</span>
                         </button>
                     )}
                 </div>
@@ -502,7 +553,7 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
                     ref={scrollRef}
                     onScroll={handleScroll}
                     onClick={handleClick}
-                    className={`flex ${p.source === "tiktok" ? "h-[50vh]" : "h-[30vh]"} w-full snap-x snap-mandatory overflow-x-auto scrollbar-hide`}
+                    className="flex h-[30vh] w-full snap-x snap-mandatory overflow-x-auto scrollbar-hide"
                 >
                     {mediaAssets.map((item, index) => {
                         const originalIndex = p.assets.findIndex(a => a.url === item.url)

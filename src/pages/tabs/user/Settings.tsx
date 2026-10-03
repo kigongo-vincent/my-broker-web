@@ -26,7 +26,7 @@ const SettingComponent = (s: SettingComponentI) => {
             </span>
             <div className="flex flex-col  justify-center">
                 <p className="font-medium ">{s?.title}</p>
-                <p className=" text-text/50">{s?.caption}</p>
+                <p className="text-sm text-text/50">{s?.caption}</p>
             </div>
         </Link>
     )
@@ -46,42 +46,42 @@ const Settings = () => {
         {
 
             ID: 1,
-            icon: <Lineicons icon={TargetUserSolid} />,
+            icon: <Lineicons size={25} icon={TargetUserSolid} />,
             title: "Profile & Account",
             caption: "customize your profile",
             path: "/account"
         },
         {
             ID: 2,
-            icon: <Lineicons icon={BadgeDecagramPercentSolid} />,
+            icon: <Lineicons size={25} icon={BadgeDecagramPercentSolid} />,
             title: "ID verification",
             caption: true ? "your account is verified" : "earn a verification badge on your account",
             path: "/verification"
         },
         {
             ID: 3,
-            icon: <Lineicons icon={PhoneSolid} />,
+            icon: <Lineicons size={25} icon={PhoneSolid} />,
             title: "Change phone number",
             caption: "Transfer account to another phone number",
             path: "/phone"
         },
         // {
         //     ID: 4,
-        //     icon: <Lineicons icon={Envelope1Solid} />,
+        //     icon: <Lineicons size={25} icon={Envelope1Solid} />,
         //     title: "Change Email",
         //     caption: "Transfer account to another email",
         //     path: ""
         // },
         {
             ID: 5,
-            icon: <Lineicons icon={Locked2Solid} />,
+            icon: <Lineicons size={25} icon={Locked2Solid} />,
             title: "Privacy",
             caption: "define what people can see about you",
             path: "/privacy"
         },
         {
             ID: 6,
-            icon: <Lineicons icon={PowerButtonSolid} />,
+            icon: <Lineicons size={25} icon={PowerButtonSolid} />,
             title: "Logout",
             caption: "logout from platform",
             path: "",
@@ -95,9 +95,8 @@ const Settings = () => {
 
     return (
         <div className="">
-            <p className="text-xl font-semibold  ">Setting</p>
-            <p className="text-sm mb-5 mt-1  pb-4 border-text/10  text-text/80">adjust the nobs of the app to match your preference</p>
-            <FlexRender className="gap-6" items={settings} render={(item, index) => <SettingComponent {...item} key={index} />} />
+            <div className="h-24"></div>
+            <FlexRender className="gap-2  bg-pale py-6 rounded-xl" items={settings} render={(item, index) => <SettingComponent {...item} key={index} />} />
 
             {/* logout  */}
             <BottomSheet open={showLogoutModal} onDismiss={() => setShowlogoutModal(false)}>

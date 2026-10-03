@@ -59,10 +59,10 @@ const Search = () => {
     const sentinelIndex = Math.max(posts.length - PREFETCH_THRESHOLD, 0)
 
     return (
-        <div>
+        <div className="overflow-auto h-screen ">
             <Header back title="search" caption={isLoading ? "Searching..." : `${totalMatches} match${totalMatches === 1 ? "" : "es"} found`} />
             <div className="px-4">
-
+                <br />
                 <p>Search results for <b className="text-primary">"{query}"</b></p>
             </div>
 

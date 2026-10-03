@@ -78,6 +78,7 @@ const FileDropzone = ({ id, label, hint, value, aspect = "aspect-video", onSelec
 
     return (
         <div className="rounded-2xl border border-text/10 bg-text/[0.02] p-3 flex flex-col gap-3">
+
             <div className="flex items-center gap-2.5">
                 <span className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary shrink-0">
                     <IdentificationIcon className="h-4.5 w-4.5" />
@@ -493,6 +494,7 @@ const Verify = () => {
     return (
         <div>
             <Header back />
+            <div className="h-6"></div>
             <div className=" px-4">
                 <div className="  rounded-2xl ">
                     <h2 className="text-xl font-semibold">Face verification</h2>
@@ -505,7 +507,7 @@ const Verify = () => {
                         <button
                             disabled={alreadyHandled || pending}
                             onClick={handleRequest}
-                            className="btn bg-primary text-white mt-10 w-full  disabled:opacity-60"
+                            className="btn bg-primary text-white mt-10 w-full rounded-full disabled:opacity-60"
                         >
                             <CheckBadgeIcon className="h-6 w-6" />
                             {

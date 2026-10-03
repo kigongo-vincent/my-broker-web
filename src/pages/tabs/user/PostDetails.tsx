@@ -1,6 +1,6 @@
 import { Activity, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router"
-import { formatAmount, formatLocation, PostI, User } from "../../../components/pages/tabs/Post"
+import { formatAmount, formatLocation, formatPhone, whatsappLink, PostI, User } from "../../../components/pages/tabs/Post"
 import Header from "../../../components/pages/tabs/Header"
 import GoogleLogo from "../../../assets/google-maps-logo.webp"
 import MapComponent from "../../../components/pages/upload/Map"
@@ -176,6 +176,14 @@ const PostDetails = () => {
     const tikTokContactDisabled = Boolean(
         post?.author?.hideContact || !post?.author?.phone
     );
+    // WhatsApp: message the owner (number normalised to +256...) with the TikTok link.
+    // If the number is hidden or missing, fall back to WhatsApp's contact picker.
+    const tikTokWhatsAppHref = originalTikTokUrl
+        ? whatsappLink(
+            tikTokContactDisabled ? undefined : post?.author?.phone,
+            `Hi, I'm interested in this property: ${originalTikTokUrl}`
+        )
+        : "";
 
     if (isLoading) {
         return (
@@ -206,21 +214,28 @@ const PostDetails = () => {
     }
 
     return (
-        <div className="w-full">
-            <Header back noMargin />
+        // Screen is a column: header (9vh) / scrolling content / action bar.
+        // Only the middle section scrolls, so the header and bar never move.
+        <div className="flex h-dvh w-full flex-col overflow-hidden">
+            <div className="h-[9vh] max-h-[9vh] shrink-0">
+                <Header back noMargin />
+            </div>
 
-            <Activity mode={showMaP ? "hidden" : "visible"}>
-                <button onClick={() => setShowMap(true)} className="fixed border border-text/10 z-100 btn max-w-max left-[50%] top-30 transform -translate-x-[50%] rounded-full bg-paper ">
-                    <img src={GoogleLogo} className="h-8 w-8" alt="" />
-                    <span>open map</span>
-                </button>
-            </Activity>
+            <div className="relative min-h-0 flex-1">
+                <Activity mode={showMaP ? "hidden" : "visible"}>
+                    <button onClick={() => setShowMap(true)} className="absolute z-10 border text-sm font-medium border-text/10 flex items-center px-4 py-1 max-w-max left-1/2 top-4 -translate-x-1/2 rounded-full bg-white text-black shadow-md">
+                        <img src={GoogleLogo} className="h-8 w-8" alt="" />
+                        <span>directions </span>
+                    </button>
+                </Activity>
 
-            {/* assets */}
-            <div
-                ref={scrollRef}
-                onScroll={handleScroll}
-                className="
+                <div className="h-full overflow-y-auto overscroll-contain">
+
+                    {/* assets */}
+                    <div
+                        ref={scrollRef}
+                        onScroll={handleScroll}
+                        className="
                     flex
                     gap-4
                     overflow-x-auto
@@ -228,14 +243,14 @@ const PostDetails = () => {
                     snap-mandatory
                     scrollbar-hide
                 "
-            >
+                    >
 
-                {
-                    mediaAssets.map(({ full, thumb }, index) => (
+                        {
+                            mediaAssets.map(({ full, thumb }, index) => (
 
-                        <div
-                            key={index}
-                            className="
+                                <div
+                                    key={index}
+                                    className="
                                 relative
                                 shrink-0
                                 snap-center
@@ -245,18 +260,18 @@ const PostDetails = () => {
                                 overflow-hidden
                                 bg-pale
                             "
-                        >
+                                >
 
-                            {
-                                full.type === "image"
-                                    ?
-                                    <LazyLoadImage
-                                        onClick={() => setImage(full.url)}
-                                        src={full.url}
-                                        placeholderSrc={thumb?.url}
-                                        effect="blur"
-                                        wrapperClassName="!absolute !inset-0 w-full h-full"
-                                        className="
+                                    {
+                                        full.type === "image"
+                                            ?
+                                            <LazyLoadImage
+                                                onClick={() => setImage(full.url)}
+                                                src={full.url}
+                                                placeholderSrc={thumb?.url}
+                                                effect="blur"
+                                                wrapperClassName="!absolute !inset-0 w-full h-full"
+                                                className="
                                             cursor-pointer
                                             absolute
                                             inset-0
@@ -264,231 +279,217 @@ const PostDetails = () => {
                                             h-full
                                             object-cover
                                         "
-                                        alt=""
-                                    />
-                                    :
-                                    post?.source === "tiktok" ? (
-                                        <TikTokVideo url={full.url} poster={thumb?.url} />
-                                    ) : (
-                                        <video
-                                            src={full.url}
-                                            poster={thumb?.url}
-                                            controls
-                                            preload="none"
-                                            playsInline
-                                            className="absolute inset-0 h-full w-full object-cover"
-                                        />
-                                    )
-                            }
+                                                alt=""
+                                            />
+                                            :
+                                            post?.source === "tiktok" ? (
+                                                <TikTokVideo url={full.url} poster={thumb?.url} />
+                                            ) : (
+                                                <video
+                                                    src={full.url}
+                                                    poster={thumb?.url}
+                                                    controls
+                                                    preload="none"
+                                                    playsInline
+                                                    className="absolute inset-0 h-full w-full object-cover"
+                                                />
+                                            )
+                                    }
 
-                            {mediaAssets.length > 1 && (
-                                <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5">
-                                    {mediaAssets.map((_, i) => (
-                                        <span
-                                            key={i}
-                                            className={`h-1.5 rounded-full transition-all ${i === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
-                                                }`}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-
-                        </div>
-
-                    ))
-                }
-
-            </div>
-
-
-            <div className="p-4 flex  flex-col gap-2">
-                <br />
-                <User {...post?.author as UserI} noActions />
-                {post.source === "tiktok" && post.author?.phone && (
-                    <a
-                        href={`tel:${post.author.phone}`}
-                        className="mx-4 -mt-2 mb-2 w-fit text-sm font-medium text-primary underline underline-offset-2"
-                    >
-                        {post.author.phone}
-                    </a>
-                )}
-                <br />
-                <div className="flex flex-col gap-4 bg-pale rounded-xl p-4 py-6">
-                    {(Number(post?.price?.amount) > 0 || post?.available !== undefined) && (
-                        <div className="flex flex-wrap items-center gap-2">
-                            {Number(post?.price?.amount) > 0 && (
-                                <>
-                                    <h2 className=" underline decoration-2 underline-offset-2">
-                                        {post?.price.currency} {formatAmount(Number(post?.price.amount))}
-                                    </h2>
-                                    <span className="text-text/60">/month</span>
-                                    <Activity mode={post?.negotiable ? "visible" : "hidden"}>
-                                        <span className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary">
-                                            negotiable
-                                        </span>
-                                    </Activity>
-                                </>
-                            )}
-                            {post?.available !== undefined && (
-                                <div className={`${post.available ? "bg-success" : "bg-danger"} w-max rounded-full px-2 py-1 text-xs font-medium text-white`}>
-                                    {post.available == false && "un"}available
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    <p className="text-text/50">{formatLocation(post?.location?.name || "")}</p>
-
-                    {(Number(post?.bedrooms) > 0 || Number(post?.toilets) > 0 || Number(post?.bathrooms) > 0) && (
-                        <div className="flex flex-wrap gap-4 text-text/50">
-                            {Number(post?.bedrooms) > 0 && (
-                                <span className="flex items-center gap-1.5">
-                                    <Bed size={20} weight="fill" />
-                                    {post?.bedrooms} bedroom{post?.bedrooms !== 1 && "s"}
-                                </span>
-                            )}
-                            {Number(post?.toilets) > 0 && (
-                                <span className="flex items-center gap-1.5">
-                                    <Toilet size={20} weight="fill" />
-                                    {post?.toilets} toilet{post?.toilets !== 1 && "s"}
-                                </span>
-                            )}
-                            {Number(post?.bathrooms) > 0 && (
-                                <span className="flex items-center gap-1.5">
-                                    <Bathtub size={20} weight="fill" />
-                                    {post?.bathrooms} bathroom{post?.bathrooms !== 1 && "s"}
-                                </span>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {(Number(post?.units) > 0 || Number(post?.months) > 0) && (
-                    <div className="bg-pale py-6 my-4 rounded-xl p-4">
-                        {Number(post?.units) > 0 && (
-                            <div className="flex items-center gap-1">
-                                <p className=" font-semibold">{post?.units}</p>
-                                <p className="">unit{post?.units != 1 && "s"} available</p>
-                            </div>
-                        )}
-                        {Number(post?.months) > 0 && (
-                            <p className="flex items-center mt-2 gap-2 text-yellow-600 bg-yellow-600/5 px-6 py-4 rounded-xl">
-                                <ExclamationTriangleIcon className="h-6 w-6" />
-                                <span>{post?.months} month{post?.months != 1 && "s"} needed for the first month</span>
-                            </p>
-                        )}
-                    </div>
-                )}
-
-                {Boolean(ammenities?.length) && (
-                    <div>
-                        <p className="font-semibold">Amenities</p>
-                        <p className="text-text/50 text-sm mt-1">Below are some of the things that come inclusive on your monthly rent</p>
-                        <br />
-                        <div className="grid gap-4 grid-cols-2">
-                            {ammenities?.map(a => (
-                                <div key={a.label} className={`flex px-4 py-10 rounded-xl bg-pale flex-col items-center justify-center ${a.selected && "border border-primary/20 bg-primary/2"}`}>
-                                    {a.icon && <img src={a.icon} className="h-20 object-contain" alt="" />}
-                                    <p className="mt-6">{a.label}</p>
-                                </div>
-                            ))}
-                        </div>
-                        <br />
-                        <div className="h-[10vh]" />
-                    </div>
-                )}
-
-                <div className="fixed h-22 gap-3 bottom-0 p-4 flex w-full bg-paper/80 backdrop-blur-sm shadow-md border-t left-0 border-text/10">
-                    {
-                        post.source === "tiktok" ? (
-                            <div className="flex w-full items-center gap-3">
-                                <button
-                                    type="button"
-                                    aria-label="Share TikTok video on WhatsApp"
-                                    title="Share on WhatsApp"
-                                    disabled={!originalTikTokUrl}
-                                    onClick={() => originalTikTokUrl && window.open(
-                                        `https://wa.me/?text=${encodeURIComponent(originalTikTokUrl)}`,
-                                        "_blank",
-                                        "noopener,noreferrer"
+                                    {mediaAssets.length > 1 && (
+                                        <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5">
+                                            {mediaAssets.map((_, i) => (
+                                                <span
+                                                    key={i}
+                                                    className={`h-1.5 rounded-full transition-all ${i === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                                                        }`}
+                                                />
+                                            ))}
+                                        </div>
                                     )}
-                                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-text/10 bg-pale text-text disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <Lineicons icon={WhatsappOutlined} />
-                                </button>
-                                <button
-                                    type="button"
-                                    aria-label="Call property owner"
-                                    title="Call"
-                                    disabled={tikTokContactDisabled}
-                                    onClick={() => isAuthenticated
-                                        ? post.author?.phone && window.open(`tel:${post.author.phone}`, "_self")
-                                        : LoginPrompt("messages")}
-                                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-text/10 bg-pale text-text disabled:cursor-not-allowed disabled:opacity-40"
-                                >
-                                    <Lineicons icon={Telephone1Solid} />
-                                </button>
-                                {originalTikTokUrl ? (
-                                    <a
-                                        href={originalTikTokUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="View on TikTok"
-                                        title="View on TikTok"
-                                        className="btn h-14 min-w-0 flex-1 justify-center rounded-full bg-white text-black"
-                                    >
-                                        <img src="https://img.magnific.com/premium-vector/tiktok-app-icon-social-media-logo_277909-647.jpg?semt=ais_hybrid&w=740&q=80" className="h-8" />
-                                        <span>Visit on TikTok</span>
-                                    </a>
-                                ) : (
-                                    <span
-                                        aria-label="TikTok video unavailable"
-                                        className="btn h-14 min-w-0 flex-1 justify-center rounded-full bg-white text-black/40"
-                                    >
-                                        <span>TikTok unavailable</span>
-                                        <TikTokBrandIcon />
-                                    </span>
+
+                                </div>
+
+                            ))
+                        }
+
+                    </div>
+
+
+                    <div className="p-4 flex  flex-col gap-2">
+                        <br />
+                        <User {...post?.author as UserI} noActions />
+
+                        <br />
+                        <div className="flex flex-col gap-4 bg-pale rounded-xl p-4 py-6">
+                            {(Number(post?.price?.amount) > 0 || post?.available !== undefined) && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {Number(post?.price?.amount) > 0 && (
+                                        <>
+                                            <h2 className=" underline decoration-2 underline-offset-2">
+                                                {post?.price.currency} {formatAmount(Number(post?.price.amount))}
+                                            </h2>
+                                            <span className="text-text/60">/month</span>
+                                            <Activity mode={post?.negotiable ? "visible" : "hidden"}>
+                                                <span className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary">
+                                                    negotiable
+                                                </span>
+                                            </Activity>
+                                        </>
+                                    )}
+                                    {post?.available !== undefined && (
+                                        <div className={`${post.available ? "bg-success" : "bg-danger"} w-max rounded-full px-2 py-1 text-xs font-medium text-white`}>
+                                            {post.available == false && "un"}available
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <p className="text-text/50">{formatLocation(post?.location?.name || "")}</p>
+
+                            {(Number(post?.bedrooms) > 0 || Number(post?.toilets) > 0 || Number(post?.bathrooms) > 0) && (
+                                <div className="flex flex-wrap gap-4 text-text/50">
+                                    {Number(post?.bedrooms) > 0 && (
+                                        <span className="flex items-center gap-1.5">
+                                            <Bed size={20} weight="fill" />
+                                            {post?.bedrooms} bedroom{post?.bedrooms !== 1 && "s"}
+                                        </span>
+                                    )}
+                                    {Number(post?.toilets) > 0 && (
+                                        <span className="flex items-center gap-1.5">
+                                            <Toilet size={20} weight="fill" />
+                                            {post?.toilets} toilet{post?.toilets !== 1 && "s"}
+                                        </span>
+                                    )}
+                                    {Number(post?.bathrooms) > 0 && (
+                                        <span className="flex items-center gap-1.5">
+                                            <Bathtub size={20} weight="fill" />
+                                            {post?.bathrooms} bathroom{post?.bathrooms !== 1 && "s"}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {(Number(post?.units) > 0 || Number(post?.months) > 0) && (
+                            <div className="bg-pale py-6 my-4 rounded-xl p-4">
+                                {Number(post?.units) > 0 && (
+                                    <div className="flex items-center gap-1">
+                                        <p className=" font-semibold">{post?.units}</p>
+                                        <p className="">unit{post?.units != 1 && "s"} available</p>
+                                    </div>
+                                )}
+                                {Number(post?.months) > 0 && (
+                                    <p className="flex items-center mt-2 gap-2 text-yellow-600 bg-yellow-600/5 px-6 py-4 rounded-xl">
+                                        <ExclamationTriangleIcon className="h-6 w-6" />
+                                        <span>{post?.months} month{post?.months != 1 && "s"} needed for the first month</span>
+                                    </p>
                                 )}
                             </div>
-                        ) : IsOwner
-                            ?
-                            <PostAuthorActions {...post} />
-                            :
-                            <>
-                                {
-                                    post?.author?.hideContact == false && <button onClick={() => isAuthenticated ? window.open(`tel:${post?.author?.phone || ""}`, "_self") : LoginPrompt("messages")} className="btn bg-paper flex-1 rounded-full border border-text/10">
-                                        <PhoneIcon className="h-6 w-6" />
-                                        <span>contact owner</span>
-                                    </button>
-                                }
-                                <button onClick={() => isAuthenticated ? navigate("/chat/" + post?.authorId) : LoginPrompt("messages")} className="btn rounded-full flex-1 bg-primary text-white">
-                                    <Lineicons icon={ChatBubble2Solid} />
-                                    <span>chat in app</span>
-                                </button>
-                            </>
-                    }
+                        )}
+
+                        {Boolean(ammenities?.length) && (
+                            <div>
+                                <p className="font-semibold">Amenities</p>
+                                <p className="text-text/50 text-sm mt-1">Below are some of the things that come inclusive on your monthly rent</p>
+                                <br />
+                                <div className="grid gap-4 grid-cols-2">
+                                    {ammenities?.map(a => (
+                                        <div key={a.label} className={`flex px-4 py-10 rounded-xl bg-pale flex-col items-center justify-center ${a.selected && "border border-primary/20 bg-primary/2"}`}>
+                                            {a.icon && <img src={a.icon} className="h-20 object-contain" alt="" />}
+                                            <p className="mt-6">{a.label}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
                 </div>
-
-                {/* <Modal position="bottom" className="p-0" open={showMaP} onClose={() => setShowMap(false)}>
-                    <div className="h-[70vh]  relative  w-full min-w-full">
-                        <motion.img initial={{ scale: "2%" }} animate={{ scale: 1 }} transition={{ duration: 10 }} src={theme == "light" ? MapLight : MapDark} className=" absolute   w-full" alt="" />
-                        <div className="absolute bg-black/10 backdrop-blur-sm h-full w-full flex items-center rounded-4xl justify-center">
-
-                            <img src={MapIcon} className="h-20  animate-bounce object-contain w-20 " alt="" />
-                        </div>
-                    </div>
-                </Modal> */}
-
-                <BottomSheet open={showMaP} onDismiss={() => setShowMap(false)} ref={sheetRef} className="z-000">
-                    <div className="h-[70vh]">
-                        <MapComponent provider="leaflet" defaultCenter={{ lat: post?.location?.cordinates?.lat || 0.3476, lng: post?.location?.cordinates?.lon || 32.5825 }} theme={theme?.toUpperCase() as ColorScheme} />
-                    </div>
-                </BottomSheet>
-
-                <Modal position="right" className="relative" open={image?.length != 0} onClose={() => setImage("")}>
-                    <img onClick={() => setImage("")} src={image} className="absolute left-0 top-0 h-full object-contain object-center w-full " />
-                </Modal>
-
             </div>
+
+            {/* action bar: sits below the scroll area, so no spacer is needed */}
+            <div className="flex w-full shrink-0 gap-3 border-t border-text/10 bg-paper px-4 py-3 shadow-md">
+                {
+                    post.source === "tiktok" ? (
+                        <div className="flex w-full items-center gap-3">
+                            <button
+                                type="button"
+                                aria-label="Contact owner on WhatsApp with the TikTok video link"
+                                title="Contact via WhatsApp"
+                                disabled={!tikTokWhatsAppHref}
+                                onClick={() => tikTokWhatsAppHref && window.open(
+                                    tikTokWhatsAppHref,
+                                    "_blank",
+                                    "noopener,noreferrer"
+                                )}
+                                className="btn bg-success flex-1 min-w-max"
+                            >
+                                <Lineicons icon={WhatsappOutlined} size={30} />
+                                <span className="min-w-max">contact via Whatsapp</span>
+                            </button>
+                            <button
+                                type="button"
+                                aria-label="Call property owner"
+                                title="Call"
+                                disabled={tikTokContactDisabled}
+                                onClick={() => isAuthenticated
+                                    ? post.author?.phone && window.open(`tel:${formatPhone(post.author.phone)}`, "_self")
+                                    : LoginPrompt("messages")}
+                                className="btn  bg-pale"
+                            >
+                                <Lineicons size={30} icon={Telephone1Solid} />
+                                <span>call</span>
+                            </button>
+                            {originalTikTokUrl ? (
+                                <a
+                                    href={originalTikTokUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="View on TikTok"
+                                    title="View on TikTok"
+                                    className="btn hidden min-w-0 flex-1 justify-center rounded-full bg-black text-white"
+                                >
+                                    <img src="https://thumbs.dreamstime.com/b/tiktok-social-media-app-icon-tiktok-social-media-app-icon-square-shape-vector-illustration-269930887.jpg" className="h-8" />
+                                    <span>Visit on TikTok</span>
+                                </a>
+                            ) : (
+                                <span
+                                    aria-label="TikTok video unavailable"
+                                    className="btn  min-w-0 flex-1 justify-center rounded-full bg-white text-black/40"
+                                >
+                                    <span>TikTok unavailable</span>
+                                    <TikTokBrandIcon />
+                                </span>
+                            )}
+                        </div>
+                    ) : IsOwner
+                        ?
+                        <PostAuthorActions {...post} />
+                        :
+                        <>
+                            {
+                                post?.author?.hideContact == false && <button onClick={() => isAuthenticated ? window.open(`tel:${post?.author?.phone || ""}`, "_self") : LoginPrompt("messages")} className="btn bg-paper flex-1 rounded-full border border-text/10">
+                                    <PhoneIcon className="h-6 w-6" />
+                                    <span>contact owner</span>
+                                </button>
+                            }
+                            <button onClick={() => isAuthenticated ? navigate("/chat/" + post?.authorId) : LoginPrompt("messages")} className="btn rounded-full flex-1 bg-primary text-white">
+                                <Lineicons icon={ChatBubble2Solid} />
+                                <span>chat in app</span>
+                            </button>
+                        </>
+                }
+            </div>
+
+            <BottomSheet open={showMaP} onDismiss={() => setShowMap(false)} ref={sheetRef} className="z-000">
+                <div className="h-[70vh]">
+                    <MapComponent provider="leaflet" defaultCenter={{ lat: post?.location?.cordinates?.lat || 0.3476, lng: post?.location?.cordinates?.lon || 32.5825 }} theme={theme?.toUpperCase() as ColorScheme} />
+                </div>
+            </BottomSheet>
+
+            <Modal position="right" className="relative" open={image?.length != 0} onClose={() => setImage("")}>
+                <img onClick={() => setImage("")} src={image} className="absolute left-0 top-0 h-full object-contain object-center w-full " />
+            </Modal>
         </div>
     )
 }

@@ -6,8 +6,14 @@ export interface Props {
 }
 
 const Tabs = ({ links }: Props) => {
+    if (!links?.length) return null
+
     return (
-        <FlexRender className="flex-row fixed bottom-0 left-0 bg-pale  max-h-[11vh] min-h-[11vh] items-center w-full px-4 justify-between" items={links} render={(item, index) => <Tab {...item} key={index} />} />
+        <FlexRender
+            className="flex-row shrink-0 bg-pale items-center w-full px-4 justify-between border-t border-text/10 h-[calc(9vh+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)]"
+            items={links}
+            render={(item, index) => <Tab {...item} key={index} />}
+        />
     )
 }
 

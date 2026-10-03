@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import a from "../assets/avatar.dark.svg";
 
 export interface BaseI {
   ID?: number;
@@ -48,8 +49,8 @@ export interface AuthStoreI {
 }
 
 export const STORAGE_KEY = "_jdncjnsckchsbchkbcknsncknksjncchbfk";
-export const AVATAR_FALLBACK =
-  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTgQIQ9gOvBDOqy7Toi6lIFPzWbdrum3VdsDwtze4kuSw&s=10";
+export const AVATAR_FALLBACK = a;
+// "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTgQIQ9gOvBDOqy7Toi6lIFPzWbdrum3VdsDwtze4kuSw&s=10";
 
 export const useUserStore = create<AuthStoreI>()(
   persist(
