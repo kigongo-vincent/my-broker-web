@@ -623,7 +623,7 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
             {/* details */}
             <div
                 onClick={handleClick}
-                className="flex cursor-pointer flex-col gap-3  px-4 py-4 "
+                className="flex cursor-pointer flex-col gap-2  px-4 py-4 "
             >
 
 
@@ -637,7 +637,7 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
                     <div className="flex flex-wrap items-center gap-2">
                         {p.price?.amount > 0 && (
                             <>
-                                <h2 className=" underline decoration-2 underline-offset-2">
+                                <h2 className="">
                                     {p.price.currency} {formatAmount(p.price.amount)}
                                 </h2>
                                 <span className="text-text/60">/month</span>
