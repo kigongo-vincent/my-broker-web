@@ -73,6 +73,8 @@ const Profile = () => {
 
     }
 
+
+
     function handleWhatsApp(): void {
         if (!isAuthenticated) {
             LoginPrompt("direct messages")
@@ -81,8 +83,12 @@ const Profile = () => {
 
         if (u?.phone) {
             // Strips out spaces, dashes, and special characters from the phone number
-            const cleanPhone = u.phone.replace(/\D/g, "")
+            let cleanPhone = u.phone.replace(/\D/g, "")
+            if (cleanPhone.startsWith("0")) {
+                cleanPhone = `256${cleanPhone.slice(1)}`
+            }
             window.open(`https://wa.me/${cleanPhone}`, "_blank")
+
         } else {
             alert("Phone number is not available for this user.")
         }
@@ -105,52 +111,52 @@ const Profile = () => {
                     <ProfileSkeleton />
                     : isError
                         ? <div className="p-6 text-center text-red-500">Failed to load profile: {(error as Error)?.message}</div>
-                    :
-                    <div className="mt-30">
-                        <img
-                            src={getUserPhoto?.(account?.user?.photo)}
-                            className='h-30 w-30 left-[50%] transform -translate-x-[50%] top-25 border-4 border-paper absolute rounded-full object-cover'
-                            alt=""
-                        />
-
-                        <div className=" p-6 flex flex-col border-b items-center gap-1.5 border-text/10">
-                            <h3 className="text-2xl font-bold">
-                                <div className="flex items-center gap-1">
-                                    <p className="font-medium">
-                                        {TextCropper(u?.name, 23)}
-                                    </p>
-                                    {u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
-                                    {u?.role == "broker" && <div className="text-sm text-white font-medium bg-primary px-4 py-1 rounded-full">broker</div>}
-                                </div>
-
-                            </h3>
-                            <p className='text-text/50'>{account?.user?.email}</p>
-
-                            {/* bio  */}
-                            <Activity mode={account?.user?.role == "broker" ? "visible" : "hidden"}>
-
-                                <p className='text-text/50'>{account?.user?.BrokerDetails?.Bio}</p>
-                                <p className='text-text/50 bg-pale px-4 py-2 rounded-full'>charges {account?.user?.BrokerDetails?.Fee}</p>
-                            </Activity>
-                        </div>
-                        <br />
-
-                        {account?.posts.length === 0 ? (
-                            <Empty type='posts' />
-                        ) : (
-                            <FlexRender
-                                className="gap-10"
-                                items={account?.posts || []}
-                                render={(item, index) => <Post {...(item as PostI)} key={index} />}
+                        :
+                        <div className="mt-30">
+                            <img
+                                src={getUserPhoto?.(account?.user?.photo)}
+                                className='h-30 w-30 left-[50%] transform -translate-x-[50%] top-25 border-4 border-paper absolute rounded-full object-cover'
+                                alt=""
                             />
-                        )}
 
-                        {hasNextPage && (
-                            <button onClick={() => fetchNextPage()} className="mt-4 text-sm text-text/70">
-                                Load more
-                            </button>
-                        )}
-                    </div>
+                            <div className=" p-6 flex flex-col border-b items-center gap-1.5 border-text/10">
+                                <h3 className="text-2xl font-bold">
+                                    <div className="flex items-center gap-1">
+                                        <p className="font-medium">
+                                            {TextCropper(u?.name, 23)}
+                                        </p>
+                                        {u?.verified && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
+                                        {u?.role == "broker" && <div className="text-sm text-white font-medium bg-primary px-4 py-1 rounded-full">broker</div>}
+                                    </div>
+
+                                </h3>
+                                <p className='text-text/50'>{account?.user?.email}</p>
+
+                                {/* bio  */}
+                                <Activity mode={account?.user?.role == "broker" ? "visible" : "hidden"}>
+
+                                    <p className='text-text/50'>{account?.user?.BrokerDetails?.Bio}</p>
+                                    <p className='text-text/50 bg-pale px-4 py-2 rounded-full'>charges {account?.user?.BrokerDetails?.Fee}</p>
+                                </Activity>
+                            </div>
+                            <br />
+
+                            {account?.posts.length === 0 ? (
+                                <Empty type='posts' />
+                            ) : (
+                                <FlexRender
+                                    className="gap-10"
+                                    items={account?.posts || []}
+                                    render={(item, index) => <Post {...(item as PostI)} key={index} />}
+                                />
+                            )}
+
+                            {hasNextPage && (
+                                <button onClick={() => fetchNextPage()} className="mt-4 text-sm text-text/70">
+                                    Load more
+                                </button>
+                            )}
+                        </div>
             }
 
 

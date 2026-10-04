@@ -5,6 +5,7 @@ import Modal from "../../base/Modal"
 import {
     HeartOutlined,
     HeartSolid,
+    MapMarker1Solid,
     Message2Outlined,
     Telephone1Solid,
     WhatsappOutlined
@@ -17,7 +18,6 @@ import { useNavigate } from "react-router"
 import { useAppStore } from "../../../store/app"
 import { BottomSheet } from "react-spring-bottom-sheet"
 import TikTokVideo, { getSafeTikTokVideoUrl } from "./TikTokVideo"
-import GoogleLogo from "../../../assets/google-maps-logo.webp"
 
 
 // ------------------------------------------------------------
@@ -388,7 +388,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             w-full justify-start
                             "
                         >
-                            <Lineicons icon={Telephone1Solid} />
+                            <Lineicons size={25} icon={Telephone1Solid} />
                             <span >Call {u?.name}</span>
                         </button>
                     )}
@@ -397,7 +397,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             onClick={handleChat}
                             className="btn w-full justify-start"
                         >
-                            <Lineicons icon={Message2Outlined} />
+                            <Lineicons size={25} icon={Message2Outlined} />
                             <span>Message {u?.name}</span>
                         </button>
                     )}
@@ -408,7 +408,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             w-full justify-start
                             "
                         >
-                            <Lineicons icon={WhatsappOutlined} />
+                            <Lineicons size={25} icon={WhatsappOutlined} />
                             <span >chat via whatsapp</span>
                         </button>
                     )}
@@ -417,7 +417,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             onClick={handleOpenMap}
                             className="btn w-full justify-start"
                         >
-                            <img src={GoogleLogo} className="h-6 w-6 object-contain" alt="" />
+                            <Lineicons size={25} icon={MapMarker1Solid} />
                             <span>open in google maps</span>
                         </button>
                     )}
