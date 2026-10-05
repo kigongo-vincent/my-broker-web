@@ -230,11 +230,12 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
             <img
               src={poster}
               alt=""
-              className="absolute inset-0 h-full w-full scale-105 object-cover blur-sm"
+              className="absolute inset-0 h-full w-full scale-105 object-cover "
               style={{ objectPosition: `50% ${FOCUS_Y * 100}%` }}
             />
           ) : (
-            <div className="absolute inset-0 animate-pulse bg-text/5" />
+            // <div className="absolute inset-0 animate-pulse bg-text/5" />
+            <></>
           )}
           <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/40">
             <span className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />

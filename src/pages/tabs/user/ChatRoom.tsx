@@ -348,7 +348,7 @@ interface ChatComposerProps {
 const ChatComposer = ({ draft, onDraftChange, onSend, sending }: ChatComposerProps) => {
     return (
         <div className="flex -z-10 dark:bg-paper/90 items-center px-4 pb-5 pt-2 gap-2 w-full">
-            <div className="rounded-full flex bg-pale items-center px-4 pr-1 dark:border border-text/10 h-14 flex-1">
+            <div className="rounded-full flex bg-pale items-center px-4 pr-1 dark:border dark:border-text/10 h-14 flex-1">
                 <input
                     value={draft}
                     onChange={(e) => onDraftChange(e.currentTarget.value)}
@@ -554,7 +554,7 @@ const ChatRoom = () => {
             </div>
 
             <Activity mode={selectedPost ? "visible" : "hidden"}>
-                <div className="relative z-10 px-5 pb-2 shrink-0">
+                <div className="relative z-10   bg-paper/90 px-5 pb-2 shrink-0">
                     <div className="backdrop-blur-sm w-full bg-paper/80 border-text/10 border flex items-center gap-3 rounded-xl p-4">
                         <img src={selectedPost?.assets[0]?.url} alt="" className="h-16 w-16 object-cover rounded-xl" />
                         <div className="flex flex-col justify-center flex-1">

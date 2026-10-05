@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import a from "../assets/avatar.dark.svg";
 
 export interface BaseI {
+  id?: number;
   ID?: number;
   CreatedAt?: string;
   UpdatedAt?: string;

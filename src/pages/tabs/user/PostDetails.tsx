@@ -136,12 +136,12 @@ const PostDetails = () => {
     const post = data
     const ammenities = post?.amenities?.map(a => ({ label: a, icon: IconFinder(a) } as CategoryI))
     const UserID = getUser()?.ID
-    const PostAuthorID = post?.author.ID
-    const IsOwner =
-        Boolean(post) &&
+    const PostAuthorID = post?.authorId
+    const IsOwner = useMemo(() => Boolean(post) &&
         post?.source !== "tiktok" &&
         UserID !== undefined &&
-        UserID === PostAuthorID
+        UserID === PostAuthorID, [post, UserID, PostAuthorID])
+
     const sheetRef = useRef(null)
     const [activeIndex, setActiveIndex] = useState(0)
     const { LoginPrompt } = useAppStore()

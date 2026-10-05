@@ -193,14 +193,15 @@ export interface Props extends UserI {
     noActions?: boolean
     actions?: ReactNode
     post?: PostI
+    u?: Partial<UserI>
 }
 
 // Gmail-like palette
-const AVATAR_COLORS = [
-    "#F44336", "#E91E63", "#9C27B0", "#673AB7",
-    "#3F51B5", "#2196F3", "#03A9F4", "#00BCD4",
-    "#009688", "#4CAF50", "#FF9800", "#FF5722",
-]
+// const AVATAR_COLORS = [
+//     "#F44336", "#E91E63", "#9C27B0", "#673AB7",
+//     "#3F51B5", "#2196F3", "#03A9F4", "#00BCD4",
+//     "#009688", "#4CAF50", "#FF9800", "#FF5722",
+// ]
 
 const getInitials = (name?: string) => {
     if (!name) return "?"
@@ -211,14 +212,14 @@ const getInitials = (name?: string) => {
     return initials.toUpperCase()
 }
 
-const getColorFromString = (str?: string) => {
-    if (!str) return AVATAR_COLORS[0]
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
-}
+// const getColorFromString = (str?: string) => {
+//     if (!str) return AVATAR_COLORS[0]
+//     let hash = 0
+//     for (let i = 0; i < str.length; i++) {
+//         hash = str.charCodeAt(i) + ((hash << 5) - hash)
+//     }
+//     return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+// }
 
 const formatPostedTime = (date?: string) => {
     if (!date) return ""
@@ -245,9 +246,9 @@ const formatPostedTime = (date?: string) => {
 
 const UserAvatar = ({ photo, name }: { photo: string; name?: string }) => {
     const initials = getInitials(name)
-    const bgColor = getColorFromString(name)
+    // const bgColor = getColorFromString(name)
     return (
-        <div className="isolate flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full" style={{ backgroundColor: bgColor }}>
+        <div className="isolate flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-text/10" >
             {photo ? (
                 <img src={photo} className="block h-full w-full rounded-full object-cover" alt="" />
             ) : (
@@ -262,7 +263,7 @@ const UserAvatar = ({ photo, name }: { photo: string; name?: string }) => {
 // and a single kebab menu that opens a bottom sheet with call/chat actions.
 // ---------------------------------------------------------------------------
 export const User = ({ noActions, actions, post, ...u }: Props) => {
-
+    u.ID = u.id
     const { getUserPhoto, user, getUser } = useUserStore()
     const navigate = useNavigate()
     const [showAuthPrompt, setShowAuthPrompt] = useState(false)
@@ -388,16 +389,16 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             w-full justify-start
                             "
                         >
-                            <Lineicons size={25} icon={Telephone1Solid} />
+                            <Lineicons size={28} icon={Telephone1Solid} />
                             <span >Call {u?.name}</span>
                         </button>
                     )}
-                    {u.source !== "tiktok" && (
+                    {(u.source !== "tiktok" && getUser().ID == post?.authorId) && (
                         <button
                             onClick={handleChat}
                             className="btn w-full justify-start"
                         >
-                            <Lineicons size={25} icon={Message2Outlined} />
+                            <Lineicons size={28} icon={Message2Outlined} />
                             <span>Message {u?.name}</span>
                         </button>
                     )}
@@ -408,7 +409,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             w-full justify-start
                             "
                         >
-                            <Lineicons size={25} icon={WhatsappOutlined} />
+                            <Lineicons size={28} icon={WhatsappOutlined} />
                             <span >chat via whatsapp</span>
                         </button>
                     )}
@@ -417,7 +418,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             onClick={handleOpenMap}
                             className="btn w-full justify-start"
                         >
-                            <Lineicons size={25} icon={MapMarker1Solid} />
+                            <Lineicons size={28} icon={MapMarker1Solid} />
                             <span>open in google maps</span>
                         </button>
                     )}

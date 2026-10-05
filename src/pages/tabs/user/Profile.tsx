@@ -101,8 +101,7 @@ const Profile = () => {
         <div>
             <Header
                 back
-                title={account?.user?.name || (user as UserI | undefined)?.name || 'Profile'}
-                caption={profileSource === "backend" && account?.user?.lastSeen ? "last seen " + account.user.lastSeen : ""}
+                title={'Profile'}
             />
 
             {
