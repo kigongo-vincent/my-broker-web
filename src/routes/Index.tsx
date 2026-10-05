@@ -21,7 +21,6 @@ const Index = () => {
 
     return (
         <div>
-
             <Routes>
                 <Route path="/" Component={() => <Navigate to="/tabs/user/" replace />} />
                 <Route path="/auth/*" Component={auth} />

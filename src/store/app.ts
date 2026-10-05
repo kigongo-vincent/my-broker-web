@@ -17,6 +17,8 @@ interface AlertI {
 export interface AppStoreI {
   completeOnBoarding?: boolean;
   setCompleteOnBoarding?: (v: boolean) => void;
+  showInstall: boolean;
+  setShowInstall: (v: boolean) => void;
   refresh: boolean;
   setRefresh?: (val: boolean) => void;
   filters: FilterColumn[];
@@ -45,6 +47,10 @@ export const useAppStore = create<AppStoreI>()(
   persist(
     (set, get) => ({
       postToUpdate: undefined,
+      showInstall: true,
+      setShowInstall: (v) => {
+        set({ showInstall: v });
+      },
       refresh: false,
       setRefresh: (val: boolean) => set({ refresh: val }),
       setPostToUpdate: (p) => {
@@ -111,6 +117,7 @@ export const useAppStore = create<AppStoreI>()(
         showHomeBadge: state.showHomeBadge,
         favouritesCount: state.favouritesCount,
         completeOnBoarding: state.completeOnBoarding,
+        showInstall: state.showInstall,
         // only persist what actually needs to survive reload
       }),
     }

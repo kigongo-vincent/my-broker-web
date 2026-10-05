@@ -6,6 +6,7 @@ import 'react-spring-bottom-sheet/dist/style.css'
 import SmoothScrollProvider from "./utils/scroll"
 import { useLocation, useNavigate } from "react-router"
 import Modal from "./components/base/Modal"
+import InstallSheet from "./components/base/Installsheet"
 import { useQuery } from "@tanstack/react-query"
 import { Get } from "../api"
 import { useUserStore } from "./store/auth"
@@ -32,7 +33,10 @@ const App = () => {
   useGlobalKeyboardDismiss()
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { error, setFavouritesCount, setCompleteOnBoarding, setError, success, setSuccess, completeOnBoarding } = useAppStore()
+  const {
+    error, setFavouritesCount, setCompleteOnBoarding, setError,
+    success, setSuccess, completeOnBoarding, RootBottomContent,
+  } = useAppStore()
   const { token } = useUserStore()
 
   // "intent" -> "Are you looking for a rental?"
@@ -75,12 +79,19 @@ const App = () => {
     setCompleteOnBoarding?.(true)
   }
 
+  // onboarding sheet visibility (single source of truth)
+  const showOnboarding = !completeOnBoarding && token != ""
+
+  // only show the install sheet when no other sheet is on screen
+  const installEnabled = !showOnboarding && !RootBottomContent?.title
+
   return (
     <>
       <div className="sm:hidden">
         <SmoothScrollProvider >
           <AppRouter />
         </SmoothScrollProvider>
+
         {/* root modal  */}
         <RModal />
 
@@ -109,7 +120,7 @@ const App = () => {
 
       {/* onboarding intent sheet */}
       <BottomSheet
-        open={!completeOnBoarding && token != ""}
+        open={showOnboarding}
         onDismiss={() => { }}
       >
         {stage === "intent" ? (
@@ -129,8 +140,9 @@ const App = () => {
         )}
       </BottomSheet>
 
+      {/* install sheet (shown after onboarding, only if not installed) */}
+      <InstallSheet enabled={installEnabled} />
     </>
-
   )
 }
 
