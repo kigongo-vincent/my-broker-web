@@ -21,8 +21,8 @@ export default defineConfig({
         enabled: true, // Forces manifest injection pipelines to compile during 'npm run dev'
       },
       manifest: {
-        name: "My broker - Rental plug", // Full branding title for Android download screen
-        short_name: "My Broker", // Fits neatly under mobile app shortcut icons
+        name: "\u200B", // zero-width space: nothing visible on the splash
+        short_name: "My Broker",
         description:
           "Comprehensive property broker platform and rental management app.",
         theme_color: "#ffffff",
