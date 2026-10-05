@@ -1,30 +1,32 @@
 import Lineicons from "@lineiconshq/react-lineicons";
-import { useInstallPrompt } from "../../hooks/install";
 import { CloudDownloadSolid } from "@lineiconshq/free-icons";
+import { useInstall } from "../../hooks/install";
 
 export function InstallButton() {
-    const { canInstall, showIOSHint, install } = useInstallPrompt();
+    const { installed, canPrompt, iosHint, install } = useInstall();
 
-    if (canInstall) {
+    // already installed (running standalone)
+    if (installed) return null;
+
+    // Android / desktop Chromium: real install prompt
+    if (canPrompt) {
         return (
-            <button
-                onClick={install}
-                className="btn bg-primary"
-            >
+            <button onClick={install} className="btn bg-primary text-white">
                 <Lineicons icon={CloudDownloadSolid} />
                 Install app
             </button>
         );
     }
 
-    if (showIOSHint) {
+    // iOS Safari: no install event, so show instructions
+    if (iosHint) {
         return (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-text/60">
                 To install: tap the <strong>Share</strong> icon, then{" "}
                 <strong>Add to Home Screen</strong>.
             </p>
         );
     }
 
-    return null; // already installed or not supported
+    return null; // not installable or not supported
 }
