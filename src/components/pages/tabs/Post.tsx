@@ -271,6 +271,12 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
     const isAuthenticated = Boolean((user as UserI)?.ID)
     const { setSelectedPost, LoginPrompt } = useAppStore()
 
+    useEffect(() => {
+        console.log("-----------------------------------------------------")
+        console.log(u.id)
+        console.log("-----------------------------------------------------")
+    }, [u])
+
     const handleCall = () => {
         setShowActions(false)
         if (!isAuthenticated) {
@@ -393,7 +399,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                             <span >Call {u?.name}</span>
                         </button>
                     )}
-                    {(u.source !== "tiktok" && getUser().ID == post?.authorId) && (
+                    {(u.source !== "tiktok" && getUser().ID != post?.authorId) && (
                         <button
                             onClick={handleChat}
                             className="btn w-full justify-start"
