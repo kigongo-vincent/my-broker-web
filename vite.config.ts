@@ -15,7 +15,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "inline", // Inlines the background daemon script to satisfy mobile engines instantly
-      filename: "manifest.json", // FORCE JSON file suffix to fix iOS Simulator local IP network bugs
+      manifestFilename: "manifest.json",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       devOptions: {
         enabled: true, // Forces manifest injection pipelines to compile during 'npm run dev'
