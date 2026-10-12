@@ -17,7 +17,7 @@ import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
 import { useAppStore } from "../../../store/app"
 import { BottomSheet } from "react-spring-bottom-sheet"
-import TikTokVideo, { getSafeTikTokVideoUrl } from "./TikTokVideo"
+import TikTokVideo from "./TikTokVideo"
 
 
 // ------------------------------------------------------------
@@ -325,11 +325,11 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         }
 
         if (u?.phone) {
-            const tikTokUrl = post?.source === "tiktok"
-                ? getSafeTikTokVideoUrl(post.assets?.find((a) => a.type === "video")?.url ?? "")
+            const postUrl = post?.ID !== undefined && post?.ID !== null
+                ? `${window.location.origin}/post/${post.source === "tiktok" ? "tiktok/" : ""}${encodeURIComponent(String(post.ID))}`
                 : undefined
             window.open(
-                whatsappLink(u.phone, tikTokUrl ? `Hi, I'm interested in this property: ${tikTokUrl}` : undefined),
+                whatsappLink(u.phone, postUrl ? `Hi, I'm interested in this property: ${postUrl}` : undefined),
                 "_blank",
                 "noopener,noreferrer"
             )

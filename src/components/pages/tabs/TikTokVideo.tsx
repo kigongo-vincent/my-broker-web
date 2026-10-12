@@ -60,6 +60,25 @@ const PLAYER_STYLE: React.CSSProperties = {
 // Share of the card that must be visible before the video plays.
 const PLAY_VISIBLE_RATIO = 0.6;
 
+// The player mounts when the card is within one screen of the viewport and
+// unmounts when it is more than three screens away, so the page never
+// carries dozens of live TikTok players.
+const LOAD_MARGIN = "100% 0px";
+const UNLOAD_MARGIN = "300% 0px";
+
+// Open the connection to TikTok once, before the first iframe mounts.
+let preconnected = false;
+const preconnectToTikTok = () => {
+  if (preconnected || typeof document === "undefined") return;
+  preconnected = true;
+  for (const rel of ["preconnect", "dns-prefetch"]) {
+    const link = document.createElement("link");
+    link.rel = rel;
+    link.href = "https://www.tiktok.com";
+    document.head.appendChild(link);
+  }
+};
+
 const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLIFrameElement>(null);
@@ -70,6 +89,7 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [shouldLoad, setShouldLoad] = useState(false);
   const safeUrl = getSafeTikTokVideoUrl(url);
   const videoId = safeUrl?.match(/\/video\/(\d+)(?:\/|$)/)?.[1];
 
@@ -159,6 +179,36 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
     };
   }, []);
 
+  // Mount the player shortly before the card is seen, unmount when far away
+  useEffect(() => {
+    preconnectToTikTok();
+    const el = containerRef.current;
+    if (!el) return;
+    const load = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setShouldLoad(true);
+      },
+      { rootMargin: LOAD_MARGIN }
+    );
+    const unload = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) return;
+        setShouldLoad(false);
+        playerReady.current = false;
+        pendingCommand.current = null;
+        setHasStarted(false);
+        setIsPlaying(false);
+      },
+      { rootMargin: UNLOAD_MARGIN }
+    );
+    load.observe(el);
+    unload.observe(el);
+    return () => {
+      load.disconnect();
+      unload.disconnect();
+    };
+  }, [videoId]);
+
   // Play when the card is mostly in view, pause when it leaves
   useEffect(() => {
     const el = containerRef.current;
@@ -207,18 +257,19 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
       className="absolute inset-0 isolate z-0 overflow-hidden bg-paper"
       style={{ containerType: "size" }}
     >
-      <iframe
-        ref={playerRef}
-        src={`https://www.tiktok.com/player/v1/${videoId}?autoplay=1&muted=1&loop=1&controls=0&progress_bar=0&play_button=0&volume_control=0&fullscreen_button=0&timestamp=0&music_info=0&description=0&rel=0&native_context_menu=0&closed_caption=0`}
-        title={title}
-        loading="lazy"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-        allowFullScreen
-        className={`pointer-events-none border-0 transition-opacity duration-300 ${hasStarted ? "opacity-100" : "opacity-0"
-          }`}
-        style={PLAYER_STYLE}
-      />
+      {shouldLoad && (
+        <iframe
+          ref={playerRef}
+          src={`https://www.tiktok.com/player/v1/${videoId}?autoplay=1&muted=1&loop=1&controls=0&progress_bar=0&play_button=0&volume_control=0&fullscreen_button=0&timestamp=0&music_info=0&description=0&rel=0&native_context_menu=0&closed_caption=0`}
+          title={title}
+          referrerPolicy="strict-origin-when-cross-origin"
+          allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+          allowFullScreen
+          className={`pointer-events-none border-0 transition-opacity duration-300 ${hasStarted ? "opacity-100" : "opacity-0"
+            }`}
+          style={PLAYER_STYLE}
+        />
+      )}
 
       {/* Loading state: blurred thumbnail + spinner (covers TikTok's own loader) */}
       {!hasStarted && (
@@ -234,7 +285,6 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
               style={{ objectPosition: `50% ${FOCUS_Y * 100}%` }}
             />
           ) : (
-            // <div className="absolute inset-0 animate-pulse bg-text/5" />
             <></>
           )}
           <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/40">
