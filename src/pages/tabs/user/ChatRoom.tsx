@@ -427,7 +427,7 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
 
     return (
         // <BottomSheet open={open} className="" onDismiss={onClose}>
-        <Modal open={open || true} onClose={onClose}>
+        <Modal open={open} onClose={onClose}>
             <div className="flex flex-col gap-4 py-10">
                 <button onClick={onViewProfile} className="btn justify-start active:bg-text/10 w-full">
                     <Lineicons icon={User4Solid} />
