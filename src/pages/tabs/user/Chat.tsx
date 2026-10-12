@@ -28,7 +28,7 @@ const ChatComponent = (c: ChatRoomI) => {
                 </div>
 
                 <div className="flex items-center mt-1 justify-between">
-                    <p className="">{TextCropper(c?.lastMessage?.text || "no messages yet", 38)}</p>
+                    <p className="">{TextCropper(c?.lastMessage?.text || "no messages yet", 30)}</p>
                     <div className="flex items-center text-text/50 gap-1 text-sm font-semibold ">
                         <p>{c?.lastMessage?.CreatedAt ? new Date(c.lastMessage?.CreatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</p>
                     </div>

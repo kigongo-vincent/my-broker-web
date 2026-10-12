@@ -427,14 +427,14 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
 
     return (
         // <BottomSheet open={open} className="" onDismiss={onClose}>
-        <Modal open={open} onClose={onClose}>
+        <Modal open={open || true} onClose={onClose}>
             <div className="flex flex-col gap-4 py-10">
-                <button onClick={onViewProfile} className="btn justify-start gap-5 w-full">
+                <button onClick={onViewProfile} className="btn justify-start active:bg-text/10 w-full">
                     <Lineicons icon={User4Solid} />
                     View profile
                 </button>
 
-                <button onClick={FileReport} className="btn justify-start gap-5">
+                <button onClick={FileReport} className="btn justify-start gap-5  active:bg-text/10 w-full">
                     <Loader loading={loading}>
                         <Lineicons icon={HandTakingUserSolid} />
                         Report user
@@ -445,7 +445,7 @@ const UserActionsMenu = ({ RoomID, open, onClose, onViewProfile }: UserActionsMe
                     <Lineicons icon={User4Stroke} />
                     Block user
                 </button> */}
-                <button onClick={clearChat} className="btn justify-start gap-5">
+                <button onClick={clearChat} className="btn active:bg-text/10 justify-start gap-5 w-full">
                     <Loader loading={loading}>
                         <Lineicons icon={Trash3Solid} />
                         Clear chat

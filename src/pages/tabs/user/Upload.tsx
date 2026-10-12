@@ -483,38 +483,121 @@ const Upload = () => {
     /* warm-up call and a later "use current location" tap from       */
     /* (roughly) the same spot only ever hit the network once.         */
     /* -------------------------------------------------------------- */
-    const handleGetCurrentLocation = useCallback((silent = false) => {
+    const locationRun = useRef(0); // bumping this cancels any in-flight attempt
+    const locationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const stopWatchingPermission = useRef<(() => void) | null>(null);
+
+    const handleGetCurrentLocation = useCallback((silentArg?: unknown) => {
+        // onClick passes the click event as the first argument, which is truthy
+        const silent = silentArg === true;
         if (!navigator.geolocation) return;
+
+        const run = ++locationRun.current;
+        clearTimeout(locationTimer.current);
+        stopWatchingPermission.current?.();
+        stopWatchingPermission.current = null;
+
+        const isStale = () => run !== locationRun.current;
+        const stopLoading = () => {
+            if (!silent && !isStale()) setLocationLoading(false);
+        };
         if (!silent) setLocationLoading(true);
 
-        navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-                const { latitude, longitude } = pos.coords;
-                try {
-                    const data = await reverseGeocode(latitude, longitude);
-                    setForm((p) => ({
-                        ...p,
-                        location: {
-                            Name: data.display_name || `${latitude}, ${longitude}`,
-                            Coordinates: { Lat: latitude, Lon: longitude },
-                        },
-                    }));
-                } catch {
-                    setForm((p) => ({
-                        ...p,
-                        location: {
-                            Name: `Coordinates: ${latitude}, ${longitude}`,
-                            Coordinates: { Lat: latitude, Lon: longitude },
-                        },
-                    }));
-                }
-                if (!silent) setLocationLoading(false);
-                setShowSuggestions(false);
-            },
-            () => {
-                if (!silent) setLocationLoading(false);
+        const onPosition = async (pos: GeolocationPosition) => {
+            if (isStale()) return;
+            const { latitude, longitude } = pos.coords;
+            let name = `${latitude}, ${longitude}`;
+            try {
+                const data = await reverseGeocode(latitude, longitude);
+                name = data.display_name || name;
+            } catch {
+                // keep the coordinates as the name
             }
-        );
+            if (isStale()) return;
+            setForm((p) => ({
+                ...p,
+                location: {
+                    Name: name,
+                    Coordinates: { Lat: latitude, Lon: longitude },
+                },
+            }));
+            stopLoading();
+            setShowSuggestions(false);
+        };
+
+        const MAX_ATTEMPTS = 4;
+
+        const attempt = (n: number) => {
+            if (isStale()) return;
+            // First try is precise and quick; retries take any recent fix, even a rough one
+            const precise = n === 0;
+            navigator.geolocation.getCurrentPosition(
+                onPosition,
+                (err) => {
+                    if (isStale()) return;
+                    if (err.code === err.PERMISSION_DENIED) {
+                        // Retrying can't help until the permission changes
+                        stopLoading();
+                        waitForPermission();
+                        return;
+                    }
+                    if (n + 1 >= MAX_ATTEMPTS) {
+                        stopLoading();
+                        return;
+                    }
+                    locationTimer.current = setTimeout(() => attempt(n + 1), 500 * (n + 1));
+                },
+                {
+                    enableHighAccuracy: precise,
+                    timeout: precise ? 8000 : 15000,
+                    maximumAge: precise ? 0 : 5 * 60 * 1000,
+                }
+            );
+        };
+
+        // Permission blocked: wait quietly, then request again when it changes
+        // or when the person comes back to the tab
+        const waitForPermission = () => {
+            if (isStale()) return;
+            const retry = () => {
+                if (isStale()) return;
+                stopWatchingPermission.current?.();
+                stopWatchingPermission.current = null;
+                if (!silent) setLocationLoading(true);
+                attempt(0);
+            };
+            const onVisible = () => {
+                if (document.visibilityState === "visible") retry();
+            };
+            document.addEventListener("visibilitychange", onVisible);
+
+            let status: PermissionStatus | undefined;
+            navigator.permissions
+                ?.query({ name: "geolocation" })
+                .then((s) => {
+                    status = s;
+                    s.onchange = () => {
+                        if (s.state !== "denied") retry();
+                    };
+                })
+                .catch(() => { });
+
+            stopWatchingPermission.current = () => {
+                document.removeEventListener("visibilitychange", onVisible);
+                if (status) status.onchange = null;
+            };
+        };
+
+        attempt(0);
+    }, []);
+
+    // Cancel everything when the screen closes
+    useEffect(() => {
+        return () => {
+            locationRun.current += 1;
+            clearTimeout(locationTimer.current);
+            stopWatchingPermission.current?.();
+        };
     }, []);
 
     // Initial silent warm-up so location is pre-filled by the time the user hits step 2.
