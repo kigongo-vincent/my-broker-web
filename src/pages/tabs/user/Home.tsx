@@ -77,7 +77,6 @@ const Home = () => {
     const {
         data,
         isLoading,
-        isRefetching,
         isFetchingNextPage,
         isError,
         error,
@@ -86,8 +85,9 @@ const Home = () => {
         refetch,
     } = useInfinitePosts({ limit: LIMIT })
 
-    // true only for a refresh-style refetch, not while loading the next page
-    const isRefreshing = isRefetching && !isFetchingNextPage
+    // skeletons only for an explicit refresh; background updates stay invisible
+    const [isManualRefresh, setIsManualRefresh] = useState(false)
+    const isRefreshing = isManualRefresh
 
     const posts = useMemo(
         () => data?.pages.flatMap((page) => page.data) ?? [],
@@ -128,7 +128,8 @@ const Home = () => {
         // jump to top first (instant) so the skeletons are visible, not just the old list scrolling away
         document.querySelector('main')?.scrollTo({ top: 0 })
 
-        refetch()
+        setIsManualRefresh(true)
+        refetch().finally(() => setIsManualRefresh(false))
         setRefresh?.(false)
     }, [refresh, refetch, setRefresh])
 

@@ -853,6 +853,10 @@ export const useInfinitePosts = ({ limit, search }: UseInfinitePostsParams) => {
   const trimmedSearch = search?.trim() || "";
 
   return useInfiniteQuery({
+    // Cached pages show instantly; anything older than this refreshes in the background
+    staleTime: 1000 * 30,
+    // A focus refetch re-requests every loaded page
+    refetchOnWindowFocus: false,
     queryKey: ["posts", "infinite", limit, filters, trimmedSearch],
     queryFn: ({ pageParam }) =>
       feedFactory.fetchPage(

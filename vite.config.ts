@@ -14,6 +14,32 @@ export default defineConfig({
 
     VitePWA({
       registerType: "autoUpdate",
+      workbox: {
+        cleanupOutdatedCaches: true,
+        navigateFallback: "/index.html",
+        runtimeCaching: [
+          {
+            // your uploaded photos: effectively immutable, serve from disk
+            urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "cloudinary-images",
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // TikTok thumbnails and avatars (signed URLs that expire)
+            urlPattern: /^https:\/\/[^/]*tiktokcdn\.com\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "tiktok-images",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 3 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
       injectRegister: "inline", // Inlines the background daemon script to satisfy mobile engines instantly
       manifestFilename: "manifest.json",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
