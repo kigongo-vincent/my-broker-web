@@ -11,7 +11,7 @@ import {
     WhatsappOutlined
 } from "@lineiconshq/free-icons"
 import { Activity, ReactNode, useEffect, useMemo, useRef, useState } from "react"
-import { CheckBadgeIcon, EllipsisVerticalIcon } from "@heroicons/react/20/solid"
+import { CheckBadgeIcon, EllipsisVerticalIcon, ShareIcon } from "@heroicons/react/20/solid"
 import { Bed, Bathtub, Toilet } from "@phosphor-icons/react"
 import { TextCropper } from "../../../utils/text"
 import { useNavigate } from "react-router"
@@ -311,6 +311,41 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         return name ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}` : ""
     })()
 
+    // Link to this post's details page in the app (shared by WhatsApp and share)
+    const postLink =
+        post?.ID !== undefined && post?.ID !== null
+            ? `${window.location.origin}/post/${post.source === "tiktok" ? "tiktok/" : ""}${encodeURIComponent(String(post.ID))}`
+            : undefined
+
+    const handleShare = async () => {
+        setShowActions(false)
+        if (!postLink) return
+        const locationName = post?.location?.name?.trim()
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: "My Broker",
+                    text: locationName
+                        ? `Property in ${formatLocation(locationName)}`
+                        : "Check out this property",
+                    url: postLink,
+                })
+                return
+            }
+            await navigator.clipboard.writeText(postLink)
+            alert("Link copied")
+        } catch (error) {
+            // The person closed the share sheet: nothing to do
+            if ((error as Error)?.name === "AbortError") return
+            try {
+                await navigator.clipboard.writeText(postLink)
+                alert("Link copied")
+            } catch {
+                alert("Couldn't share this post.")
+            }
+        }
+    }
+
     const handleOpenMap = () => {
         setShowActions(false)
         if (mapsUrl) window.open(mapsUrl, "_blank", "noopener,noreferrer")
@@ -325,11 +360,8 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         }
 
         if (u?.phone) {
-            const postUrl = post?.ID !== undefined && post?.ID !== null
-                ? `${window.location.origin}/post/${post.source === "tiktok" ? "tiktok/" : ""}${encodeURIComponent(String(post.ID))}`
-                : undefined
             window.open(
-                whatsappLink(u.phone, postUrl ? `Hi, I'm interested in this property: ${postUrl}` : undefined),
+                whatsappLink(u.phone, postLink ? `Hi, I'm interested in this property: ${postLink}` : undefined),
                 "_blank",
                 "noopener,noreferrer"
             )
@@ -417,6 +449,15 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                         >
                             <Lineicons size={28} icon={WhatsappOutlined} />
                             <span >chat via whatsapp</span>
+                        </button>
+                    )}
+                    {postLink && (
+                        <button
+                            onClick={handleShare}
+                            className="btn w-full justify-start"
+                        >
+                            <ShareIcon aria-hidden="true" className="h-7 w-7" />
+                            <span>share this property</span>
                         </button>
                     )}
                     {mapsUrl && (
