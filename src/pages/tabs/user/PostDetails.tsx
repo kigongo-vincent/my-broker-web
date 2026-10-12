@@ -25,6 +25,7 @@ import { PostSkeleton } from "../../../components/base/PageSkeleton"
 import { Bed, Toilet, Bathtub } from "@phosphor-icons/react"
 import { LazyLoadImage } from "react-lazy-load-image-component"
 import "react-lazy-load-image-component/src/effects/blur.css"
+
 import TikTokVideo, { getSafeTikTokVideoUrl } from "../../../components/pages/tabs/TikTokVideo"
 
 interface IconI {
@@ -178,10 +179,14 @@ const PostDetails = () => {
     );
     // WhatsApp: message the owner (number normalised to +256...) with the TikTok link.
     // If the number is hidden or missing, fall back to WhatsApp's contact picker.
-    const tikTokWhatsAppHref = originalTikTokUrl
+    const postLink =
+        post?.ID !== undefined && post?.ID !== null
+            ? `${window.location.origin}/post/tiktok/${encodeURIComponent(String(post.ID))}`
+            : "";
+    const tikTokWhatsAppHref = postLink
         ? whatsappLink(
             tikTokContactDisabled ? undefined : post?.author?.phone,
-            `Hi, I'm interested in this property: ${originalTikTokUrl}`
+            `Hi, I'm interested in this property: ${postLink}`
         )
         : "";
 
@@ -211,6 +216,19 @@ const PostDetails = () => {
                 <div className="p-6 text-center text-text/60">Post not found.</div>
             </>
         )
+    }
+
+        const handleContactOwner = () => {
+        if (!isAuthenticated) {
+            LoginPrompt("messages")
+            return
+        }
+        const phone = formatPhone(post?.author?.phone)
+        if (!phone) {
+            alert("Phone number is not available for this owner.")
+            return
+        }
+        window.location.href = `tel:${phone}`
     }
 
     return (
@@ -468,7 +486,7 @@ const PostDetails = () => {
                         :
                         <>
                             {
-                                post?.author?.hideContact == false && <button onClick={() => isAuthenticated ? window.open(`tel:${post?.author?.phone || ""}`, "_self") : LoginPrompt("messages")} className="btn bg-paper flex-1 rounded-full border border-text/10">
+                                post?.author?.hideContact == false && <button onClick={handleContactOwner} className="btn bg-paper flex-1 rounded-full border border-text/10">
                                     <PhoneIcon className="h-6 w-6" />
                                     <span>contact owner</span>
                                 </button>

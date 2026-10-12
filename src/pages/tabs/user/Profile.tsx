@@ -34,7 +34,7 @@ export const useInfiniteUserProfile = (params: { limit: number; userId?: string;
 }
 
 const Profile = () => {
-    const { user, getUserPhoto, getUser } = useUserStore()
+    const { user, getUser } = useUserStore()
     const { id = "", source } = useParams()
     const profileSource: FeedSource = source === "tiktok" ? "tiktok" : "backend"
     const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -134,12 +134,7 @@ const Profile = () => {
                     : isError
                         ? <div className="p-6 text-center text-red-500">Failed to load profile: {(error as Error)?.message}</div>
                         :
-                        <div className="mt-30">
-                            <img
-                                src={getUserPhoto?.(account?.user?.photo)}
-                                className='h-30 w-30 left-[50%] transform -translate-x-[50%] top-25 border-4 border-paper absolute rounded-full object-cover'
-                                alt=""
-                            />
+                        <div className="h-14 w-full object-cover">
 
                             <div className=" p-6 flex flex-col border-b items-center gap-1.5 border-text/10">
                                 <h3 className="text-2xl font-bold">

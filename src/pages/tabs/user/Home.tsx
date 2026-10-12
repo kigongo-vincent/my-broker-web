@@ -48,7 +48,17 @@ const FAB2 = ({ ...attr }: FABProps) => {
     )
 }
 const LIMIT = 3
-const PREFETCH_THRESHOLD = 3 // sentinel sits 3 items from the end of what's loaded
+
+// Nearest ancestor that actually scrolls (null = the window scrolls)
+const getScrollParent = (node: HTMLElement): HTMLElement | null => {
+    let el = node.parentElement
+    while (el) {
+        const { overflowY } = getComputedStyle(el)
+        if (overflowY === "auto" || overflowY === "scroll") return el
+        el = el.parentElement
+    }
+    return null
+}
 
 const Home = () => {
     const tabs = ["rentals", "short stays"]
@@ -102,16 +112,14 @@ const Home = () => {
         if (!node) return
 
         const observer = new IntersectionObserver(handleIntersect, {
-            root: null,
-            rootMargin: "200px",
+            root: getScrollParent(node),
+            rootMargin: "0px 0px 800px 0px",
             threshold: 0,
         })
 
         observer.observe(node)
         return () => observer.disconnect()
-    }, [handleIntersect, posts.length])
-
-    const sentinelIndex = Math.max(posts.length - PREFETCH_THRESHOLD, 0)
+    }, [handleIntersect, posts.length, hasNextPage])
     const { refresh, setRefresh } = useAppStore()
 
     useEffect(() => {
@@ -196,25 +204,30 @@ const Home = () => {
                 <>
                     <div className="flex flex-col gap-2">
                         {posts.map((item, index) => (
-                            <div key={item.ID || index}>
+                            <div key={`${item.source ?? "backend"}-${item.ID ?? index}`}>
                                 <Post {...(item as PostI)} hideAvailability />
-                                {index === sentinelIndex && (
-                                    <div ref={sentinelRef} className="h-1 w-full" />
-                                )}
                             </div>
                         ))}
                     </div>
 
+                    <div ref={sentinelRef} className="h-1 w-full" />
                     <div className="flex items-center justify-center py-6">
                         {isFetchingNextPage ? (
                             <span className="text-sm text-text/50 animate-pulse">
                                 Loading more properties...
                             </span>
-                        ) : !hasNextPage ? (
+                        ) : hasNextPage ? (
+                            <button
+                                onClick={() => fetchNextPage()}
+                                className="btn rounded-full bg-pale px-6 text-text"
+                            >
+                                Load more
+                            </button>
+                        ) : (
                             <span className="text-sm text-text/50">
                                 You've reached the end.
                             </span>
-                        ) : null}
+                        )}
                     </div>
                 </>
             )}

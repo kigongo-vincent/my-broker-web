@@ -60,11 +60,36 @@ const PLAYER_STYLE: React.CSSProperties = {
 // Share of the card that must be visible before the video plays.
 const PLAY_VISIBLE_RATIO = 0.6;
 
-// The player mounts when the card is within one screen of the viewport and
-// unmounts when it is more than three screens away, so the page never
-// carries dozens of live TikTok players.
-const LOAD_MARGIN = "100% 0px";
-const UNLOAD_MARGIN = "300% 0px";
+/* ------------------------------------------------------------------ */
+/* Preloading                                                          */
+/* ------------------------------------------------------------------ */
+
+// How many cards below the viewport should already have a player loaded.
+const LOAD_AHEAD = 3;
+// Height of a card beyond its media: user header + details panel (px).
+// Tune this if the preloading feels off by a card.
+const CARD_CHROME_PX = 210;
+
+// Players boot a couple at a time. Booting every player at once makes them
+// fight for bandwidth and slows down the one the person is actually
+// watching. The card in view always skips the line.
+const MAX_CONCURRENT_BOOTS = 2;
+// A boot slot is freed after this long even if the player never reports in.
+const BOOT_TIMEOUT_MS = 8000;
+
+let activeBoots = 0;
+const bootQueue: Array<() => void> = [];
+
+const pumpBootQueue = () => {
+  while (activeBoots < MAX_CONCURRENT_BOOTS && bootQueue.length > 0) {
+    bootQueue.shift()?.();
+  }
+};
+
+const removeFromBootQueue = (grant: () => void) => {
+  const index = bootQueue.indexOf(grant);
+  if (index !== -1) bootQueue.splice(index, 1);
+};
 
 // Open the connection to TikTok once, before the first iframe mounts.
 let preconnected = false;
@@ -84,6 +109,9 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
   const playerRef = useRef<HTMLIFrameElement>(null);
   const playerReady = useRef(false);
   const inViewRef = useRef(false);
+  const shouldLoadRef = useRef(false);
+  const queuedGrant = useRef<(() => void) | null>(null);
+  const releaseBoot = useRef<(() => void) | null>(null);
   const pendingCommand = useRef<"play" | "pause" | null>(null);
   const retryTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -120,6 +148,65 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
     }
   };
 
+  /* ---------------- boot queue (per card) ---------------- */
+
+  // Frees this card's boot slot so the next waiting card can start.
+  const finishBoot = () => {
+    releaseBoot.current?.();
+  };
+
+  const requestBoot = (priority: boolean) => {
+    if (shouldLoadRef.current) return;
+    if (!queuedGrant.current) {
+      const grant = () => {
+        queuedGrant.current = null;
+        if (shouldLoadRef.current) return;
+        activeBoots += 1;
+        let released = false;
+        const release = () => {
+          if (released) return;
+          released = true;
+          clearTimeout(timer);
+          activeBoots = Math.max(0, activeBoots - 1);
+          releaseBoot.current = null;
+          pumpBootQueue();
+        };
+        const timer = setTimeout(release, BOOT_TIMEOUT_MS);
+        releaseBoot.current = release;
+        shouldLoadRef.current = true;
+        setShouldLoad(true);
+      };
+      queuedGrant.current = grant;
+      bootQueue.push(grant);
+    }
+    if (priority && queuedGrant.current) {
+      // The card in view skips the line
+      const grant = queuedGrant.current;
+      removeFromBootQueue(grant);
+      grant();
+      return;
+    }
+    pumpBootQueue();
+  };
+
+  const cancelBootRequest = () => {
+    if (queuedGrant.current) {
+      removeFromBootQueue(queuedGrant.current);
+      queuedGrant.current = null;
+    }
+  };
+
+  const unloadPlayer = () => {
+    cancelBootRequest();
+    finishBoot();
+    shouldLoadRef.current = false;
+    setShouldLoad(false);
+    playerReady.current = false;
+    pendingCommand.current = null;
+    setHasStarted(false);
+    setIsPlaying(false);
+  };
+
   // Player -> host messages
   useEffect(() => {
     const handlePlayerMessage = (event: MessageEvent) => {
@@ -148,8 +235,12 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
         }
       } else if (type === "onStateChange") {
         if (value === 1) {
+          // Playing means the stream is actually flowing: free the boot
+          // slot so the next card can start loading.
+          finishBoot();
           // The URL autoplays on load. If the card is off screen, stop it
-          // right away and keep the skeleton up until it is actually seen.
+          // right away (it stays warm and buffered) and keep the skeleton
+          // up until it is actually seen.
           if (!inViewRef.current) {
             postToPlayer("pause");
           } else {
@@ -165,6 +256,7 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
       } else if (type === "onMute") {
         setIsMuted(Boolean(value));
       } else if (type === "onPlayerError") {
+        finishBoot();
         // Autoplay blocked by the browser: reveal the player so the person
         // can tap play instead of staring at the skeleton.
         const code = event.data.errorCode ?? value?.errorCode;
@@ -176,30 +268,40 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
     return () => {
       window.removeEventListener("message", handlePlayerMessage);
       if (retryTimer.current) clearInterval(retryTimer.current);
+      // Never leave a boot slot or queue entry behind when the card unmounts
+      cancelBootRequest();
+      finishBoot();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Mount the player shortly before the card is seen, unmount when far away
+  // Load the player LOAD_AHEAD cards before it is seen, release it when far away
   useEffect(() => {
     preconnectToTikTok();
     const el = containerRef.current;
     if (!el) return;
+    // One card's full height, so the margins below are measured in cards
+    const stride = Math.max(el.offsetHeight, 150) + CARD_CHROME_PX;
+
     const load = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) setShouldLoad(true);
+        if (entry.isIntersecting) {
+          requestBoot(false);
+        } else if (!shouldLoadRef.current) {
+          // Scrolled past before its turn: don't waste a boot slot on it
+          cancelBootRequest();
+        }
       },
-      { rootMargin: LOAD_MARGIN }
+      // 1 card behind, LOAD_AHEAD cards ahead
+      { rootMargin: `${stride}px 0px ${LOAD_AHEAD * stride}px 0px` }
     );
     const unload = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) return;
-        setShouldLoad(false);
-        playerReady.current = false;
-        pendingCommand.current = null;
-        setHasStarted(false);
-        setIsPlaying(false);
+        unloadPlayer();
       },
-      { rootMargin: UNLOAD_MARGIN }
+      // keep players alive a little longer than they were loaded
+      { rootMargin: `${2 * stride}px 0px ${(LOAD_AHEAD + 2) * stride}px 0px` }
     );
     load.observe(el);
     unload.observe(el);
@@ -207,6 +309,7 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
       load.disconnect();
       unload.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
 
   // Play when the card is mostly in view, pause when it leaves
@@ -218,6 +321,8 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
         const visible = entry.intersectionRatio >= PLAY_VISIBLE_RATIO;
         if (visible === inViewRef.current) return;
         inViewRef.current = visible;
+        // The card being watched never waits behind preloading cards
+        if (visible) requestBoot(true);
         setPlayback(visible ? "play" : "pause");
       },
       { threshold: [0, PLAY_VISIBLE_RATIO] }
@@ -271,27 +376,27 @@ const TikTokVideo = ({ url, poster, title = "TikTok property video" }: Props) =>
         />
       )}
 
-      {/* Loading state: blurred thumbnail + spinner (covers TikTok's own loader) */}
-      {!hasStarted && (
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 z-[1] overflow-hidden bg-pale"
-        >
-          {poster ? (
-            <img
-              src={poster}
-              alt=""
-              className="absolute inset-0 h-full w-full scale-105 object-cover "
-              style={{ objectPosition: `50% ${FOCUS_Y * 100}%` }}
-            />
-          ) : (
-            <></>
-          )}
+      {/* Loading state: blurred thumbnail + spinner (covers TikTok's own
+          loader). Fades out instead of vanishing so the swap to video is smooth. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-0 z-[1] overflow-hidden bg-pale transition-opacity duration-300 ${hasStarted ? "opacity-0" : "opacity-100"
+          }`}
+      >
+        {poster && (
+          <img
+            src={poster}
+            alt=""
+            className="absolute inset-0 h-full w-full scale-105 object-cover "
+            style={{ objectPosition: `50% ${FOCUS_Y * 100}%` }}
+          />
+        )}
+        {!hasStarted && (
           <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/40">
             <span className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <button
         type="button"

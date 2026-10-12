@@ -2,7 +2,7 @@ import { Activity } from "react"
 import { useAppStore } from "../../../store/app"
 import { UserI, useUserStore } from "../../../store/auth"
 import Logo from "../../base/Logo"
-import { Link, useNavigate } from "react-router"
+import { Link, useNavigate, useLocation } from "react-router"
 
 export interface props {
     back?: boolean
@@ -18,6 +18,17 @@ const Header = ({ back, title, noMargin, noblur, caption }: props) => {
     const photo = getUserPhoto?.((user as UserI)?.photo)
     const { LoginPrompt } = useAppStore()
     const navigate = useNavigate()
+    const location = useLocation()
+
+    // "default" means this is the first page of the session (opened from a
+    // shared link, a new tab, etc.), so there is no in-app page to go back to.
+    function handleBack(): void {
+        if (location.key === "default") {
+            navigate("/", { replace: true })
+        } else {
+            navigate(-1)
+        }
+    }
 
     function handleProfileClick(): void {
 
@@ -38,7 +49,7 @@ const Header = ({ back, title, noMargin, noblur, caption }: props) => {
                         ?
                         <Logo className="h-14" />
                         :
-                        <button onClick={() => navigate(-1)} className="font-semibold  h-20 w-20 justify-start">
+                        <button onClick={handleBack} className="font-semibold  h-20 w-20 justify-start">
                             back
                         </button>
                 }
