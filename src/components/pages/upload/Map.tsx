@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { PostI } from '../tabs/Post';
 import { TextCropper } from '../../../utils/text';
@@ -103,6 +103,16 @@ const extractDestinations = (properties?: Partial<PostI>[]): LatLng[] => {
  * directions are actually wanted). Shared by both providers so "where is the
  * user" behaves identically regardless of map engine.
  */
+/** The `count` destinations closest to `origin` (straight-line), used to cap route requests. */
+const nearestDestinations = (origin: LatLng, destinations: LatLng[], count = 5): LatLng[] =>
+    [...destinations]
+        .sort(
+            (a, b) =>
+                (a.lat - origin.lat) ** 2 + (a.lng - origin.lng) ** 2 -
+                ((b.lat - origin.lat) ** 2 + (b.lng - origin.lng) ** 2)
+        )
+        .slice(0, count);
+
 const useCurrentLocation = (enabled: boolean) => {
     const [currentLocation, setCurrentLocation] = useState<LatLng | null>(null);
     const [locationError, setLocationError] = useState<string | null>(null);
@@ -330,10 +340,14 @@ const GoogleRoutesLayer = ({ origin, destinations }: { origin: LatLng; destinati
 const GoogleFitBoundsLayer = ({ points }: { points: LatLng[] }) => {
     const map = useMap();
     const coreLibrary = useMapsLibrary('core');
+    const hasFitRef = useRef(false);
 
     useEffect(() => {
         if (!map || !coreLibrary) return;
         if (!points || points.length === 0) return;
+        // Fit only once, when the first batch of pins arrives. Later pages
+        // just add markers and never move the camera.
+        if (hasFitRef.current) return;
 
         if (points.length === 1) {
             map.setCenter(points[0]);
@@ -344,7 +358,8 @@ const GoogleFitBoundsLayer = ({ points }: { points: LatLng[] }) => {
         const bounds = new coreLibrary.LatLngBounds();
         points.forEach((point) => bounds.extend(point));
         map.fitBounds(bounds, 60);
-    }, [map, coreLibrary, JSON.stringify(points)]);
+        hasFitRef.current = true;
+    }, [map, coreLibrary, points.length]);
 
     return null;
 };
@@ -403,7 +418,12 @@ const GoogleMapView = ({ theme, properties, defaultCenter, showDirections }: Pro
 
                 <GoogleFitBoundsLayer points={boundsPoints} />
 
-                {shouldShowDirections && <GoogleRoutesLayer origin={effectiveCenter} destinations={destinations} />}
+                {shouldShowDirections && (
+                    <GoogleRoutesLayer
+                        origin={effectiveCenter}
+                        destinations={nearestDestinations(effectiveCenter, destinations)}
+                    />
+                )}
 
                 {locationError && showDirections && (
                     <div
@@ -609,9 +629,11 @@ const LeafletRoutesLayer = ({ origin, destinations }: { origin: LatLng; destinat
  */
 const LeafletFitBoundsLayer = ({ points }: { points: LatLng[] }) => {
     const map = useLeafletMap();
+    const hasFitRef = useRef(false);
 
     useEffect(() => {
         if (!points || points.length === 0) return;
+        if (hasFitRef.current) return;
 
         if (points.length === 1) {
             map.setView([points[0].lat, points[0].lng], 15);
@@ -620,7 +642,8 @@ const LeafletFitBoundsLayer = ({ points }: { points: LatLng[] }) => {
 
         const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng] as [number, number]));
         map.fitBounds(bounds, { padding: [60, 60] });
-    }, [map, JSON.stringify(points)]);
+        hasFitRef.current = true;
+    }, [map, points.length]);
 
     return null;
 };
@@ -631,11 +654,15 @@ const LeafletFitBoundsLayer = ({ points }: { points: LatLng[] }) => {
  * DivIcon instead of the <PropertyLabel/> component Google uses directly.
  */
 const LeafletPropertyMarker = ({ coords, property }: { coords: LatLng; property: Partial<PostI> }) => {
-    const icon = L.divIcon({
-        className: 'map-property-marker', // clears Leaflet's default icon box styling
-        html: propertyLabelHtml(property),
-        iconAnchor: [0, 0] // label positions itself via CSS transform, see LEAFLET_PROPERTY_LABEL_CSS
-    });
+    const icon = useMemo(
+        () =>
+            L.divIcon({
+                className: 'map-property-marker', // clears Leaflet's default icon box styling
+                html: propertyLabelHtml(property),
+                iconAnchor: [0, 0] // label positions itself via CSS transform, see LEAFLET_PROPERTY_LABEL_CSS
+            }),
+        [property.ID, property.price?.amount, property.location?.name]
+    );
 
     return <Marker position={[coords.lat, coords.lng]} icon={icon} />;
 };
@@ -676,7 +703,12 @@ const LeafletMapView = ({ theme, properties, defaultCenter, showDirections }: Pr
 
                 <LeafletFitBoundsLayer points={boundsPoints} />
 
-                {shouldShowDirections && <LeafletRoutesLayer origin={effectiveCenter} destinations={destinations} />}
+                {shouldShowDirections && (
+                    <LeafletRoutesLayer
+                        origin={effectiveCenter}
+                        destinations={nearestDestinations(effectiveCenter, destinations)}
+                    />
+                )}
 
                 {hasProperties &&
                     (properties as PostI[]).map((p: Partial<PostI>, index: number) => {

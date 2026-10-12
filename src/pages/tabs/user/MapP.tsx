@@ -9,7 +9,7 @@ import MapIcon from "../../../assets/map.webp"
 
 
 const MapP = () => {
-    const { data, isError, error, isLoadingMore } = useGeoData()
+    const { data, isError, error } = useGeoData()
     const { theme } = useSystemTheme()
     const properties = data
     return (
@@ -22,12 +22,6 @@ const MapP = () => {
             </div>
 
             <Header back noMargin title="properties map" caption="browser properties by places" />
-            {
-                isLoadingMore && !isError &&
-                <div className="absolute z-10 bottom-6 left-1/2 -translate-x-1/2 rounded-full border border-text/10 bg-paper px-4 py-2 text-xs shadow">
-                    Loading more properties… {properties?.length ?? 0} on map
-                </div>
-            }
             {
                 isError &&
                 <div className="absolute z-10 top-24 left-4 right-4 rounded-xl border border-text/10 bg-paper p-4 text-center text-danger shadow">
