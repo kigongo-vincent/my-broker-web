@@ -22,7 +22,7 @@ type verification = "pending" | "approved" | "cancelled";
 export interface UserI extends Partial<BaseI> {
   name: string;
   username?: string;
-  source?: "backend" | "tiktok";
+  source?: "backend" | "tiktok" | "rentify";
   email?: string;
   completeSetup?: boolean;
   role?: UserRole;

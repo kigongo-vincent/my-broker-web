@@ -2,7 +2,7 @@ import { Get, Post, type APIResponse } from "../../api";
 import type { PostI } from "../components/pages/tabs/Post";
 import type { UserI } from "../store/auth";
 
-export type FeedSource = "backend" | "tiktok";
+export type FeedSource = "backend" | "tiktok" | "rentify";
 const MAX_MAP_PAGES = 4;
 
 export interface FeedFilter {
@@ -285,7 +285,11 @@ export function createFeedFactory() {
         ...source,
         url: normalizeBaseUrl(
           source.url,
-          source.id === "tiktok" ? "TikTok" : "Backend"
+          source.id === "tiktok"
+            ? "TikTok"
+            : source.id === "rentify"
+            ? "Rentify"
+            : "Backend"
         ),
       }));
   };
@@ -299,6 +303,7 @@ export function createFeedFactory() {
       ...(request.filters?.length ? { columns: request.filters } : {}),
       ...(request.search?.trim() ? { search: request.search.trim() } : {}),
     };
+
     const path = source.id === "backend" ? "posts/feed" : "properties";
     const response: APIResponse<PostI[]> = await Post<FeedAPIRequest, PostI[]>(
       path,
@@ -317,6 +322,7 @@ export function createFeedFactory() {
           `${source.id} feed request failed with status ${response.status}.`
       );
     }
+
     if (!Array.isArray(response.data)) {
       throw new Error(`${source.id} feed returned an invalid posts list.`);
     }

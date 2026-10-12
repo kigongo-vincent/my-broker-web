@@ -53,6 +53,7 @@ export const ProfileSkeleton = () => {
 
         {/* header  */}
         <div className="flex w-full flex-col items-center gap-3">
+            <br />
             <div className="h-5 rounded-3xl w-[70%] animate-pulse bg-text/10"></div>
             <div className="h-5 rounded-3xl w-[40%] animate-pulse bg-text/10"></div>
         </div>

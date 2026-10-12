@@ -105,7 +105,8 @@ export interface PriceI {
 export interface PostI extends BaseI {
     author: UserI
     authorId?: number
-    source?: "backend" | "tiktok"
+    source?: "backend" | "tiktok" | "rentify"
+    externalId?: string // set by the backend for rentify posts (their ID is 0)
     type: PostType
     assets: PostAssetI[]
     price: PriceI
@@ -196,13 +197,6 @@ export interface Props extends UserI {
     u?: Partial<UserI>
 }
 
-// Gmail-like palette
-// const AVATAR_COLORS = [
-//     "#F44336", "#E91E63", "#9C27B0", "#673AB7",
-//     "#3F51B5", "#2196F3", "#03A9F4", "#00BCD4",
-//     "#009688", "#4CAF50", "#FF9800", "#FF5722",
-// ]
-
 const getInitials = (name?: string) => {
     if (!name) return "?"
     const parts = name.trim().split(/\s+/)
@@ -211,15 +205,6 @@ const getInitials = (name?: string) => {
         : parts[0][0] + parts[parts.length - 1][0]
     return initials.toUpperCase()
 }
-
-// const getColorFromString = (str?: string) => {
-//     if (!str) return AVATAR_COLORS[0]
-//     let hash = 0
-//     for (let i = 0; i < str.length; i++) {
-//         hash = str.charCodeAt(i) + ((hash << 5) - hash)
-//     }
-//     return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
-// }
 
 const formatPostedTime = (date?: string) => {
     if (!date) return ""
@@ -246,7 +231,6 @@ const formatPostedTime = (date?: string) => {
 
 const UserAvatar = ({ photo, name }: { photo: string; name?: string }) => {
     const initials = getInitials(name)
-    // const bgColor = getColorFromString(name)
     return (
         <div className="isolate flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-text/10" >
             {photo ? (
@@ -259,7 +243,7 @@ const UserAvatar = ({ photo, name }: { photo: string; name?: string }) => {
 }
 
 // ---------------------------------------------------------------------------
-// User header — modular, Instagram-style: dark bar, avatar + name/last-seen,
+// User header — modular, Instagram-style: dark bar, avatar + name/posted time,
 // and a single kebab menu that opens a bottom sheet with call/chat actions.
 // ---------------------------------------------------------------------------
 export const User = ({ noActions, actions, post, ...u }: Props) => {
@@ -270,6 +254,10 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
     const [showActions, setShowActions] = useState(false)
     const isAuthenticated = Boolean((user as UserI)?.ID)
     const { setSelectedPost, LoginPrompt } = useAppStore()
+
+
+    const isRentify = post?.source === "backend" && post.authorId == 0
+    const isTikTokUser = u.source === "tiktok" || post?.source === "tiktok"
 
     useEffect(() => {
         console.log("-----------------------------------------------------")
@@ -311,10 +299,17 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         return name ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}` : ""
     })()
 
-    // Link to this post's details page in the app (shared by WhatsApp and share)
+    // Link to this post's details page in the app (shared by WhatsApp and share).
+    // Rentify posts have no details page, so no link.
     const postLink =
-        post?.ID !== undefined && post?.ID !== null
+        !isRentify && !isRentify && post?.ID !== undefined && post?.ID !== null
             ? `${window.location.origin}/post/${post.source === "tiktok" ? "tiktok/" : ""}${encodeURIComponent(String(post.ID))}`
+            : undefined
+
+    const whatsappText = postLink
+        ? `Hi, I'm interested in this property: ${postLink}`
+        : post?.location?.name?.trim()
+            ? `Hi, I'm interested in your property in ${formatLocation(post.location.name)}`
             : undefined
 
     const handleShare = async () => {
@@ -351,8 +346,8 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
         if (mapsUrl) window.open(mapsUrl, "_blank", "noopener,noreferrer")
     }
 
-    const isTikTokUser = u.source === "tiktok" || post?.source === "tiktok"
-    const canShowActions = !noActions && (isTikTokUser || getUser()?.ID != u?.ID)
+    const canShowActions = !noActions && (isTikTokUser || isRentify || getUser()?.ID != u?.ID)
+
     function handleWhatsApp(): void {
         if (!isAuthenticated) {
             LoginPrompt("direct messages")
@@ -361,7 +356,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
 
         if (u?.phone) {
             window.open(
-                whatsappLink(u.phone, postLink ? `Hi, I'm interested in this property: ${postLink}` : undefined),
+                whatsappLink(u.phone, whatsappText),
                 "_blank",
                 "noopener,noreferrer"
             )
@@ -371,14 +366,17 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
     }
 
     return (
-        <div className={`flex cursor-pointer items-center justify-between  ${post && "px-4"} py-3`}>
+        <div className={`flex items-center justify-between ${post && "px-4"} py-3`}>
             <div
-                className="flex items-center gap-3"
-                onClick={() => navigate(
-                    u.source === "tiktok" && u.username
-                        ? `/profile/tiktok/${encodeURIComponent(u.username)}`
-                        : `/profile/${u?.ID}`
-                )}
+                className={`flex items-center gap-3 ${isRentify ? "" : "cursor-pointer"}`}
+                onClick={() => {
+                    if (isRentify) return // no profile page for rentify
+                    navigate(
+                        u.source === "tiktok" && u.username
+                            ? `/profile/tiktok/${encodeURIComponent(u.username)}`
+                            : `/profile/${u?.ID}`
+                    )
+                }}
             >
                 <UserAvatar
                     photo={getUserPhoto?.(u.photo) || ""}
@@ -392,15 +390,9 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                         {u?.verification == "approved" && <CheckBadgeIcon className="h-6 w-6 text-primary" />}
                         {u?.role == "broker" && <span className="text-sm font-medium text-primary">broker</span>}
                     </div>
-                    {isTikTokUser ? (
-                        post?.CreatedAt && (
-                            <span className="text-sm text-text/50">
-                                {formatPostedTime(post.CreatedAt)}
-                            </span>
-                        )
-                    ) : u.lastSeen && (
+                    {post?.CreatedAt && (
                         <span className="text-sm text-text/50">
-                            last seen {u.lastSeen}
+                            {formatPostedTime(post.CreatedAt)}
                         </span>
                     )}
                 </div>
@@ -411,7 +403,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
             ) : canShowActions ? (
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowActions(true) }}
-                    className="flex h-10 w-10 items-center justify-center "
+                    className="flex h-10 w-10 cursor-pointer items-center justify-center "
                 >
                     <EllipsisVerticalIcon className="h-9 w-9" />
                 </button>
@@ -423,15 +415,13 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                     {!u?.hideContact && (
                         <button
                             onClick={handleCall}
-                            className="btn
-                            w-full justify-start
-                            "
+                            className="btn w-full justify-start"
                         >
                             <Lineicons size={28} icon={Telephone1Solid} />
                             <span >Call {u?.name}</span>
                         </button>
                     )}
-                    {(u.source !== "tiktok" && getUser().ID != post?.authorId) && (
+                    {(u.source !== "tiktok" && !isRentify && getUser().ID != post?.authorId) && (
                         <button
                             onClick={handleChat}
                             className="btn w-full justify-start"
@@ -443,9 +433,7 @@ export const User = ({ noActions, actions, post, ...u }: Props) => {
                     {!u?.hideContact && (
                         <button
                             onClick={handleWhatsApp}
-                            className="btn
-                            w-full justify-start
-                            "
+                            className="btn w-full justify-start"
                         >
                             <Lineicons size={28} icon={WhatsappOutlined} />
                             <span >chat via whatsapp</span>
@@ -504,7 +492,7 @@ export const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; pla
             <img
                 src={src}
                 alt={alt}
-                loading="lazy" // Native browser scheduling
+                loading="lazy"
                 onLoad={() => setHighResLoaded(true)}
                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-in-out ${highResLoaded ? "opacity-100" : "opacity-0"
                     }`}
@@ -512,6 +500,49 @@ export const NativeLazyImage = ({ src, placeholderSrc, alt }: { src: string; pla
         </div>
     );
 };
+
+// ---------------------------------------------------------------------------
+// AutoPlayVideo — Automatically plays when in view and pauses when out of view
+// ---------------------------------------------------------------------------
+const AutoPlayVideo = ({ src, poster }: { src: string; poster?: string }) => {
+    const videoRef = useRef<HTMLVideoElement>(null)
+
+    useEffect(() => {
+        const el = videoRef.current
+        if (!el) return
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    el.play().catch(() => {
+                        // Prevented/handled autoplay policy errors
+                    })
+                } else {
+                    el.pause()
+                }
+            },
+            { threshold: 0.5 } // Triggers when 50% of the video is visible
+        )
+
+        observer.observe(el)
+        return () => {
+            observer.disconnect()
+        }
+    }, [])
+
+    return (
+        <video
+            ref={videoRef}
+            src={src}
+            poster={poster}
+            controls
+            muted
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 h-full w-full object-cover"
+        />
+    )
+}
 
 // ---------------------------------------------------------------------------
 // Post — modular IG-style card:
@@ -537,8 +568,10 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
         p.author.role = "broker"
         p.author.verification = "approved"
     }
+    const isRentify = p.source === "rentify" || p?.authorId == 0
+    const isExternal = p.source === "tiktok" || isRentify
     const isOwner =
-        p.source !== "tiktok" &&
+        !isExternal &&
         currentUserId !== undefined &&
         currentUserId === p.authorId
     const showAvailability = isOwner && !hideAvailability
@@ -563,7 +596,7 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation()
 
-        if (p.source === "tiktok") {
+        if (isExternal) {
             return
         }
         if (!isAuthenticated) {
@@ -587,15 +620,16 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
         }
     }
 
+    // TikTok and Rentify posts have no details page
     const handleClick = () => {
-        if (p.source === "tiktok") return
+        if (isExternal) return
         navigate(
             `/post/${p?.ID}`
         )
     }
 
     return (
-        <div className="flex flex-col overflow-hidden  ">
+        <div className="flex flex-col overflow-hidden">
             {/* user */}
             {!p?.hideHeader && <User post={p} {...p.author} />}
 
@@ -627,13 +661,7 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
                                     p.source === "tiktok" ? (
                                         <TikTokVideo url={item.url} poster={thumbnailSrc} />
                                     ) : (
-                                        <video
-                                            src={item.url}
-                                            controls
-                                            preload="none"
-                                            playsInline
-                                            className="absolute inset-0 h-full w-full object-cover"
-                                        />
+                                        <AutoPlayVideo src={item.url} poster={thumbnailSrc} />
                                     )
                                 )}
                             </div>
@@ -648,8 +676,8 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
                     </span>
                 )}
 
-                {/* like button */}
-                {p.source !== "tiktok" && (
+                {/* like button (only for our own posts) */}
+                {!isExternal && (
                     <button
                         onClick={handleLike}
                         className="absolute right-4 top-4 rounded-2xl bg-black/30 p-4 text-white transition-transform active:scale-95"
@@ -675,10 +703,8 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
             {/* details */}
             <div
                 onClick={handleClick}
-                className="flex cursor-pointer flex-col gap-2  px-4 py-4 "
+                className={`flex flex-col gap-2 px-4 py-4 ${isExternal ? "" : "cursor-pointer"}`}
             >
-
-
                 {p.location?.name?.trim() && (
                     <div className="text-text/60">
                         Located <span className=" text-text">{TextCropper(formatLocation(p.location.name), 60)}</span>
