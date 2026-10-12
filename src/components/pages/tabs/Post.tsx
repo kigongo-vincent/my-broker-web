@@ -533,6 +533,10 @@ const Post = ({ hideAvailability, ...p }: postProps) => {
     const isAuthenticated = Boolean((user as UserI)?.ID)
     const { setFavouritesCount, favouritesCount, LoginPrompt } = useAppStore()
     const currentUserId = getUser()?.ID
+    if (p.source == "tiktok") {
+        p.author.role = "broker"
+        p.author.verification = "approved"
+    }
     const isOwner =
         p.source !== "tiktok" &&
         currentUserId !== undefined &&
