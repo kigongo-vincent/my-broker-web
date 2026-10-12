@@ -629,6 +629,7 @@ import {
   useInfiniteQuery,
   keepPreviousData,
 } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
 import { useParams } from "react-router";
 import imageCompression from "browser-image-compression";
 import { Post } from "../../api";
@@ -874,10 +875,34 @@ export const useInfinitePosts = ({ limit, search }: UseInfinitePostsParams) => {
 };
 
 export const useGeoData = () => {
-  return useQuery({
-    queryKey: ["geo"],
-    queryFn: () => feedFactory.fetchMapData(),
+  const query = useInfiniteQuery({
+    queryKey: ["geo", feedFactory.activeSourceKey()],
+    queryFn: ({ pageParam }) => feedFactory.fetchMapPage(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
   });
+
+  const { hasNextPage, isFetchingNextPage, isError, fetchNextPage } = query;
+
+  // Keep pulling pages in the background; the map already shows what's loaded.
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage && !isError) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, isError, fetchNextPage]);
+
+  const data = useMemo(
+    () => query.data?.pages.flatMap((p) => p.data),
+    [query.data]
+  );
+
+  return {
+    data,
+    isError,
+    error: query.error,
+    isPending: query.isPending,
+    isLoadingMore: Boolean(hasNextPage) || isFetchingNextPage,
+  };
 };
 
 export const usePostDetails = () => {

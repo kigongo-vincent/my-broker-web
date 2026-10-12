@@ -3,6 +3,7 @@ import type { PostI } from "../components/pages/tabs/Post";
 import type { UserI } from "../store/auth";
 
 export type FeedSource = "backend" | "tiktok";
+const MAX_MAP_PAGES = 4;
 
 export interface FeedFilter {
   column: string;
@@ -63,7 +64,13 @@ interface SourceConfig {
   url?: string;
 }
 
-const MAX_MAP_PAGES = 50;
+export const MAP_PAGE_SIZE = 10;
+
+export interface MapPage {
+  data: PostI[];
+  page: number;
+  hasMore: boolean;
+}
 
 const scraperFilterOperators: Record<string, string[]> = {
   location: ["within_radius"],
@@ -494,6 +501,27 @@ export function createFeedFactory() {
         },
         posts,
         pagination,
+      };
+    },
+    /**
+     * Loads ONE page of map pins (merged across eligible sources) so the map
+     * can render progressively instead of waiting for every page.
+     */
+    async fetchMapPage(
+      page: number,
+      limit: number = MAP_PAGE_SIZE
+    ): Promise<MapPage> {
+      const result = await this.fetchPage({ page, limit });
+      const plotted = result.data.filter(hasMapCoordinates);
+      if (import.meta.env.DEV) {
+        console.info(
+          `[feed] map page ${page}: ${result.data.length} returned, ${plotted.length} plotted`
+        );
+      }
+      return {
+        data: plotted,
+        page,
+        hasMore: Boolean(result.pagination.hasMore),
       };
     },
     /** Changes whenever the enabled sources change; use it in query keys. */

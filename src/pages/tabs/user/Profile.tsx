@@ -1,4 +1,4 @@
-import { Activity, useMemo } from 'react'
+import { Activity, useEffect, useMemo, useRef } from 'react'
 import { UserI, useUserStore } from '../../../store/auth'
 import Post, { PostI } from '../../../components/pages/tabs/Post'
 import FlexRender from '../../../components/base/FlexRender'
@@ -37,7 +37,30 @@ const Profile = () => {
     const { user, getUserPhoto, getUser } = useUserStore()
     const { id = "", source } = useParams()
     const profileSource: FeedSource = source === "tiktok" ? "tiktok" : "backend"
-    const { data, isLoading, isError, error, fetchNextPage, hasNextPage } = useInfiniteUserProfile({ limit: 5, userId: id, source: profileSource })
+    const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+        useInfiniteUserProfile({ limit: 10, userId: id, source: profileSource })
+
+    // infinite scroll: the page scrolls inside a div, so the observer's root is that div
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const sentinelRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const sentinel = sentinelRef.current
+        if (!sentinel || !hasNextPage || isFetchingNextPage) return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) fetchNextPage()
+            },
+            {
+                root: scrollRef.current,
+                rootMargin: '300px', // start loading before the user reaches the bottom
+            }
+        )
+
+        observer.observe(sentinel)
+        return () => observer.disconnect()
+    }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage])
 
     const account = useMemo<ProfilePage | null>(() => {
         const pages = data?.pages ?? []
@@ -98,7 +121,7 @@ const Profile = () => {
     const isOwner = profileSource === "backend" && getUser()?.ID == Number(id)
 
     return (
-        <div>
+        <div ref={scrollRef} className=' overflow-auto h-screen pb-20'>
             <Header
                 back
                 title={'Profile'}
@@ -150,10 +173,11 @@ const Profile = () => {
                                 />
                             )}
 
+                            {/* infinite scroll sentinel */}
                             {hasNextPage && (
-                                <button onClick={() => fetchNextPage()} className="mt-4 text-sm text-text/70">
-                                    Load more
-                                </button>
+                                <div ref={sentinelRef} className="py-6 text-center text-sm text-text/50">
+                                    {isFetchingNextPage ? 'Loading more...' : ''}
+                                </div>
                             )}
                         </div>
             }

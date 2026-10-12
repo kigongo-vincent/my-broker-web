@@ -124,7 +124,7 @@ const App = () => {
         onDismiss={() => { }}
       >
         {stage === "intent" ? (
-          <div className="py-10 px-4 min-h-[26vh] text-center flex justify-around flex-col gap-4">
+          <div className="py-10 px-4 min-h-[26vh text-center flex justify-around flex-col gap-4">
             <h3 className="text-xl font-semibold">Are you looking for a rental?</h3>
             <p className="text-text/60 leading-7"></p>
             <button onClick={handleLookingForRental} className="btn outline-0 bg-primary text-white w-full rounded-full">Yes, find a rental</button>

@@ -17,8 +17,8 @@ const InstallSheet = ({ enabled = true }: { enabled?: boolean }) => {
     };
 
     return (
-        <BottomSheet open={open} onDismiss={close}>
-            <div className="py-10 px-4 flex flex-col gap-4">
+        <BottomSheet className="sm:hidden" open={open} onDismiss={close}>
+            <div className="py-10 px-4 flex flex-col gap-4 sm:hidden">
                 <h3 className="text-xl font-semibold">Install My Broker</h3>
 
                 {canPrompt ? (

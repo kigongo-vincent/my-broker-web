@@ -1,5 +1,6 @@
-import { Activity, ReactNode, useMemo } from "react"
+import { Activity, ReactNode, useEffect, useMemo, useRef, useState } from "react"
 import { useLocation, useNavigate } from "react-router"
+import { ArrowPathIcon } from "@heroicons/react/24/solid"
 import { useAppStore } from "../../../store/app"
 import { useUserStore } from "../../../store/auth"
 
@@ -16,13 +17,31 @@ const Tab = (t: LinkI) => {
     const isActive = useMemo(() => pathname === t?.path || pathname === t?.path + "/", [pathname, t?.path])
     const isUpload = useMemo(() => t?.path?.includes("upload"), [t?.path])
     const navigate = useNavigate()
-    const { LoginPrompt, unread } = useAppStore()
+    const { LoginPrompt, unread, setRefresh } = useAppStore()
 
     const hasBadge = t?.label === "messages" && unread !== 0 ? true : typeof t.badge === "number" ? t.badge > 0 : Boolean(t.badge)
     const badgeContent = t?.label === "messages" ? unread : t?.badge
     const { token } = useUserStore()
 
+    // TikTok style: tapping home while already on home refreshes the feed
+    const isHomeReload = t?.label === "home" && isActive
+
+    // while refreshing, the home icon is swapped for a spinning reload icon, then switches back
+    const [spinning, setSpinning] = useState(false)
+    const spinTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+    useEffect(() => () => {
+        if (spinTimer.current) clearTimeout(spinTimer.current)
+    }, [])
+
     const action = () => {
+        if (isHomeReload) {
+            setRefresh?.(true)
+            setSpinning(true)
+            if (spinTimer.current) clearTimeout(spinTimer.current)
+            spinTimer.current = setTimeout(() => setSpinning(false), 800)
+            return
+        }
+
         if (token !== "") {
             navigate(t?.path)
             return
@@ -65,7 +84,9 @@ const Tab = (t: LinkI) => {
                     }`}
             >
                 <span className={`transition-transform duration-200 ${isActive ? "scale-110" : "scale-100"}`}>
-                    {t?.icon}
+                    {isHomeReload && spinning
+                        ? <ArrowPathIcon className="h-6 w-6 animate-spin" />
+                        : t?.icon}
                 </span>
 
                 <Activity mode={hasBadge ? "visible" : "hidden"}>

@@ -67,6 +67,7 @@ const Home = () => {
     const {
         data,
         isLoading,
+        isRefetching,
         isFetchingNextPage,
         isError,
         error,
@@ -75,6 +76,8 @@ const Home = () => {
         refetch,
     } = useInfinitePosts({ limit: LIMIT })
 
+    // true only for a refresh-style refetch, not while loading the next page
+    const isRefreshing = isRefetching && !isFetchingNextPage
 
     const posts = useMemo(
         () => data?.pages.flatMap((page) => page.data) ?? [],
@@ -112,19 +115,13 @@ const Home = () => {
     const { refresh, setRefresh } = useAppStore()
 
     useEffect(() => {
-        if (refresh) {
-            // 1. Refetch data
-            refetch({})
+        if (!refresh) return
 
-            // 2. Scroll the <main> container to the top (not the window)
-            const mainScrollContainer = document.querySelector('main');
-            if (mainScrollContainer) {
-                mainScrollContainer.scrollTo({ top: 0, behavior: "smooth" });
-            }
+        // jump to top first (instant) so the skeletons are visible, not just the old list scrolling away
+        document.querySelector('main')?.scrollTo({ top: 0 })
 
-            // 3. Reset state
-            setRefresh?.(false)
-        }
+        refetch()
+        setRefresh?.(false)
     }, [refresh, refetch, setRefresh])
 
     return (
@@ -181,7 +178,7 @@ const Home = () => {
                 )}
             />
 
-            {isLoading ? (
+            {isLoading || isRefreshing ? (
                 <div className="py-4">
                     <ListStackSkeleton rows={3} className="space-y-8" />
                 </div>
